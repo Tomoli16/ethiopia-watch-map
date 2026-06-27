@@ -6,14 +6,17 @@ import {
   FOCUS_REGIONS,
   PRIORITY_COLOR_STOPS,
   PROXIES,
-  REGION_DATA,
+  analysisUnitById,
+  analysisUnitsForLevel,
   colorForScore,
   gbifBiodiversityForRegion,
+  livelihoodPopulationForAdm2,
   livelihoodPopulationForRegion,
   priorityLevel,
-  priorityScore,
-  proxyScores,
+  priorityScoreForUnit,
+  proxyScoresForUnit,
   soilGridsSampleForRegion,
+  type AnalysisLevel,
   type ProxyKey,
   type ProxyScores,
   type Weights,
@@ -57,18 +60,50 @@ function Index() {
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   useEffect(() => setMounted(true), []);
 
-  const ranked = FOCUS_REGIONS.map((name) => {
-    const r = REGION_DATA[name];
-    return { name, ...r, score: priorityScore(r, weights), proxies: proxyScores(r) };
-  }).sort((a, b) => b.score - a.score);
+  const analysisLevel: AnalysisLevel = adminLevel === "adm1" ? "adm1" : "adm2";
+  const selectedUnit = analysisUnitById(selected ?? undefined);
+  const ranked = analysisUnitsForLevel(analysisLevel)
+    .map((unit) => ({
+      ...unit,
+      score: priorityScoreForUnit(unit, weights),
+      proxies: proxyScoresForUnit(unit),
+    }))
+    .sort((a, b) => b.score - a.score);
 
-  const detail = selected ? REGION_DATA[selected] : null;
-  const detailScore = detail ? priorityScore(detail, weights) : 0;
+  useEffect(() => {
+    const current = analysisUnitById(selected ?? undefined);
+    if (analysisLevel === "adm1" && current?.level === "adm2") {
+      setSelected(current.region);
+      return;
+    }
+    if (analysisLevel === "adm2" && current?.level !== "adm2") {
+      const region = current?.region ?? selected ?? "Oromia";
+      const firstAdm2 = analysisUnitsForLevel("adm2").find((unit) => unit.region === region);
+      setSelected(firstAdm2?.id ?? null);
+    }
+  }, [analysisLevel, selected]);
+
+  const detail = selectedUnit;
+  const detailScore = detail ? priorityScoreForUnit(detail, weights) : 0;
   const detailLevel = detail ? priorityLevel(detailScore) : null;
-  const detailProxies = detail ? proxyScores(detail) : null;
-  const detailSoilGrids = selected ? soilGridsSampleForRegion(selected) : undefined;
-  const detailGbif = selected ? gbifBiodiversityForRegion(selected) : undefined;
-  const detailLivelihood = selected ? livelihoodPopulationForRegion(selected) : undefined;
+  const detailProxies = detail ? proxyScoresForUnit(detail) : null;
+  const detailSoilGrids = detail ? soilGridsSampleForRegion(detail.region) : undefined;
+  const detailGbif = detail ? gbifBiodiversityForRegion(detail.region) : undefined;
+  const detailLivelihood =
+    detail?.level === "adm2"
+      ? livelihoodPopulationForAdm2(detail.id)
+      : livelihoodPopulationForRegion(detail?.region);
+  const handleAdminLevelChange = (level: AdminLevel) => {
+    const current = analysisUnitById(selected ?? undefined);
+    setAdminLevel(level);
+    if (level === "adm1" && current?.level === "adm2") {
+      setSelected(current.region);
+    }
+    if (level !== "adm1" && current?.level !== "adm2") {
+      const firstAdm2 = analysisUnitsForLevel("adm2").find((unit) => unit.region === (current?.region ?? selected));
+      if (firstAdm2) setSelected(firstAdm2.id);
+    }
+  };
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -117,15 +152,15 @@ function Index() {
         <aside className="flex flex-col overflow-hidden border-r border-border">
           <div className="overflow-y-auto">
             <div className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Focus regions · ranked by priority
+              {analysisLevel === "adm2" ? "ADM2 zones" : "Focus regions"} · ranked by priority
             </div>
             <ul>
               {ranked.map((r) => {
-                const active = r.name === selected;
+                const active = r.id === selected;
                 return (
-                  <li key={r.name}>
+                  <li key={r.id}>
                     <button
-                      onClick={() => setSelected(r.name)}
+                      onClick={() => setSelected(r.id)}
                       className={`flex w-full items-center justify-between gap-3 border-l-2 px-4 py-3 text-left transition-colors hover:bg-secondary ${
                         active ? "border-primary bg-secondary" : "border-transparent"
                       }`}
@@ -133,8 +168,9 @@ function Index() {
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium">{r.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          ERP {r.proxies.ecologicalRestorationPotential} · BRV{" "}
-                          {r.proxies.biodiversityRecoveryValue} · LI {r.proxies.livelihoodImpact}
+                          {r.level === "adm2" ? `${r.region} · ` : ""}
+                          ERP {r.proxies.ecologicalRestorationPotential} · BRV {r.proxies.biodiversityRecoveryValue} · LI{" "}
+                          {r.proxies.livelihoodImpact}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -177,7 +213,7 @@ function Index() {
                 selected={selected}
                 onSelect={setSelected}
                 adminLevel={adminLevel}
-                onAdminLevelChange={setAdminLevel}
+                onAdminLevelChange={handleAdminLevelChange}
                 weights={weights}
               />
             </Suspense>
@@ -195,7 +231,10 @@ function Index() {
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">
                   Selected region
                 </div>
-                <h2 className="mt-1 text-2xl font-semibold">{selected}</h2>
+                <h2 className="mt-1 text-2xl font-semibold">{detail.name}</h2>
+                {detail.level === "adm2" ? (
+                  <div className="mt-1 text-xs text-muted-foreground">{detail.region} · ADM2 zone</div>
+                ) : null}
                 <div className="mt-2 flex items-center gap-2">
                   <span
                     className="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wider"
@@ -227,8 +266,7 @@ function Index() {
                   </div>
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real ISRIC SoilGrids v2.0 centroid sample, depth-weighted
-                    across 0-30 cm. The ERP score is calculated only from this
-                    fetched soil sample.
+                    across 0-30 cm. {detail.level === "adm2" ? "ADM2 currently inherits this ERP input from its parent ADM1 region." : "The ERP score is calculated only from this fetched soil sample."}
                   </p>
                 </div>
               ) : (
@@ -257,8 +295,7 @@ function Index() {
                   </div>
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real GBIF coordinated occurrences, queried by ADM1 bounding
-                    box. The BRV score uses only this occurrence evidence and is
-                    not yet corrected for observer or road-access bias.
+                    box. {detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "The BRV score uses only this occurrence evidence and is"} not yet corrected for observer or road-access bias.
                   </p>
                 </div>
               ) : (
@@ -286,8 +323,7 @@ function Index() {
                   </div>
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real HDX/OCHA ADM3 2022 projected population statistics,
-                    aggregated to the app's focus regions. The LI score uses
-                    only this fetched population aggregation.
+                    aggregated to {detail.level === "adm2" ? "this ADM2 zone" : "the app's focus regions"}. The LI score uses only this fetched population aggregation.
                   </p>
                 </div>
               ) : (

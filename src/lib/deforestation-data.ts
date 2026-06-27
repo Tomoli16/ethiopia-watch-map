@@ -1,4 +1,9 @@
 import { gbifBiodiversityForRegion } from "./gbif-data";
+import {
+  LIVELIHOOD_POPULATION_ADM2,
+  livelihoodPopulationForAdm2,
+  type LivelihoodPopulationAdm2,
+} from "./livelihood-adm2-data";
 import { livelihoodPopulationForRegion } from "./livelihood-data";
 import { SOILGRIDS_REGION_SAMPLES } from "./soilgrids-data";
 
@@ -7,6 +12,16 @@ export type RiskLevel = "low" | "moderate" | "high" | "severe";
 export interface RegionRisk {
   name: string;
   focus?: boolean;
+}
+
+export type AnalysisLevel = "adm1" | "adm2";
+
+export interface AnalysisUnit {
+  id: string;
+  name: string;
+  level: AnalysisLevel;
+  region: string;
+  livelihoodAdm2?: LivelihoodPopulationAdm2;
 }
 
 export const REGION_DATA: Record<string, RegionRisk> = {
@@ -19,6 +34,79 @@ export const REGION_DATA: Record<string, RegionRisk> = {
 export const FOCUS_REGIONS = Object.entries(REGION_DATA)
   .filter(([, r]) => r.focus)
   .map(([name]) => name);
+
+export const ADM1_ANALYSIS_UNITS: AnalysisUnit[] = FOCUS_REGIONS.map((name) => ({
+  id: name,
+  name,
+  level: "adm1",
+  region: name,
+}));
+
+export const ADM2_ANALYSIS_UNITS: AnalysisUnit[] = Object.values(LIVELIHOOD_POPULATION_ADM2)
+  .map((zone) => ({
+    id: zone.id,
+    name: zone.zone,
+    level: "adm2" as const,
+    region: zone.region,
+    livelihoodAdm2: zone,
+  }))
+  .sort((a, b) => a.region.localeCompare(b.region) || a.name.localeCompare(b.name));
+
+export function analysisUnitsForLevel(level: AnalysisLevel): AnalysisUnit[] {
+  return level === "adm2" ? ADM2_ANALYSIS_UNITS : ADM1_ANALYSIS_UNITS;
+}
+
+export function analysisUnitById(id?: string): AnalysisUnit | undefined {
+  if (!id) return undefined;
+  return ADM1_ANALYSIS_UNITS.find((unit) => unit.id === id) ?? ADM2_ANALYSIS_UNITS.find((unit) => unit.id === id);
+}
+
+function normalizeAdm2Name(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/\(r4\)/g, "or")
+    .replace(/\(or\)/g, "or")
+    .replace(/special woreda/g, "special")
+    .replace(/special$/g, "")
+    .replace(/zone$/g, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+const ADM2_NAME_ALIASES: Record<string, string> = {
+  "Beneshangul Gumu__Asosa": "Beneshangul Gumu__Assosa",
+  "Beneshangul Gumu__Kemashi": "Beneshangul Gumu__Kamashi",
+  "Gambela__Agnuak": "Gambela__Agnewak",
+  "Gambela__Nuer": "Gambela__Nuwer",
+  "Oromia__East Harerge": "Oromia__East Hararge",
+  "Oromia__West Harerge": "Oromia__West Hararge",
+  "Oromia__Horo Guduru": "Oromia__Horo Gudru Wellega",
+  "Oromia__Ilubabor": "Oromia__Ilu Aba Bora",
+  "Oromia__North Shewa(R4)": "Oromia__North Shewa (OR)",
+  "SNNPR__Alaba": "SNNPR__Halaba",
+  "SNNPR__Bench Maji": "SNNPR__Bench Sheko",
+  "SNNPR__Dawro": "SNNPR__Dawuro",
+  "SNNPR__Gamo Gofa": "SNNPR__Gamo",
+  "SNNPR__Gedio": "SNNPR__Gedeo",
+  "SNNPR__Gurage": "SNNPR__Guraghe",
+  "SNNPR__Keffa": "SNNPR__Kefa",
+  "SNNPR__Konta": "SNNPR__Konta Special",
+  "SNNPR__KT": "SNNPR__Kembata Tembaro",
+  "SNNPR__Selti": "SNNPR__Siltie",
+  "SNNPR__Yem": "SNNPR__Yem Special",
+};
+
+export function adm2UnitId(region?: string, zone?: string): string | undefined {
+  if (!region || !zone) return undefined;
+  const exact = `${region}__${zone}`;
+  if (LIVELIHOOD_POPULATION_ADM2[exact]) return exact;
+  const alias = ADM2_NAME_ALIASES[exact];
+  if (alias && LIVELIHOOD_POPULATION_ADM2[alias]) return alias;
+  const normalizedZone = normalizeAdm2Name(zone);
+  return ADM2_ANALYSIS_UNITS.find(
+    (unit) => unit.region === region && normalizeAdm2Name(unit.name) === normalizedZone,
+  )?.id;
+}
 
 export type ProxyKey =
   | "ecologicalRestorationPotential"
@@ -99,6 +187,7 @@ export function soilSuitabilityScoreForRegion(regionName?: string): number | nul
 }
 
 export { gbifBiodiversityForRegion };
+export { livelihoodPopulationForAdm2 };
 export { livelihoodPopulationForRegion };
 
 export interface ProxyScores {
@@ -108,17 +197,28 @@ export interface ProxyScores {
 }
 
 export function proxyScores(r: RegionRisk): ProxyScores {
+  return proxyScoresForUnit({ id: r.name, name: r.name, level: "adm1", region: r.name });
+}
+
+export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
+  const region = unit.region;
+  const livelihoodAdm1 = livelihoodPopulationForRegion(region);
+  const livelihoodAdm2 = unit.level === "adm2" ? livelihoodPopulationForAdm2(unit.id) : undefined;
+
   return {
-    ecologicalRestorationPotential: soilSuitabilityScoreForRegion(r.name) ?? 0,
+    ecologicalRestorationPotential: soilSuitabilityScoreForRegion(region) ?? 0,
     biodiversityRecoveryValue:
-      gbifBiodiversityForRegion(r.name)?.occurrenceEvidenceScore ?? 0,
-    livelihoodImpact:
-      livelihoodPopulationForRegion(r.name)?.livelihoodEvidenceScore ?? 0,
+      gbifBiodiversityForRegion(region)?.occurrenceEvidenceScore ?? 0,
+    livelihoodImpact: livelihoodAdm2?.livelihoodEvidenceScore ?? livelihoodAdm1?.livelihoodEvidenceScore ?? 0,
   };
 }
 
 export function priorityScore(r: RegionRisk, weights: Weights): number {
-  const p = proxyScores(r);
+  return priorityScoreForUnit({ id: r.name, name: r.name, level: "adm1", region: r.name }, weights);
+}
+
+export function priorityScoreForUnit(unit: AnalysisUnit, weights: Weights): number {
+  const p = proxyScoresForUnit(unit);
   const total = PROXIES.reduce((sum, proxy) => sum + weights[proxy.key], 0);
   if (total <= 0) return 0;
   const sum = PROXIES.reduce((acc, proxy) => acc + p[proxy.key] * weights[proxy.key], 0);

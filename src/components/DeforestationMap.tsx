@@ -5,11 +5,12 @@ import type { Feature } from "geojson";
 import "leaflet/dist/leaflet.css";
 import {
   FOCUS_REGIONS,
-  REGION_DATA,
+  adm2UnitId,
+  analysisUnitById,
   colorForScore,
   gbifBiodiversityForRegion,
   livelihoodPopulationForRegion,
-  priorityScore,
+  priorityScoreForUnit,
   soilSuitabilityScoreForRegion,
   type Weights,
 } from "@/lib/deforestation-data";
@@ -80,6 +81,8 @@ export function DeforestationMap({
   const [satellite, setSatellite] = useState(false);
   const [overlayMode, setOverlayMode] = useState<OverlayMode>("priority");
   const [hoverZone, setHoverZone] = useState<string | null>(null);
+  const selectedUnit = analysisUnitById(selected ?? undefined);
+  const selectedRegion = selectedUnit?.region ?? selected;
 
   useEffect(() => {
     fetch("/data/eth-adm1.geojson")
@@ -103,11 +106,12 @@ export function DeforestationMap({
       (feature?: Feature): PathOptions => {
         const props = feature?.properties as ZoneProps | undefined;
         const name = props?.shapeName ?? "";
-        const regionName = adminLevel === "adm1" ? name : props?.parent ?? "";
-        const risk = REGION_DATA[regionName];
+        const regionName = props?.parent ?? name;
+        const unitId = adminLevel === "adm1" ? regionName : adm2UnitId(regionName, adminLevel === "adm2" ? name : props?.zoneParent);
+        const unit = analysisUnitById(unitId);
         const inFocus = FOCUS_REGIONS.includes(regionName);
-        const color = risk && inFocus ? colorForScore(priorityScore(risk, weights)) : "#2a2f2c";
-        const isSelected = regionName === selected;
+        const color = unit && inFocus ? colorForScore(priorityScoreForUnit(unit, weights)) : "#2a2f2c";
+        const isSelected = unitId === selected || regionName === selected;
         const isZoneHover = adminLevel === "adm2" && name === hoverZone;
         return {
           fillColor: color,
@@ -123,21 +127,22 @@ export function DeforestationMap({
   const onEach = (feature: Feature, layer: Layer) => {
     const props = feature.properties as ZoneProps | undefined;
     const name = props?.shapeName ?? "";
-    const regionName = adminLevel === "adm1" ? name : props?.parent ?? "";
+    const regionName = props?.parent ?? name;
+    const unitId = adminLevel === "adm1" ? regionName : adm2UnitId(regionName, adminLevel === "adm2" ? name : props?.zoneParent);
+    const unit = analysisUnitById(unitId);
     const parentLabel =
       adminLevel === "adm3" && props?.zoneParent
         ? `${props.zoneParent}, ${regionName}`
         : regionName;
     const inFocus = FOCUS_REGIONS.includes(regionName);
-    const risk = REGION_DATA[regionName];
-    const score = risk ? priorityScore(risk, weights) : 0;
+    const score = unit ? priorityScoreForUnit(unit, weights) : 0;
     layer.bindTooltip(
-      `<div style="font-family:inherit"><strong>${name}</strong>${adminLevel !== "adm1" && regionName ? `<br/><em>${parentLabel}</em>` : ""}${inFocus ? `<br/>Priority: ${score}` : "<br/><em>out of scope</em>"}</div>`,
+      `<div style="font-family:inherit"><strong>${name}</strong>${adminLevel !== "adm1" && regionName ? `<br/><em>${parentLabel}</em>` : ""}${inFocus ? `<br/>Priority: ${score}${adminLevel !== "adm1" ? "<br/><span>ADM2 LI + parent ERP/BRV</span>" : ""}` : "<br/><em>out of scope</em>"}</div>`,
       { sticky: true, className: "deforest-tooltip" },
     );
     if (!inFocus) return;
     layer.on({
-      click: () => onSelect(regionName),
+      click: () => onSelect(unitId ?? regionName),
       mouseover: (e) => {
         if (adminLevel !== "adm1") setHoverZone(name);
         const l = e.target as { setStyle: (s: PathOptions) => void };
@@ -146,7 +151,7 @@ export function DeforestationMap({
       mouseout: (e) => {
         if (adminLevel !== "adm1") setHoverZone(null);
         const l = e.target as { setStyle: (s: PathOptions) => void };
-        const isSelected = regionName === selected;
+        const isSelected = unitId === selected || regionName === selected;
         l.setStyle({
           fillOpacity: isSelected ? 0.74 : adminLevel === "adm3" ? 0.44 : 0.52,
           weight: isSelected ? (adminLevel === "adm1" ? 3 : 1.6) : 1,
@@ -156,14 +161,14 @@ export function DeforestationMap({
   };
 
   const zoneData = useMemo<GeoJSON.FeatureCollection | null>(() => {
-    if (adminLevel !== "adm1" || !zones || !selected) return null;
+    if (adminLevel !== "adm1" || !zones || !selectedRegion) return null;
     return {
       type: "FeatureCollection",
       features: zones.features.filter(
-        (f) => (f.properties as ZoneProps | undefined)?.parent === selected,
+        (f) => (f.properties as ZoneProps | undefined)?.parent === selectedRegion,
       ),
     };
-  }, [adminLevel, zones, selected]);
+  }, [adminLevel, zones, selectedRegion]);
 
   const soilRegionData = useMemo<GeoJSON.FeatureCollection | null>(() => {
     if (!regions) return null;
@@ -225,7 +230,7 @@ export function DeforestationMap({
   const soilStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
     const score = soilSuitabilityScoreForRegion(name);
-    const active = name === selected;
+    const active = name === selectedRegion;
     return {
       fillColor: score === null ? "#737373" : soilColor(score),
       fillOpacity: active ? 0.58 : 0.42,
@@ -263,7 +268,7 @@ export function DeforestationMap({
   const gbifStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
     const gbif = gbifBiodiversityForRegion(name);
-    const active = name === selected;
+    const active = name === selectedRegion;
     return {
       fillColor: gbif ? gbifColor(gbif.occurrenceEvidenceScore) : "#737373",
       fillOpacity: active ? 0.6 : 0.44,
@@ -309,7 +314,7 @@ export function DeforestationMap({
   const livelihoodStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
     const livelihood = livelihoodPopulationForRegion(name);
-    const active = name === selected;
+    const active = name === selectedRegion;
     return {
       fillColor: livelihood ? livelihoodColor(livelihood.livelihoodEvidenceScore) : "#737373",
       fillOpacity: active ? 0.62 : 0.46,
@@ -392,13 +397,13 @@ export function DeforestationMap({
           onEachFeature={onEachZone}
         />
       )}
-      {adminLevel !== "adm1" && regions && selected && (
+      {adminLevel !== "adm1" && regions && selectedRegion && (
         <GeoJSON
-          key={`selected-region-${selected}`}
+          key={`selected-region-${selectedRegion}`}
           data={{
             type: "FeatureCollection",
             features: regions.features.filter(
-              (f) => (f.properties as ZoneProps | undefined)?.shapeName === selected,
+              (f) => (f.properties as ZoneProps | undefined)?.shapeName === selectedRegion,
             ),
           }}
           style={() => ({
@@ -434,7 +439,7 @@ export function DeforestationMap({
       )}
       {overlayMode === "soil" &&
         SOILGRIDS_SAMPLES.map((sample) => {
-          const active = sample.region === selected;
+          const active = sample.region === selectedRegion;
           return (
             <CircleMarker
               key={sample.region}
@@ -487,7 +492,7 @@ export function DeforestationMap({
             </CircleMarker>
           );
         })}
-      <ZoomToSelection data={regions} selected={selected} />
+      <ZoomToSelection data={regions} selected={selectedRegion} />
       <div className="leaflet-top leaflet-right" style={{ pointerEvents: "none" }}>
         <div
           className="leaflet-control leaflet-bar"

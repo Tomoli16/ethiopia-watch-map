@@ -10,6 +10,7 @@
     "data:fetch": "node scripts/fetch-real-datasets.mjs",
     "data:fetch:gbif": "node scripts/fetch-gbif-biodiversity.mjs",
     "data:build:livelihood": "node scripts/build-livelihood-population.mjs",
+    "data:build:livelihood:adm2": "node scripts/build-livelihood-adm2.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."
