@@ -15,13 +15,24 @@ import {
 interface Props {
   selected: string | null;
   onSelect: (name: string) => void;
+  adminLevel: AdminLevel;
+  onAdminLevelChange: (level: AdminLevel) => void;
   weights: Weights;
 }
+
+export type AdminLevel = "adm1" | "adm2" | "adm3";
 
 interface ZoneProps {
   shapeName?: string;
   parent?: string;
+  zoneParent?: string;
 }
+
+const ADMIN_LEVELS: { value: AdminLevel; label: string; description: string }[] = [
+  { value: "adm1", label: "ADM1", description: "Regions" },
+  { value: "adm2", label: "ADM2", description: "Zones" },
+  { value: "adm3", label: "ADM3", description: "Woredas" },
+];
 
 function ZoomToSelection({ data, selected }: { data: GeoJSON.FeatureCollection | null; selected: string | null }) {
   const map = useMap();
@@ -38,80 +49,105 @@ function ZoomToSelection({ data, selected }: { data: GeoJSON.FeatureCollection |
   return null;
 }
 
-export function DeforestationMap({ selected, onSelect, weights }: Props) {
-  const [data, setData] = useState<GeoJSON.FeatureCollection | null>(null);
+export function DeforestationMap({
+  selected,
+  onSelect,
+  adminLevel,
+  onAdminLevelChange,
+  weights,
+}: Props) {
+  const [regions, setRegions] = useState<GeoJSON.FeatureCollection | null>(null);
   const [zones, setZones] = useState<GeoJSON.FeatureCollection | null>(null);
+  const [woredas, setWoredas] = useState<GeoJSON.FeatureCollection | null>(null);
   const [satellite, setSatellite] = useState(false);
   const [hoverZone, setHoverZone] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/data/eth-adm1.geojson")
       .then((r) => r.json())
-      .then(setData)
+      .then(setRegions)
       .catch((e) => console.error("Failed to load boundaries", e));
     fetch("/data/eth-adm2.geojson")
       .then((r) => r.json())
       .then(setZones)
       .catch((e) => console.error("Failed to load zone boundaries", e));
+    fetch("/data/eth-adm3.geojson")
+      .then((r) => r.json())
+      .then(setWoredas)
+      .catch((e) => console.error("Failed to load woreda boundaries", e));
   }, []);
+
+  const boundaryData = adminLevel === "adm1" ? regions : adminLevel === "adm2" ? zones : woredas;
 
   const style = useMemo(
     () =>
       (feature?: Feature): PathOptions => {
-        const name = (feature?.properties as { shapeName?: string } | undefined)?.shapeName ?? "";
-        const risk = REGION_DATA[name];
-        const inFocus = FOCUS_REGIONS.includes(name);
+        const props = feature?.properties as ZoneProps | undefined;
+        const name = props?.shapeName ?? "";
+        const regionName = adminLevel === "adm1" ? name : props?.parent ?? "";
+        const risk = REGION_DATA[regionName];
+        const inFocus = FOCUS_REGIONS.includes(regionName);
         const color =
           risk && inFocus
             ? RISK_COLORS[priorityLevel(priorityScore(risk, weights))]
             : "#2a2f2c";
-        const isSelected = name === selected;
+        const isSelected = regionName === selected;
+        const isZoneHover = adminLevel === "adm2" && name === hoverZone;
         return {
           fillColor: color,
-          fillOpacity: inFocus ? (isSelected ? 0.85 : 0.6) : 0.18,
+          fillOpacity: inFocus ? (isSelected ? 0.74 : adminLevel === "adm3" ? 0.44 : 0.52) : 0.14,
           color: isSelected ? "#fafafa" : "#0c1410",
-          weight: isSelected ? 3 : inFocus ? 1 : 0.5,
+          weight: isSelected ? (adminLevel === "adm1" ? 3 : 1.6) : inFocus ? 1 : 0.5,
+          dashArray: adminLevel !== "adm1" && !isZoneHover ? "2 3" : undefined,
         };
       },
-    [selected, weights],
+    [adminLevel, hoverZone, selected, weights],
   );
 
   const onEach = (feature: Feature, layer: Layer) => {
-    const name = (feature.properties as { shapeName?: string } | undefined)?.shapeName ?? "";
-    const inFocus = FOCUS_REGIONS.includes(name);
-    const risk = REGION_DATA[name];
+    const props = feature.properties as ZoneProps | undefined;
+    const name = props?.shapeName ?? "";
+    const regionName = adminLevel === "adm1" ? name : props?.parent ?? "";
+    const parentLabel =
+      adminLevel === "adm3" && props?.zoneParent
+        ? `${props.zoneParent}, ${regionName}`
+        : regionName;
+    const inFocus = FOCUS_REGIONS.includes(regionName);
+    const risk = REGION_DATA[regionName];
     const score = risk ? priorityScore(risk, weights) : 0;
     layer.bindTooltip(
-      `<div style="font-family:inherit"><strong>${name}</strong>${inFocus ? `<br/>Priority: ${score}` : "<br/><em>out of scope</em>"}</div>`,
+      `<div style="font-family:inherit"><strong>${name}</strong>${adminLevel !== "adm1" && regionName ? `<br/><em>${parentLabel}</em>` : ""}${inFocus ? `<br/>Priority: ${score}` : "<br/><em>out of scope</em>"}</div>`,
       { sticky: true, className: "deforest-tooltip" },
     );
     if (!inFocus) return;
     layer.on({
-      click: () => onSelect(name),
+      click: () => onSelect(regionName),
       mouseover: (e) => {
+        if (adminLevel !== "adm1") setHoverZone(name);
         const l = e.target as { setStyle: (s: PathOptions) => void };
         l.setStyle({ fillOpacity: 0.85, weight: 2 });
       },
       mouseout: (e) => {
+        if (adminLevel !== "adm1") setHoverZone(null);
         const l = e.target as { setStyle: (s: PathOptions) => void };
-        const isSelected = name === selected;
+        const isSelected = regionName === selected;
         l.setStyle({
-          fillOpacity: isSelected ? 0.85 : 0.6,
-          weight: isSelected ? 3 : 1,
+          fillOpacity: isSelected ? 0.74 : adminLevel === "adm3" ? 0.44 : 0.52,
+          weight: isSelected ? (adminLevel === "adm1" ? 3 : 1.6) : 1,
         });
       },
     });
   };
 
   const zoneData = useMemo<GeoJSON.FeatureCollection | null>(() => {
-    if (!zones || !selected) return null;
+    if (adminLevel !== "adm1" || !zones || !selected) return null;
     return {
       type: "FeatureCollection",
       features: zones.features.filter(
         (f) => (f.properties as ZoneProps | undefined)?.parent === selected,
       ),
     };
-  }, [zones, selected]);
+  }, [adminLevel, zones, selected]);
 
   const zoneStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
@@ -170,10 +206,10 @@ export function DeforestationMap({ selected, onSelect, weights }: Props) {
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
       )}
-      {data && (
+      {boundaryData && (
         <GeoJSON
-          key={`${selected ?? "none"}-${weightKey}`}
-          data={data}
+          key={`${adminLevel}-${selected ?? "none"}-${hoverZone ?? ""}-${weightKey}`}
+          data={boundaryData}
           style={style}
           onEachFeature={onEach}
         />
@@ -186,12 +222,58 @@ export function DeforestationMap({ selected, onSelect, weights }: Props) {
           onEachFeature={onEachZone}
         />
       )}
-      <ZoomToSelection data={data} selected={selected} />
+      {adminLevel !== "adm1" && regions && selected && (
+        <GeoJSON
+          key={`selected-region-${selected}`}
+          data={{
+            type: "FeatureCollection",
+            features: regions.features.filter(
+              (f) => (f.properties as ZoneProps | undefined)?.shapeName === selected,
+            ),
+          }}
+          style={() => ({
+            fillOpacity: 0,
+            color: "#fafafa",
+            weight: 3,
+          })}
+        />
+      )}
+      <ZoomToSelection data={regions} selected={selected} />
       <div className="leaflet-top leaflet-right" style={{ pointerEvents: "none" }}>
         <div
           className="leaflet-control leaflet-bar"
           style={{ pointerEvents: "auto", margin: "10px", overflow: "hidden" }}
         >
+          <div
+            role="group"
+            aria-label="HDX admin boundary level"
+            style={{ display: "flex", borderBottom: "1px solid #d6d6d6" }}
+          >
+            {ADMIN_LEVELS.map((level) => {
+              const active = adminLevel === level.value;
+              return (
+                <button
+                  key={level.value}
+                  type="button"
+                  onClick={() => onAdminLevelChange(level.value)}
+                  aria-pressed={active}
+                  title={`Use HDX ${level.label} ${level.description.toLowerCase()}`}
+                  style={{
+                    minWidth: 56,
+                    padding: "7px 9px",
+                    background: active ? "#0c1410" : "#fff",
+                    color: active ? "#fafafa" : "#0c1410",
+                    border: "none",
+                    borderRight: level.value !== "adm3" ? "1px solid #d6d6d6" : "none",
+                    font: "700 11px/1 system-ui, sans-serif",
+                    cursor: "pointer",
+                  }}
+                >
+                  {level.label}
+                </button>
+              );
+            })}
+          </div>
           <button
             type="button"
             onClick={() => setSatellite((s) => !s)}

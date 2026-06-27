@@ -16,6 +16,7 @@ import {
 } from "@/lib/deforestation-data";
 import { recommendSpecies } from "@/lib/species-recommender";
 import type { SpeciesPick } from "@/lib/species-recommender";
+import type { AdminLevel } from "@/components/DeforestationMap";
 
 const DeforestationMap = lazy(() =>
   import("@/components/DeforestationMap").then((m) => ({ default: m.DeforestationMap })),
@@ -56,6 +57,7 @@ function fmtDensity(d: number): string {
 function Index() {
   const [selected, setSelected] = useState<string | null>("Oromia");
   const [mounted, setMounted] = useState(false);
+  const [adminLevel, setAdminLevel] = useState<AdminLevel>("adm1");
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   useEffect(() => setMounted(true), []);
 
@@ -143,6 +145,12 @@ function Index() {
               <WeightsPanel weights={weights} onChange={setWeights} />
             </div>
             <div className="px-4 pb-4 pt-2 text-[11px] leading-relaxed text-muted-foreground">
+              Map boundaries use HDX COD-AB-ETH{" "}
+              <span className="font-medium text-foreground/80">{adminLevel.toUpperCase()}</span>{" "}
+              {adminLevel === "adm1" ? "regions" : adminLevel === "adm2" ? "zones" : "woredas"}.
+              {" "}ADM2/ADM3 colors inherit their parent region priority.
+            </div>
+            <div className="px-4 pb-4 text-[11px] leading-relaxed text-muted-foreground">
               Scope covers Oromia, SNNPR (incl. South West Ethiopia Peoples'),
               Gambela and Benishangul-Gumuz — nearly all of Ethiopia's
               remaining moist forest.
@@ -159,7 +167,13 @@ function Index() {
                 </div>
               }
             >
-              <DeforestationMap selected={selected} onSelect={setSelected} weights={weights} />
+              <DeforestationMap
+                selected={selected}
+                onSelect={setSelected}
+                adminLevel={adminLevel}
+                onAdminLevelChange={setAdminLevel}
+                weights={weights}
+              />
             </Suspense>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
