@@ -1,25 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Bird, Sprout, UsersRound, type LucideIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
   DEFAULT_WEIGHTS,
   FOCUS_REGIONS,
+  PRIORITY_COLOR_STOPS,
   PROXIES,
   REGION_DATA,
-  RISK_COLORS,
-  populationDensity,
+  colorForScore,
+  gbifBiodiversityForRegion,
+  livelihoodPopulationForRegion,
   priorityLevel,
   priorityScore,
   proxyScores,
-  gbifBiodiversityForRegion,
-  livelihoodPopulationForRegion,
   soilGridsSampleForRegion,
   type ProxyKey,
   type ProxyScores,
   type Weights,
 } from "@/lib/deforestation-data";
-import { recommendSpecies } from "@/lib/species-recommender";
-import type { SpeciesPick } from "@/lib/species-recommender";
 import type { AdminLevel } from "@/components/DeforestationMap";
+
+const PROXY_ICONS: Record<ProxyKey, LucideIcon> = {
+  ecologicalRestorationPotential: Sprout,
+  biodiversityRecoveryValue: Bird,
+  livelihoodImpact: UsersRound,
+};
 
 const DeforestationMap = lazy(() =>
   import("@/components/DeforestationMap").then((m) => ({ default: m.DeforestationMap })),
@@ -28,34 +33,22 @@ const DeforestationMap = lazy(() =>
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Southwest Ethiopia · Forest Risk & Restoration Opportunity" },
+      { title: "Southwest Ethiopia · Real Data Priority Map" },
       {
         name: "description",
         content:
-          "Interactive map of southwest Ethiopia pairing Global Forest Watch deforestation risk with rainfall, land cover, protected areas and WRI restoration opportunity.",
+          "Interactive Ethiopia restoration priority map using fetched SoilGrids, GBIF and HDX/OCHA ADM3 population data.",
       },
-      { property: "og:title", content: "Southwest Ethiopia · Forest Risk & Restoration Opportunity" },
+      { property: "og:title", content: "Southwest Ethiopia · Real Data Priority Map" },
       {
         property: "og:description",
         content:
-          "Prioritize southwest Ethiopian regions for monitoring and reforestation, combining GFW loss data with CHIRPS, ESA WorldCover, WDPA and WRI restoration layers.",
+          "Prioritize focus regions with real SoilGrids, GBIF occurrence and HDX/OCHA ADM3 population inputs.",
       },
     ],
   }),
   component: Index,
 });
-
-function fmtKha(ha: number): string {
-  return (ha / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 });
-}
-
-function fmtMha(ha: number): string {
-  return (ha / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
-
-function fmtDensity(d: number): string {
-  return d.toLocaleString(undefined, { maximumFractionDigits: 1 });
-}
 
 function Index() {
   const [selected, setSelected] = useState<string | null>("Oromia");
@@ -66,7 +59,7 @@ function Index() {
 
   const ranked = FOCUS_REGIONS.map((name) => {
     const r = REGION_DATA[name];
-    return { name, ...r, score: priorityScore(r, weights) };
+    return { name, ...r, score: priorityScore(r, weights), proxies: proxyScores(r) };
   }).sort((a, b) => b.score - a.score);
 
   const detail = selected ? REGION_DATA[selected] : null;
@@ -83,19 +76,28 @@ function Index() {
         <div className="flex items-baseline justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold tracking-tight">
-              Southwest Ethiopia · Forest Risk & Restoration Opportunity
+              Southwest Ethiopia · Real Data Priority Map
             </h1>
             <p className="text-xs text-muted-foreground">
-              Three-pillar priority score (ERP · BRV · LI). Layers from{" "}
+              Three-pillar score from fetched{" "}
               <a
                 className="underline decoration-dotted hover:text-foreground"
-                href="https://www.globalforestwatch.org/dashboards/country/ETH/"
+                href="https://soilgrids.org/"
                 target="_blank"
                 rel="noreferrer"
               >
-                GFW
+                SoilGrids
               </a>
-              , SRTM DEM, SoilGrids/iSDAsoil, CIFOR-ICRAF, WDPA, GBIF/eBird, WorldPop, PSNP. Boundaries from HDX{" "}
+              ,{" "}
+              <a
+                className="underline decoration-dotted hover:text-foreground"
+                href="https://www.gbif.org/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GBIF
+              </a>
+              {" "}and HDX/OCHA ADM3 population data. Boundaries from HDX{" "}
               <a
                 className="underline decoration-dotted hover:text-foreground"
                 href="https://data.humdata.org/dataset/cod-ab-eth"
@@ -115,11 +117,10 @@ function Index() {
         <aside className="flex flex-col overflow-hidden border-r border-border">
           <div className="overflow-y-auto">
             <div className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Southwest regions · ranked by priority
+              Focus regions · ranked by priority
             </div>
             <ul>
               {ranked.map((r) => {
-                const level = priorityLevel(r.score);
                 const active = r.name === selected;
                 return (
                   <li key={r.name}>
@@ -132,13 +133,14 @@ function Index() {
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium">{r.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          {fmtKha(r.loss2023Ha)} kha lost in 2023
+                          ERP {r.proxies.ecologicalRestorationPotential} · BRV{" "}
+                          {r.proxies.biodiversityRecoveryValue} · LI {r.proxies.livelihoodImpact}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span
                           className="inline-block size-2 rounded-full"
-                          style={{ backgroundColor: RISK_COLORS[level] }}
+                          style={{ backgroundColor: colorForScore(r.score) }}
                         />
                         <span className="tabular-nums text-sm font-semibold">{r.score}</span>
                       </div>
@@ -157,9 +159,7 @@ function Index() {
               {" "}ADM2/ADM3 colors inherit their parent region priority.
             </div>
             <div className="px-4 pb-4 text-[11px] leading-relaxed text-muted-foreground">
-              Scope covers Oromia, SNNPR (incl. South West Ethiopia Peoples'),
-              Gambela and Benishangul-Gumuz — nearly all of Ethiopia's
-              remaining moist forest.
+              Current focus regions: Oromia, SNNPR, Gambela and Benishangul-Gumuz.
             </div>
           </div>
         </aside>
@@ -169,7 +169,7 @@ function Index() {
             <Suspense
               fallback={
                 <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                  Loading map…
+                  Loading map...
                 </div>
               }
             >
@@ -183,7 +183,7 @@ function Index() {
             </Suspense>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              Loading map…
+              Loading map...
             </div>
           )}
         </main>
@@ -199,7 +199,7 @@ function Index() {
                 <div className="mt-2 flex items-center gap-2">
                   <span
                     className="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wider"
-                    style={{ backgroundColor: RISK_COLORS[detailLevel], color: "#0b0f0c" }}
+                    style={{ backgroundColor: colorForScore(detailScore), color: "#0b0f0c" }}
                   >
                     {detailLevel} priority
                   </span>
@@ -211,56 +211,36 @@ function Index() {
 
               <ProxyPanel proxies={detailProxies} weights={weights} total={detailScore} />
 
-              <div className="grid grid-cols-2 gap-3">
-                <Stat label="Tree cover 2000" value={`${fmtMha(detail.treeCover2000Ha)} Mha`} />
-                <Stat label="Loss 2001–2023" value={`${fmtKha(detail.lossTotalHa)} kha`} />
-                <Stat label="Loss 2023" value={`${fmtKha(detail.loss2023Ha)} kha`} />
-                <Stat label="Primary loss" value={`${fmtKha(detail.primaryLossHa)} kha`} />
-                <Stat
-                  label="Population"
-                  value={`${(detail.population / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 2 })} M`}
-                />
-                <Stat
-                  label="Pop. density"
-                  value={`${fmtDensity(populationDensity(detail))} /km²`}
-                />
-                <Stat label="AGB carbon" value={`${detail.aboveGroundCarbonTha} tC/ha`} />
-                <Stat
-                  label={detailSoilGrids ? "Soil C SoilGrids" : "Soil C (0–30cm)"}
-                  value={
-                    detailSoilGrids
-                      ? `${detailSoilGrids.soilOrganicCarbonGkg.toFixed(1)} g/kg`
-                      : `${detail.soilOrganicCarbonTha} tC/ha`
-                  }
-                />
-                <Stat label="Erosion" value={`${detail.erosionRiskTHaYr} t/ha·yr`} />
-                <Stat label="Water stress" value={`${detail.waterStressIndex.toFixed(1)} / 5`} />
-                <Stat label="KBA coverage" value={`${Math.round(detail.kbaCoveragePct * 100)}%`} />
-                <Stat label="Forest-dependent" value={`${Math.round(detail.forestDependentPct * 100)}%`} />
-              </div>
-
               {detailSoilGrids ? (
                 <div className="rounded-md border border-border bg-card/50 p-3">
-                  <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    SoilGrids input
+                  <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Sprout className="size-3.5" aria-hidden />
+                    <span>SoilGrids ERP input</span>
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     <Stat label="pH H2O" value={detailSoilGrids.phH2O.toFixed(1)} />
+                    <Stat label="Soil C" value={`${detailSoilGrids.soilOrganicCarbonGkg.toFixed(1)} g/kg`} />
                     <Stat label="Clay" value={`${detailSoilGrids.clayPct.toFixed(1)}%`} />
                     <Stat label="Sand" value={`${detailSoilGrids.sandPct.toFixed(1)}%`} />
+                    <Stat label="Silt" value={`${detailSoilGrids.siltPct.toFixed(1)}%`} />
+                    <Stat label="Depth" value={detailSoilGrids.depthRangeCm} />
                   </div>
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real ISRIC SoilGrids v2.0 centroid sample, depth-weighted
-                    across 0–30 cm. Used directly in ERP soil suitability.
+                    across 0-30 cm. The ERP score is calculated only from this
+                    fetched soil sample.
                   </p>
                 </div>
-              ) : null}
+              ) : (
+                <MissingData label="SoilGrids ERP input" />
+              )}
 
               {detailGbif ? (
                 <div className="rounded-md border border-border bg-card/50 p-3">
                   <div className="flex items-baseline justify-between gap-3">
-                    <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      GBIF biodiversity input
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <Bird className="size-3.5" aria-hidden />
+                      <span>GBIF BRV input</span>
                     </div>
                     <span className="text-[10px] text-muted-foreground">
                       evidence {detailGbif.occurrenceEvidenceScore}/100
@@ -277,17 +257,20 @@ function Index() {
                   </div>
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real GBIF coordinated occurrences, queried by ADM1 bounding
-                    box. Used in BRV as occurrence evidence; not yet corrected
-                    for observer or road-access bias.
+                    box. The BRV score uses only this occurrence evidence and is
+                    not yet corrected for observer or road-access bias.
                   </p>
                 </div>
-              ) : null}
+              ) : (
+                <MissingData label="GBIF BRV input" />
+              )}
 
               {detailLivelihood ? (
                 <div className="rounded-md border border-border bg-card/50 p-3">
                   <div className="flex items-baseline justify-between gap-3">
-                    <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Livelihood population input
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <UsersRound className="size-3.5" aria-hidden />
+                      <span>HDX/OCHA LI input</span>
                     </div>
                     <span className="text-[10px] text-muted-foreground">
                       evidence {detailLivelihood.livelihoodEvidenceScore}/100
@@ -296,107 +279,25 @@ function Index() {
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     <Stat label="ADM3 units" value={detailLivelihood.admin3Count.toLocaleString()} />
                     <Stat label="Population" value={detailLivelihood.populationTotal.toLocaleString()} />
-                    <Stat label="Density" value={`${detailLivelihood.densityPerKm2.toFixed(1)} /km²`} />
+                    <Stat label="Density" value={`${detailLivelihood.densityPerKm2.toFixed(1)} /km2`} />
                     <Stat label="Children <15" value={`${Math.round(detailLivelihood.childShare * 100)}%`} />
                     <Stat label="Women" value={`${Math.round(detailLivelihood.femaleShare * 100)}%`} />
                     <Stat label="Dependency" value={detailLivelihood.dependencyRatio.toFixed(2)} />
                   </div>
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real HDX/OCHA ADM3 2022 projected population statistics,
-                    aggregated to the app's focus regions. Used directly in LI.
+                    aggregated to the app's focus regions. The LI score uses
+                    only this fetched population aggregation.
                   </p>
                 </div>
-              ) : null}
-
-              <div>
-                <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Restoration context
-                </h3>
-                <div className="mt-2 grid grid-cols-2 gap-3">
-                  <Stat label="Annual rainfall" value={`${detail.annualRainfallMm.toLocaleString()} mm`} />
-                  <Stat label="Mean elevation" value={`${detail.meanElevationM.toLocaleString()} m`} />
-                  <Stat
-                    label="Protected area"
-                    value={`${Math.round(detail.protectedAreaPct * 100)}%`}
-                  />
-                  <Stat
-                    label="Restoration opp."
-                    value={`${fmtMha(detail.restorationPotentialHa)} Mha`}
-                  />
-                </div>
-                <div className="mt-3">
-                  <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-                    <span>Land cover</span>
-                    <span>ESA WorldCover 2021</span>
-                  </div>
-                  <LandCoverBar lc={detail.landCover} />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Primary drivers
-                </h3>
-                <ul className="mt-2 flex flex-wrap gap-1.5">
-                  {detail.drivers.map((d) => (
-                    <li key={d} className="rounded-md bg-secondary px-2 py-1 text-xs">
-                      {d}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <div className="flex items-baseline justify-between">
-                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Recommended species
-                  </h3>
-                  <span className="text-[10px] text-muted-foreground">ranked by site fit</span>
-                </div>
-                <ul className="mt-2 space-y-2">
-                  {recommendSpecies(detail).map((sp) => (
-                    <li key={sp.scientificName} className="rounded-md border border-border bg-card/40 p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium leading-tight">
-                            {sp.commonName}
-                            {sp.amharic ? <span className="ml-1 text-xs text-muted-foreground">({sp.amharic})</span> : null}
-                          </div>
-                          <div className="text-[11px] italic text-muted-foreground">{sp.scientificName}</div>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
-                            {sp.fit}% fit
-                          </span>
-                          <span className={`mt-1 text-[10px] ${sp.native ? "text-emerald-400" : "text-amber-400"}`}>
-                            {sp.native ? "Native" : "Exotic"}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="mt-1.5 text-[11px] leading-relaxed text-foreground/80">{sp.note}</p>
-                      <FitBreakdown sp={sp} />
-                      <div className="mt-1.5 text-[10px] text-muted-foreground">
-                        Uses: {sp.uses.join(" · ")}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Field notes
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/90">
-                  {detail.notes}
-                </p>
-              </div>
+              ) : (
+                <MissingData label="HDX/OCHA LI input" />
+              )}
 
               <div className="rounded-md border border-border bg-card/50 p-3 text-xs text-muted-foreground">
-                Priority = weighted mean of 3 pillars (sliders, left). Each
-                proxy is a 0–100 composite of public datasets — adjust weights
-                to reflect the decision you're making (e.g. restoration-first vs
-                livelihood-safeguard prioritization).
+                Priority = weighted mean of the available real-source proxy
+                scores above. Missing datasets contribute 0 until fetched and
+                wired in, so no placeholder values are silently used.
               </div>
             </div>
           ) : (
@@ -417,6 +318,19 @@ function Stat({ label, value }: { label: string; value: string }) {
         {label}
       </div>
       <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function MissingData({ label }: { label: string }) {
+  return (
+    <div className="rounded-md border border-border bg-card/50 p-3">
+      <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        No fetched real dataset is available for this region yet.
+      </p>
     </div>
   );
 }
@@ -449,36 +363,6 @@ function SpeciesList({
   );
 }
 
-function LandCoverBar({ lc }: { lc: { forest: number; cropland: number; grassland: number; other: number } }) {
-  const segs: { key: string; label: string; pct: number; color: string }[] = [
-    { key: "forest", label: "Forest", pct: lc.forest, color: "#16a34a" },
-    { key: "cropland", label: "Cropland", pct: lc.cropland, color: "#eab308" },
-    { key: "grassland", label: "Grass/shrub", pct: lc.grassland, color: "#a3a380" },
-    { key: "other", label: "Other", pct: lc.other, color: "#6b7280" },
-  ];
-  return (
-    <div>
-      <div className="flex h-2.5 w-full overflow-hidden rounded-sm">
-        {segs.map((s) => (
-          <div
-            key={s.key}
-            title={`${s.label}: ${Math.round(s.pct * 100)}%`}
-            style={{ width: `${s.pct * 100}%`, backgroundColor: s.color }}
-          />
-        ))}
-      </div>
-      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-        {segs.map((s) => (
-          <div key={s.key} className="flex items-center gap-1">
-            <span className="inline-block size-2 rounded-sm" style={{ backgroundColor: s.color }} />
-            {s.label} {Math.round(s.pct * 100)}%
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function WeightsPanel({
   weights,
   onChange,
@@ -506,14 +390,17 @@ function WeightsPanel({
         {PROXIES.map((p) => {
           const w = weights[p.key];
           const share = total > 0 ? Math.round((w / total) * 100) : 0;
+          const Icon = PROXY_ICONS[p.key];
           return (
             <div key={p.key}>
               <div className="flex items-center justify-between text-[11px]">
                 <span className="flex items-center gap-1.5">
                   <span
-                    className="inline-block size-2 rounded-sm"
-                    style={{ backgroundColor: p.color }}
-                  />
+                    className="flex size-5 items-center justify-center rounded-sm"
+                    style={{ backgroundColor: `${p.color}26`, color: p.color }}
+                  >
+                    <Icon className="size-3.5" aria-hidden />
+                  </span>
                   <span className="font-medium">{p.label}</span>
                 </span>
                 <span className="tabular-nums text-muted-foreground">{share}%</span>
@@ -567,11 +454,21 @@ function ProxyPanel({
         {PROXIES.map((p) => {
           const v = proxies[p.key as ProxyKey];
           const share = sumW > 0 ? Math.round((weights[p.key] / sumW) * 100) : 0;
+          const Icon = PROXY_ICONS[p.key];
           return (
-            <div key={p.key} className="grid grid-cols-[96px_1fr_36px] items-center gap-2">
-              <span className="text-[11px]">
-                <span className="font-medium">{p.short}</span>{" "}
-                <span className="text-[9px] text-muted-foreground/70">({share}%)</span>
+            <div key={p.key} className="grid grid-cols-[112px_1fr_36px] items-center gap-2">
+              <span className="flex items-center gap-1.5 text-[11px]">
+                <span
+                  className="flex size-5 shrink-0 items-center justify-center rounded-sm"
+                  style={{ backgroundColor: `${p.color}26`, color: p.color }}
+                  title={p.label}
+                >
+                  <Icon className="size-3.5" aria-hidden />
+                </span>
+                <span>
+                  <span className="font-medium">{p.short}</span>{" "}
+                  <span className="text-[9px] text-muted-foreground/70">({share}%)</span>
+                </span>
               </span>
               <div className="h-1.5 overflow-hidden rounded-sm bg-secondary">
                 <div
@@ -582,7 +479,7 @@ function ProxyPanel({
               <span className="text-right text-[10px] tabular-nums text-muted-foreground">
                 {v}
               </span>
-              <span className="col-span-3 -mt-0.5 pl-[104px] text-[10px] text-muted-foreground/80">
+              <span className="col-span-3 -mt-0.5 pl-[120px] text-[10px] text-muted-foreground/80">
                 {p.description}
               </span>
             </div>
@@ -593,70 +490,23 @@ function ProxyPanel({
   );
 }
 
-function FitBreakdown({ sp }: { sp: SpeciesPick }) {
-  const b = sp.breakdown;
-  const rows: { label: string; value: number; detail: string }[] = [
-    {
-      label: "Elevation",
-      value: b.elevation,
-      detail: `site ${b.siteElevation} m · ideal ${sp.elevMin}–${sp.elevMax} m`,
-    },
-    {
-      label: "Rainfall",
-      value: b.rainfall,
-      detail: `site ${b.siteRainfall} mm · ideal ${sp.rainMin}–${sp.rainMax} mm`,
-    },
-    {
-      label: "Niche",
-      value: b.niche,
-      detail: b.matchedNiche ? `best match: ${b.matchedNiche.replace("-", " ")}` : "—",
-    },
-  ];
-  return (
-    <div className="mt-2 space-y-1">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-        Fit breakdown
-      </div>
-      {rows.map((r) => (
-        <div key={r.label} className="grid grid-cols-[64px_1fr_32px] items-center gap-2">
-          <span className="text-[10px] text-muted-foreground">{r.label}</span>
-          <div className="h-1.5 overflow-hidden rounded-sm bg-secondary">
-            <div
-              className="h-full"
-              style={{
-                width: `${r.value}%`,
-                backgroundColor: r.value >= 80 ? "#16a34a" : r.value >= 60 ? "#eab308" : "#b91c1c",
-              }}
-            />
-          </div>
-          <span className="text-right text-[10px] tabular-nums text-muted-foreground">{r.value}</span>
-          <span className="col-span-3 -mt-0.5 pl-[72px] text-[10px] text-muted-foreground/80">
-            {r.detail}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function Legend() {
-  const items: { label: string; color: string }[] = [
-    { label: "Low", color: RISK_COLORS.low },
-    { label: "Moderate", color: RISK_COLORS.moderate },
-    { label: "High", color: RISK_COLORS.high },
-    { label: "Severe", color: RISK_COLORS.severe },
-  ];
+  const gradient = `linear-gradient(90deg, ${PRIORITY_COLOR_STOPS
+    .map((stop) => `${stop.color} ${stop.value}%`)
+    .join(", ")})`;
   return (
-    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-      {items.map((i) => (
-        <div key={i.label} className="flex items-center gap-1.5">
-          <span
-            className="inline-block size-3 rounded-sm"
-            style={{ backgroundColor: i.color }}
-          />
-          {i.label}
-        </div>
-      ))}
+    <div className="w-48 text-xs text-muted-foreground">
+      <div className="mb-1 flex justify-between">
+        <span>Low</span>
+        <span>Priority</span>
+        <span>High</span>
+      </div>
+      <div className="h-2 rounded-sm" style={{ background: gradient }} />
+      <div className="mt-1 flex justify-between font-mono text-[10px]">
+        {PRIORITY_COLOR_STOPS.map((stop) => (
+          <span key={stop.value}>{stop.label}</span>
+        ))}
+      </div>
     </div>
   );
 }

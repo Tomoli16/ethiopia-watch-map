@@ -6,11 +6,11 @@ import "leaflet/dist/leaflet.css";
 import {
   FOCUS_REGIONS,
   REGION_DATA,
-  RISK_COLORS,
+  colorForScore,
   gbifBiodiversityForRegion,
   livelihoodPopulationForRegion,
-  priorityLevel,
   priorityScore,
+  soilSuitabilityScoreForRegion,
   type Weights,
 } from "@/lib/deforestation-data";
 import { SOILGRIDS_REGION_SAMPLES } from "@/lib/soilgrids-data";
@@ -40,52 +40,16 @@ const ADMIN_LEVELS: { value: AdminLevel; label: string; description: string }[] 
 
 const SOILGRIDS_SAMPLES = Object.values(SOILGRIDS_REGION_SAMPLES);
 
-function clamp01(x: number) {
-  return Math.min(1, Math.max(0, x));
-}
-
-function soilPhSuitability(ph: number) {
-  if (ph >= 5.5 && ph <= 7.5) return 1;
-  if (ph < 5.5) return clamp01((ph - 4) / 1.5);
-  return clamp01((8.5 - ph) / 1);
-}
-
-function soilTextureSuitability(clayPct: number, sandPct: number) {
-  const clayOk = clayPct <= 45 ? 1 : clamp01((65 - clayPct) / 20);
-  const sandOk = sandPct <= 55 ? 1 : clamp01((75 - sandPct) / 20);
-  return clamp01((clayOk + sandOk) / 2);
-}
-
-function soilSuitabilityScore(regionName: string) {
-  const sample = SOILGRIDS_REGION_SAMPLES[regionName];
-  if (!sample) return null;
-
-  const carbon = clamp01(sample.soilOrganicCarbonGkg / 50);
-  const ph = soilPhSuitability(sample.phH2O);
-  const texture = soilTextureSuitability(sample.clayPct, sample.sandPct);
-
-  return Math.round(((carbon + ph + texture) / 3) * 100);
-}
-
 function soilColor(score: number) {
-  if (score >= 80) return "#16a34a";
-  if (score >= 65) return "#84cc16";
-  if (score >= 50) return "#eab308";
-  return "#ea580c";
+  return colorForScore(score);
 }
 
 function gbifColor(score: number) {
-  if (score >= 90) return "#7c3aed";
-  if (score >= 75) return "#2563eb";
-  if (score >= 60) return "#0891b2";
-  return "#64748b";
+  return colorForScore(score);
 }
 
 function livelihoodColor(score: number) {
-  if (score >= 90) return "#be123c";
-  if (score >= 75) return "#f97316";
-  if (score >= 60) return "#facc15";
-  return "#65a30d";
+  return colorForScore(score);
 }
 
 function ZoomToSelection({ data, selected }: { data: GeoJSON.FeatureCollection | null; selected: string | null }) {
@@ -142,10 +106,7 @@ export function DeforestationMap({
         const regionName = adminLevel === "adm1" ? name : props?.parent ?? "";
         const risk = REGION_DATA[regionName];
         const inFocus = FOCUS_REGIONS.includes(regionName);
-        const color =
-          risk && inFocus
-            ? RISK_COLORS[priorityLevel(priorityScore(risk, weights))]
-            : "#2a2f2c";
+        const color = risk && inFocus ? colorForScore(priorityScore(risk, weights)) : "#2a2f2c";
         const isSelected = regionName === selected;
         const isZoneHover = adminLevel === "adm2" && name === hoverZone;
         return {
@@ -263,7 +224,7 @@ export function DeforestationMap({
 
   const soilStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
-    const score = soilSuitabilityScore(name);
+    const score = soilSuitabilityScoreForRegion(name);
     const active = name === selected;
     return {
       fillColor: score === null ? "#737373" : soilColor(score),
@@ -276,7 +237,7 @@ export function DeforestationMap({
   const onEachSoilRegion = (feature: Feature, layer: Layer) => {
     const name = (feature.properties as ZoneProps | undefined)?.shapeName ?? "";
     const sample = SOILGRIDS_REGION_SAMPLES[name];
-    const score = soilSuitabilityScore(name);
+    const score = soilSuitabilityScoreForRegion(name);
     if (!sample || score === null) return;
 
     layer.bindTooltip(
@@ -481,7 +442,7 @@ export function DeforestationMap({
               radius={active ? 9 : 7}
               pathOptions={{
                 color: active ? "#fafafa" : "#f59e0b",
-                fillColor: soilColor(soilSuitabilityScore(sample.region) ?? 0),
+                fillColor: soilColor(soilSuitabilityScoreForRegion(sample.region) ?? 0),
                 fillOpacity: active ? 0.95 : 0.78,
                 opacity: 1,
                 weight: active ? 3 : 2,
@@ -496,7 +457,7 @@ export function DeforestationMap({
                   <br />
                   SoilGrids sample
                   <br />
-                  Soil suitability {soilSuitabilityScore(sample.region)}/100
+                  Soil suitability {soilSuitabilityScoreForRegion(sample.region)}/100
                   <br />
                   pH {sample.phH2O.toFixed(1)} · SOC {sample.soilOrganicCarbonGkg.toFixed(1)} g/kg
                 </div>
@@ -509,7 +470,7 @@ export function DeforestationMap({
                   </div>
                   <dl style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "3px 12px", margin: "8px 0 0" }}>
                     <dt>Suitability</dt>
-                    <dd style={{ margin: 0, fontWeight: 700 }}>{soilSuitabilityScore(sample.region)}/100</dd>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{soilSuitabilityScoreForRegion(sample.region)}/100</dd>
                     <dt>pH H2O</dt>
                     <dd style={{ margin: 0, fontWeight: 700 }}>{sample.phH2O.toFixed(1)}</dd>
                     <dt>Soil C</dt>
