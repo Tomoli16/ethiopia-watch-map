@@ -7,13 +7,15 @@ import {
   FOCUS_REGIONS,
   REGION_DATA,
   RISK_COLORS,
-  riskLevel,
-  riskScore,
+  priorityLevel,
+  priorityScore,
+  type Weights,
 } from "@/lib/deforestation-data";
 
 interface Props {
   selected: string | null;
   onSelect: (name: string) => void;
+  weights: Weights;
 }
 
 interface ZoneProps {
@@ -36,7 +38,7 @@ function ZoomToSelection({ data, selected }: { data: GeoJSON.FeatureCollection |
   return null;
 }
 
-export function DeforestationMap({ selected, onSelect }: Props) {
+export function DeforestationMap({ selected, onSelect, weights }: Props) {
   const [data, setData] = useState<GeoJSON.FeatureCollection | null>(null);
   const [zones, setZones] = useState<GeoJSON.FeatureCollection | null>(null);
   const [satellite, setSatellite] = useState(false);
@@ -59,7 +61,10 @@ export function DeforestationMap({ selected, onSelect }: Props) {
         const name = (feature?.properties as { shapeName?: string } | undefined)?.shapeName ?? "";
         const risk = REGION_DATA[name];
         const inFocus = FOCUS_REGIONS.includes(name);
-        const color = risk && inFocus ? RISK_COLORS[riskLevel(riskScore(risk))] : "#2a2f2c";
+        const color =
+          risk && inFocus
+            ? RISK_COLORS[priorityLevel(priorityScore(risk, weights))]
+            : "#2a2f2c";
         const isSelected = name === selected;
         return {
           fillColor: color,
@@ -68,16 +73,16 @@ export function DeforestationMap({ selected, onSelect }: Props) {
           weight: isSelected ? 3 : inFocus ? 1 : 0.5,
         };
       },
-    [selected],
+    [selected, weights],
   );
 
   const onEach = (feature: Feature, layer: Layer) => {
     const name = (feature.properties as { shapeName?: string } | undefined)?.shapeName ?? "";
     const inFocus = FOCUS_REGIONS.includes(name);
     const risk = REGION_DATA[name];
-    const score = risk ? riskScore(risk) : 0;
+    const score = risk ? priorityScore(risk, weights) : 0;
     layer.bindTooltip(
-      `<div style="font-family:inherit"><strong>${name}</strong>${inFocus ? `<br/>Risk score: ${score}` : "<br/><em>out of scope</em>"}</div>`,
+      `<div style="font-family:inherit"><strong>${name}</strong>${inFocus ? `<br/>Priority: ${score}` : "<br/><em>out of scope</em>"}</div>`,
       { sticky: true, className: "deforest-tooltip" },
     );
     if (!inFocus) return;
@@ -132,6 +137,9 @@ export function DeforestationMap({ selected, onSelect }: Props) {
     });
   };
 
+  // Re-key GeoJSON layer when weights change so colors refresh
+  const weightKey = `${weights.suitability}-${weights.carbon}-${weights.biodiversity}-${weights.waterSoil}-${weights.livelihood}`;
+
   return (
     <MapContainer
       center={[7.5, 36.5]}
@@ -164,7 +172,7 @@ export function DeforestationMap({ selected, onSelect }: Props) {
       )}
       {data && (
         <GeoJSON
-          key={selected ?? "none"}
+          key={`${selected ?? "none"}-${weightKey}`}
           data={data}
           style={style}
           onEachFeature={onEach}
