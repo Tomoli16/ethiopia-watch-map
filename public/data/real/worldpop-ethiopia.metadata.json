@@ -1,0 +1,25 @@
+{
+  "fetchedAt": "2026-06-27T19:19:28.449Z",
+  "source": "WorldPop open population rasters",
+  "note": "GeoTIFFs are large and should be downloaded to data/raw for local zonal processing, not committed to public assets.",
+  "datasets": {
+    "population2020Unadjusted": {
+      "url": "https://data.worldpop.org/GIS/Population/Global_2000_2020/2020/ETH/eth_ppp_2020_UNadj.tif",
+      "ok": true,
+      "status": 200,
+      "contentType": "image/tiff",
+      "contentLength": 538636074,
+      "lastModified": "Mon, 10 Feb 2020 23:13:35 GMT",
+      "etag": "\"201aef2a-59e40e381dda4\""
+    },
+    "population2020": {
+      "url": "https://data.worldpop.org/GIS/Population/Global_2000_2020/2020/ETH/eth_ppp_2020.tif",
+      "ok": true,
+      "status": 200,
+      "contentType": "image/tiff",
+      "contentLength": 609409144,
+      "lastModified": "Thu, 22 Nov 2018 17:57:24 GMT",
+      "etag": "\"2452d878-57b4499575815\""
+    }
+  }
+}

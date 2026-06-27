@@ -10,6 +10,8 @@ import {
   priorityLevel,
   priorityScore,
   proxyScores,
+  gbifBiodiversityForRegion,
+  soilGridsSampleForRegion,
   type ProxyKey,
   type ProxyScores,
   type Weights,
@@ -70,6 +72,8 @@ function Index() {
   const detailScore = detail ? priorityScore(detail, weights) : 0;
   const detailLevel = detail ? priorityLevel(detailScore) : null;
   const detailProxies = detail ? proxyScores(detail) : null;
+  const detailSoilGrids = selected ? soilGridsSampleForRegion(selected) : undefined;
+  const detailGbif = selected ? gbifBiodiversityForRegion(selected) : undefined;
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -80,7 +84,7 @@ function Index() {
               Southwest Ethiopia · Forest Risk & Restoration Opportunity
             </h1>
             <p className="text-xs text-muted-foreground">
-              Five-proxy priority score (Restoration Suitability · Carbon · Biodiversity · Water/Soil · Livelihood). Layers from{" "}
+              Three-pillar priority score (ERP · BRV · LI). Layers from{" "}
               <a
                 className="underline decoration-dotted hover:text-foreground"
                 href="https://www.globalforestwatch.org/dashboards/country/ETH/"
@@ -89,7 +93,7 @@ function Index() {
               >
                 GFW
               </a>
-              , ESA CCI Biomass, SoilGrids, WRI Aqueduct, KBA, World Bank. Boundaries from HDX{" "}
+              , SRTM DEM, SoilGrids/iSDAsoil, CIFOR-ICRAF, WDPA, GBIF/eBird, WorldPop, PSNP. Boundaries from HDX{" "}
               <a
                 className="underline decoration-dotted hover:text-foreground"
                 href="https://data.humdata.org/dataset/cod-ab-eth"
@@ -219,12 +223,63 @@ function Index() {
                   value={`${fmtDensity(populationDensity(detail))} /km²`}
                 />
                 <Stat label="AGB carbon" value={`${detail.aboveGroundCarbonTha} tC/ha`} />
-                <Stat label="Soil C (0–30cm)" value={`${detail.soilOrganicCarbonTha} tC/ha`} />
+                <Stat
+                  label={detailSoilGrids ? "Soil C SoilGrids" : "Soil C (0–30cm)"}
+                  value={
+                    detailSoilGrids
+                      ? `${detailSoilGrids.soilOrganicCarbonGkg.toFixed(1)} g/kg`
+                      : `${detail.soilOrganicCarbonTha} tC/ha`
+                  }
+                />
                 <Stat label="Erosion" value={`${detail.erosionRiskTHaYr} t/ha·yr`} />
                 <Stat label="Water stress" value={`${detail.waterStressIndex.toFixed(1)} / 5`} />
                 <Stat label="KBA coverage" value={`${Math.round(detail.kbaCoveragePct * 100)}%`} />
                 <Stat label="Forest-dependent" value={`${Math.round(detail.forestDependentPct * 100)}%`} />
               </div>
+
+              {detailSoilGrids ? (
+                <div className="rounded-md border border-border bg-card/50 p-3">
+                  <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    SoilGrids input
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <Stat label="pH H2O" value={detailSoilGrids.phH2O.toFixed(1)} />
+                    <Stat label="Clay" value={`${detailSoilGrids.clayPct.toFixed(1)}%`} />
+                    <Stat label="Sand" value={`${detailSoilGrids.sandPct.toFixed(1)}%`} />
+                  </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                    Real ISRIC SoilGrids v2.0 centroid sample, depth-weighted
+                    across 0–30 cm. Used directly in ERP soil suitability.
+                  </p>
+                </div>
+              ) : null}
+
+              {detailGbif ? (
+                <div className="rounded-md border border-border bg-card/50 p-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      GBIF biodiversity input
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      evidence {detailGbif.occurrenceEvidenceScore}/100
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <Stat label="All records" value={detailGbif.allOccurrences.toLocaleString()} />
+                    <Stat label="Plants" value={detailGbif.plantOccurrences.toLocaleString()} />
+                    <Stat label="Birds" value={detailGbif.birdOccurrences.toLocaleString()} />
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-[11px]">
+                    <SpeciesList title="Top plants" species={detailGbif.topPlantSpecies} />
+                    <SpeciesList title="Top birds" species={detailGbif.topBirdSpecies} />
+                  </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                    Real GBIF coordinated occurrences, queried by ADM1 bounding
+                    box. Used in BRV as occurrence evidence; not yet corrected
+                    for observer or road-access bias.
+                  </p>
+                </div>
+              ) : null}
 
               <div>
                 <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -311,10 +366,10 @@ function Index() {
               </div>
 
               <div className="rounded-md border border-border bg-card/50 p-3 text-xs text-muted-foreground">
-                Priority = weighted mean of 5 proxies (sliders, left). Each
+                Priority = weighted mean of 3 pillars (sliders, left). Each
                 proxy is a 0–100 composite of public datasets — adjust weights
-                to reflect the decision you're making (e.g. carbon-finance vs
-                biodiversity-led prioritization).
+                to reflect the decision you're making (e.g. restoration-first vs
+                livelihood-safeguard prioritization).
               </div>
             </div>
           ) : (
@@ -335,6 +390,34 @@ function Stat({ label, value }: { label: string; value: string }) {
         {label}
       </div>
       <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function SpeciesList({
+  title,
+  species,
+}: {
+  title: string;
+  species: { canonicalName: string | null; scientificName: string; count: number }[];
+}) {
+  return (
+    <div>
+      <div className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+        {title}
+      </div>
+      <ul className="space-y-1">
+        {species.slice(0, 3).map((sp) => (
+          <li key={`${title}-${sp.scientificName}`} className="flex justify-between gap-2">
+            <span className="truncate italic text-foreground/85">
+              {sp.canonicalName ?? sp.scientificName}
+            </span>
+            <span className="tabular-nums text-muted-foreground">
+              {sp.count.toLocaleString()}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -376,12 +459,7 @@ function WeightsPanel({
   weights: Weights;
   onChange: (w: Weights) => void;
 }) {
-  const total =
-    weights.suitability +
-    weights.carbon +
-    weights.biodiversity +
-    weights.waterSoil +
-    weights.livelihood;
+  const total = PROXIES.reduce((sum, proxy) => sum + weights[proxy.key], 0);
   const reset = () => onChange(DEFAULT_WEIGHTS);
   return (
     <div className="px-4 py-3">
@@ -446,12 +524,7 @@ function ProxyPanel({
   weights: Weights;
   total: number;
 }) {
-  const sumW =
-    weights.suitability +
-    weights.carbon +
-    weights.biodiversity +
-    weights.waterSoil +
-    weights.livelihood;
+  const sumW = PROXIES.reduce((sum, proxy) => sum + weights[proxy.key], 0);
   return (
     <div>
       <div className="flex items-baseline justify-between">

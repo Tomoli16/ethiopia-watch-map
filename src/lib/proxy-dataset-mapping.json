@@ -1,0 +1,122 @@
+{
+  "title": "Proxy to Dataset Mapping",
+  "adminReportingFoundation": {
+    "dataset": "HDX / OCHA Admin 3 Boundaries",
+    "proxy": "Livelihood Impact (LI)",
+    "role": "Fundamental cross-pillar management layer",
+    "status": "fetched",
+    "localFiles": [
+      "public/data/eth-adm3.geojson",
+      "public/data/real/hdx-cod-ab-eth.metadata.json"
+    ],
+    "reason": "Provides woreda polygons used to clip and aggregate all upper-level pixel values because MfM reports exactly at Admin 3 level."
+  },
+  "populationSafeguardFoundation": {
+    "dataset": "WorldPop",
+    "proxy": "Livelihood Impact (LI)",
+    "role": "Fundamental cross-pillar safeguard layer",
+    "status": "metadata-fetched",
+    "localFiles": [
+      "public/data/real/worldpop-ethiopia.metadata.json"
+    ],
+    "reason": "Population-density rasters help prevent restoration planning on livelihood-critical smallholder farmland."
+  },
+  "proxies": [
+    {
+      "key": "ecologicalRestorationPotential",
+      "label": "Ecological Restoration Potential (ERP)",
+      "datasets": [
+        {
+          "priority": 1,
+          "dataset": "Global Forest Watch / UMD",
+          "status": "deferred",
+          "nextStep": "Add GFW geostore or bulk raster workflow for ADM3 aggregation.",
+          "reason": "Provides ready-to-use metrics for historical tree loss and canopy condition, allowing degradation extent to be shown without custom image processing."
+        },
+        {
+          "priority": 2,
+          "dataset": "SRTM DEM",
+          "status": "deferred",
+          "nextStep": "Select DEM tiles, derive slope, then aggregate steep-slope share by ADM3.",
+          "reason": "Provides wall-to-wall elevation data for slope and erosion exposure, helping prioritize steep, landslide-prone watershed areas."
+        },
+        {
+          "priority": 3,
+          "dataset": "iSDAsoil / SoilGrids",
+          "status": "sample-fetched-used-in-score",
+          "localFiles": [
+            "public/data/real/soilgrids-region-samples.json",
+            "src/lib/soilgrids-data.ts"
+          ],
+          "nextStep": "Replace centroid samples with zonal summaries per ADM3.",
+          "reason": "Provides soil chemistry baselines such as pH and soil organic carbon, reducing the risk of recommending trees on severely unsuitable soils."
+        }
+      ]
+    },
+    {
+      "key": "biodiversityRecoveryValue",
+      "label": "Biodiversity Recovery Value (BRV)",
+      "datasets": [
+        {
+          "priority": 1,
+          "dataset": "CIFOR-ICRAF Species Atlas",
+          "status": "deferred",
+          "nextStep": "Locate a stable download/API or curate a species-climate table from the atlas.",
+          "reason": "Links native tree species to suitable climate zones, giving a fast and defensible proxy for biodiversity-oriented restoration fit."
+        },
+        {
+          "priority": 2,
+          "dataset": "WDPA (World Database on Protected Areas)",
+          "status": "deferred",
+          "nextStep": "Use a Protected Planet account/token or approved WDPA export, then aggregate protected-area adjacency by ADM3.",
+          "reason": "Protected-area polygons allow adjacent degraded areas to receive corridor bonus points for wildlife connectivity."
+        },
+        {
+          "priority": 3,
+          "dataset": "GBIF / eBird",
+          "status": "regional-gbif-fetched-used-in-score",
+          "localFiles": [
+            "public/data/real/gbif-ethiopia-summary.json",
+            "public/data/real/gbif-biodiversity-regions.json",
+            "src/lib/gbif-data.ts"
+          ],
+          "nextStep": "Replace ADM1 bounding-box counts with polygon-clipped records and apply spatial sampling-bias correction before final scoring.",
+          "reason": "Species observations are strong ecological indicators, but require correction for spatial sampling bias near roads and accessible areas."
+        }
+      ]
+    },
+    {
+      "key": "livelihoodImpact",
+      "label": "Livelihood Impact (LI)",
+      "datasets": [
+        {
+          "priority": 1,
+          "dataset": "WorldPop",
+          "status": "metadata-fetched",
+          "localFiles": [
+            "public/data/real/worldpop-ethiopia.metadata.json"
+          ],
+          "nextStep": "Download raster to data/raw and compute population-density summaries per ADM3.",
+          "reason": "Acts as the primary safeguard by using population density to avoid placing restoration on critical smallholder agricultural land."
+        },
+        {
+          "priority": 2,
+          "dataset": "HDX / OCHA Admin 3 Boundaries",
+          "status": "fetched",
+          "localFiles": [
+            "public/data/eth-adm3.geojson",
+            "public/data/real/hdx-cod-ab-eth.metadata.json"
+          ],
+          "reason": "Provides the woreda polygons needed to clip, aggregate and report all raster and vector indicators at MfM's management level."
+        },
+        {
+          "priority": 3,
+          "dataset": "PSNP Public Works Data",
+          "status": "deferred",
+          "nextStep": "Find a public PSNP works endpoint or receive a project dataset from MfM/government partners.",
+          "reason": "Checks existing public investments in watersheds so MfM can avoid duplicating government-funded work."
+        }
+      ]
+    }
+  ]
+}

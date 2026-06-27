@@ -1,0 +1,35 @@
+{
+  "fetchedAt": "2026-06-27T19:21:07.265Z",
+  "generatedFiles": [
+    "hdx-cod-ab-eth.metadata.json",
+    "soilgrids-region-samples.json",
+    "gbif-ethiopia-summary.json",
+    "worldpop-ethiopia.metadata.json"
+  ],
+  "deferred": [
+    {
+      "dataset": "Global Forest Watch / UMD",
+      "reason": "Needs geostore/vector workflow or bulk tile processing before useful ADM3 aggregation."
+    },
+    {
+      "dataset": "SRTM DEM",
+      "reason": "Needs DEM tile selection and slope derivation; raw DEM should stay in data/raw."
+    },
+    {
+      "dataset": "WDPA",
+      "reason": "Protected Planet downloads generally require account/token acceptance."
+    },
+    {
+      "dataset": "CIFOR-ICRAF Species Atlas",
+      "reason": "No stable open machine API was added yet; needs source-specific download or curated species table."
+    },
+    {
+      "dataset": "eBird",
+      "reason": "API/data products require an eBird key and sampling-bias handling."
+    },
+    {
+      "dataset": "PSNP Public Works Data",
+      "reason": "Needs a specific public dataset endpoint before automated fetch can be added."
+    }
+  ]
+}

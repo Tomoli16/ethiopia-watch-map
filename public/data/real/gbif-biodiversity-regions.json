@@ -1,0 +1,1123 @@
+{
+  "fetchedAt": "2026-06-27T20:05:09.058Z",
+  "source": "GBIF Occurrence API",
+  "description": "Regional biodiversity evidence for the four focus regions using GBIF coordinated occurrences. Includes occurrence counts and top species facets for all taxa, plants and birds. These values are real GBIF data but are not yet corrected for observer/sampling bias.",
+  "regions": [
+    {
+      "region": "Oromia",
+      "bbox": {
+        "minLon": 34.14023202111279,
+        "minLat": 3.511191788152185,
+        "maxLon": 42.980778201228134,
+        "maxLat": 10.387792414097712
+      },
+      "geometryNote": "GBIF was queried with the ADM1 bounding box for speed. Counts may include records just outside the region and should be replaced with polygon filtering for production.",
+      "groups": [
+        {
+          "key": "allOccurrences",
+          "label": "All coordinated occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.14023202111279+3.511191788152185%2C42.980778201228134+3.511191788152185%2C42.980778201228134+10.387792414097712%2C34.14023202111279+10.387792414097712%2C34.14023202111279+3.511191788152185%29%29&limit=0&facet=speciesKey&facetLimit=8",
+          "region": "Oromia",
+          "count": 942941,
+          "topSpecies": [
+            {
+              "speciesKey": "2474950",
+              "scientificName": "Grus grus (Linnaeus, 1758)",
+              "canonicalName": "Grus grus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Gruidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2474950",
+              "count": 18423
+            },
+            {
+              "speciesKey": "2706406",
+              "scientificName": "Triticum turgidum L.",
+              "canonicalName": "Triticum turgidum",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2706406",
+              "count": 9877
+            },
+            {
+              "speciesKey": "5229167",
+              "scientificName": "Milvus migrans (Boddaert, 1783)",
+              "canonicalName": "Milvus migrans",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5229167",
+              "count": 9248
+            },
+            {
+              "speciesKey": "5231817",
+              "scientificName": "Columba guinea Linnaeus, 1758",
+              "canonicalName": "Columba guinea",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Columbidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5231817",
+              "count": 8309
+            },
+            {
+              "speciesKey": "5231212",
+              "scientificName": "Passer swainsonii (Rüppell, 1840)",
+              "canonicalName": "Passer swainsonii",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Passeridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5231212",
+              "count": 7975
+            },
+            {
+              "speciesKey": "2486147",
+              "scientificName": "Pycnonotus barbatus (Desfontaines, 1789)",
+              "canonicalName": "Pycnonotus barbatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Pycnonotidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2486147",
+              "count": 7785
+            },
+            {
+              "speciesKey": "2480715",
+              "scientificName": "Necrosyrtes monachus (Temminck, 1823)",
+              "canonicalName": "Necrosyrtes monachus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480715",
+              "count": 7533
+            },
+            {
+              "speciesKey": "2495707",
+              "scientificName": "Streptopelia semitorquata (Rüppell, 1837)",
+              "canonicalName": "Streptopelia semitorquata",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Columbidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2495707",
+              "count": 7309
+            }
+          ]
+        },
+        {
+          "key": "plantOccurrences",
+          "label": "Plant occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.14023202111279+3.511191788152185%2C42.980778201228134+3.511191788152185%2C42.980778201228134+10.387792414097712%2C34.14023202111279+10.387792414097712%2C34.14023202111279+3.511191788152185%29%29&limit=0&facet=speciesKey&facetLimit=8&kingdomKey=6",
+          "region": "Oromia",
+          "count": 159471,
+          "topSpecies": [
+            {
+              "speciesKey": "2706406",
+              "scientificName": "Triticum turgidum L.",
+              "canonicalName": "Triticum turgidum",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2706406",
+              "count": 9877
+            },
+            {
+              "speciesKey": "2705181",
+              "scientificName": "Sorghum bicolor (L.) Moench",
+              "canonicalName": "Sorghum bicolor",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705181",
+              "count": 3558
+            },
+            {
+              "speciesKey": "2706056",
+              "scientificName": "Hordeum vulgare L.",
+              "canonicalName": "Hordeum vulgare",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2706056",
+              "count": 2473
+            },
+            {
+              "speciesKey": "7795888",
+              "scientificName": "Triticum aestivum L.",
+              "canonicalName": "Triticum aestivum",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/7795888",
+              "count": 1846
+            },
+            {
+              "speciesKey": "2947311",
+              "scientificName": "Cicer arietinum L.",
+              "canonicalName": "Cicer arietinum",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Fabaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2947311",
+              "count": 1678
+            },
+            {
+              "speciesKey": "5347846",
+              "scientificName": "Lathyrus oleraceus Lam.",
+              "canonicalName": "Lathyrus oleraceus",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Fabaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5347846",
+              "count": 966
+            },
+            {
+              "speciesKey": "3086784",
+              "scientificName": "Parthenium hysterophorus L.",
+              "canonicalName": "Parthenium hysterophorus",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Asteraceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/3086784",
+              "count": 851
+            },
+            {
+              "speciesKey": "10776689",
+              "scientificName": "Silene abyssinica (Hochst.) H.Neumayer",
+              "canonicalName": "Silene abyssinica",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Caryophyllaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/10776689",
+              "count": 613
+            }
+          ]
+        },
+        {
+          "key": "birdOccurrences",
+          "label": "Bird occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.14023202111279+3.511191788152185%2C42.980778201228134+3.511191788152185%2C42.980778201228134+10.387792414097712%2C34.14023202111279+10.387792414097712%2C34.14023202111279+3.511191788152185%29%29&limit=0&facet=speciesKey&facetLimit=8&classKey=212",
+          "region": "Oromia",
+          "count": 717513,
+          "topSpecies": [
+            {
+              "speciesKey": "2474950",
+              "scientificName": "Grus grus (Linnaeus, 1758)",
+              "canonicalName": "Grus grus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Gruidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2474950",
+              "count": 18423
+            },
+            {
+              "speciesKey": "5229167",
+              "scientificName": "Milvus migrans (Boddaert, 1783)",
+              "canonicalName": "Milvus migrans",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5229167",
+              "count": 9248
+            },
+            {
+              "speciesKey": "5231817",
+              "scientificName": "Columba guinea Linnaeus, 1758",
+              "canonicalName": "Columba guinea",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Columbidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5231817",
+              "count": 8309
+            },
+            {
+              "speciesKey": "5231212",
+              "scientificName": "Passer swainsonii (Rüppell, 1840)",
+              "canonicalName": "Passer swainsonii",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Passeridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5231212",
+              "count": 7975
+            },
+            {
+              "speciesKey": "2486147",
+              "scientificName": "Pycnonotus barbatus (Desfontaines, 1789)",
+              "canonicalName": "Pycnonotus barbatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Pycnonotidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2486147",
+              "count": 7785
+            },
+            {
+              "speciesKey": "2480715",
+              "scientificName": "Necrosyrtes monachus (Temminck, 1823)",
+              "canonicalName": "Necrosyrtes monachus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480715",
+              "count": 7533
+            },
+            {
+              "speciesKey": "2495707",
+              "scientificName": "Streptopelia semitorquata (Rüppell, 1837)",
+              "canonicalName": "Streptopelia semitorquata",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Columbidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2495707",
+              "count": 7309
+            },
+            {
+              "speciesKey": "2482519",
+              "scientificName": "Corvus albus Statius Muller, 1776",
+              "canonicalName": "Corvus albus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Corvidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2482519",
+              "count": 7071
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "SNNPR",
+      "bbox": {
+        "minLon": 34.877830136386926,
+        "minLat": 4.440605853664487,
+        "maxLon": 39.13270136601689,
+        "maxLat": 8.458712666907717
+      },
+      "geometryNote": "GBIF was queried with the ADM1 bounding box for speed. Counts may include records just outside the region and should be replaced with polygon filtering for production.",
+      "groups": [
+        {
+          "key": "allOccurrences",
+          "label": "All coordinated occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.877830136386926+4.440605853664487%2C39.13270136601689+4.440605853664487%2C39.13270136601689+8.458712666907717%2C34.877830136386926+8.458712666907717%2C34.877830136386926+4.440605853664487%29%29&limit=0&facet=speciesKey&facetLimit=8",
+          "region": "SNNPR",
+          "count": 374994,
+          "topSpecies": [
+            {
+              "speciesKey": "2486147",
+              "scientificName": "Pycnonotus barbatus (Desfontaines, 1789)",
+              "canonicalName": "Pycnonotus barbatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Pycnonotidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2486147",
+              "count": 3214
+            },
+            {
+              "speciesKey": "2498252",
+              "scientificName": "Alopochen aegyptiaca (Linnaeus, 1766)",
+              "canonicalName": "Alopochen aegyptiaca",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Anatidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2498252",
+              "count": 3021
+            },
+            {
+              "speciesKey": "2495707",
+              "scientificName": "Streptopelia semitorquata (Rüppell, 1837)",
+              "canonicalName": "Streptopelia semitorquata",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Columbidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2495707",
+              "count": 2940
+            },
+            {
+              "speciesKey": "2492362",
+              "scientificName": "Plocepasser mahali A.Smith, 1836",
+              "canonicalName": "Plocepasser mahali",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Passeridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2492362",
+              "count": 2861
+            },
+            {
+              "speciesKey": "2480454",
+              "scientificName": "Haliaeetus vocifer (Daudin, 1800)",
+              "canonicalName": "Haliaeetus vocifer",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480454",
+              "count": 2852
+            },
+            {
+              "speciesKey": "9772663",
+              "scientificName": "Leptoptilos crumenifer (R.P.Lesson, 1831)",
+              "canonicalName": "Leptoptilos crumenifer",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Ciconiidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/9772663",
+              "count": 2823
+            },
+            {
+              "speciesKey": "5229467",
+              "scientificName": "Colius striatus J.F.Gmelin, 1789",
+              "canonicalName": "Colius striatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Coliidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5229467",
+              "count": 2775
+            },
+            {
+              "speciesKey": "5229167",
+              "scientificName": "Milvus migrans (Boddaert, 1783)",
+              "canonicalName": "Milvus migrans",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5229167",
+              "count": 2695
+            }
+          ]
+        },
+        {
+          "key": "plantOccurrences",
+          "label": "Plant occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.877830136386926+4.440605853664487%2C39.13270136601689+4.440605853664487%2C39.13270136601689+8.458712666907717%2C34.877830136386926+8.458712666907717%2C34.877830136386926+4.440605853664487%29%29&limit=0&facet=speciesKey&facetLimit=8&kingdomKey=6",
+          "region": "SNNPR",
+          "count": 52999,
+          "topSpecies": [
+            {
+              "speciesKey": "2705181",
+              "scientificName": "Sorghum bicolor (L.) Moench",
+              "canonicalName": "Sorghum bicolor",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705181",
+              "count": 727
+            },
+            {
+              "speciesKey": "2706056",
+              "scientificName": "Hordeum vulgare L.",
+              "canonicalName": "Hordeum vulgare",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2706056",
+              "count": 566
+            },
+            {
+              "speciesKey": "2706406",
+              "scientificName": "Triticum turgidum L.",
+              "canonicalName": "Triticum turgidum",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2706406",
+              "count": 561
+            },
+            {
+              "speciesKey": "2929236",
+              "scientificName": "Solanum campylacanthum Hochst. ex A.Rich.",
+              "canonicalName": "Solanum campylacanthum",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Solanaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2929236",
+              "count": 426
+            },
+            {
+              "speciesKey": "2957556",
+              "scientificName": "Senna didymobotrya (Fresen.) H.S.Irwin & Barneby",
+              "canonicalName": "Senna didymobotrya",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Fabaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2957556",
+              "count": 366
+            },
+            {
+              "speciesKey": "3974372",
+              "scientificName": "Biancaea decapetala (Roth) O.Deg.",
+              "canonicalName": "Biancaea decapetala",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Fabaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/3974372",
+              "count": 337
+            },
+            {
+              "speciesKey": "10776689",
+              "scientificName": "Silene abyssinica (Hochst.) H.Neumayer",
+              "canonicalName": "Silene abyssinica",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Caryophyllaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/10776689",
+              "count": 309
+            },
+            {
+              "speciesKey": "3086784",
+              "scientificName": "Parthenium hysterophorus L.",
+              "canonicalName": "Parthenium hysterophorus",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Asteraceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/3086784",
+              "count": 290
+            }
+          ]
+        },
+        {
+          "key": "birdOccurrences",
+          "label": "Bird occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.877830136386926+4.440605853664487%2C39.13270136601689+4.440605853664487%2C39.13270136601689+8.458712666907717%2C34.877830136386926+8.458712666907717%2C34.877830136386926+4.440605853664487%29%29&limit=0&facet=speciesKey&facetLimit=8&classKey=212",
+          "region": "SNNPR",
+          "count": 289840,
+          "topSpecies": [
+            {
+              "speciesKey": "2486147",
+              "scientificName": "Pycnonotus barbatus (Desfontaines, 1789)",
+              "canonicalName": "Pycnonotus barbatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Pycnonotidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2486147",
+              "count": 3214
+            },
+            {
+              "speciesKey": "2498252",
+              "scientificName": "Alopochen aegyptiaca (Linnaeus, 1766)",
+              "canonicalName": "Alopochen aegyptiaca",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Anatidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2498252",
+              "count": 3021
+            },
+            {
+              "speciesKey": "2495707",
+              "scientificName": "Streptopelia semitorquata (Rüppell, 1837)",
+              "canonicalName": "Streptopelia semitorquata",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Columbidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2495707",
+              "count": 2940
+            },
+            {
+              "speciesKey": "2492362",
+              "scientificName": "Plocepasser mahali A.Smith, 1836",
+              "canonicalName": "Plocepasser mahali",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Passeridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2492362",
+              "count": 2861
+            },
+            {
+              "speciesKey": "2480454",
+              "scientificName": "Haliaeetus vocifer (Daudin, 1800)",
+              "canonicalName": "Haliaeetus vocifer",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480454",
+              "count": 2852
+            },
+            {
+              "speciesKey": "9772663",
+              "scientificName": "Leptoptilos crumenifer (R.P.Lesson, 1831)",
+              "canonicalName": "Leptoptilos crumenifer",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Ciconiidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/9772663",
+              "count": 2823
+            },
+            {
+              "speciesKey": "5229467",
+              "scientificName": "Colius striatus J.F.Gmelin, 1789",
+              "canonicalName": "Colius striatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Coliidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5229467",
+              "count": 2775
+            },
+            {
+              "speciesKey": "5229167",
+              "scientificName": "Milvus migrans (Boddaert, 1783)",
+              "canonicalName": "Milvus migrans",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5229167",
+              "count": 2695
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "Beneshangul Gumu",
+      "bbox": {
+        "minLon": 34.10146842275419,
+        "minLat": 8.951248601762902,
+        "maxLon": 36.692987207357916,
+        "maxLat": 11.985376722521387
+      },
+      "geometryNote": "GBIF was queried with the ADM1 bounding box for speed. Counts may include records just outside the region and should be replaced with polygon filtering for production.",
+      "groups": [
+        {
+          "key": "allOccurrences",
+          "label": "All coordinated occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.10146842275419+8.951248601762902%2C36.692987207357916+8.951248601762902%2C36.692987207357916+11.985376722521387%2C34.10146842275419+11.985376722521387%2C34.10146842275419+8.951248601762902%29%29&limit=0&facet=speciesKey&facetLimit=8",
+          "region": "Beneshangul Gumu",
+          "count": 10751,
+          "topSpecies": [
+            {
+              "speciesKey": "2480505",
+              "scientificName": "Aquila pomarina C.L.Brehm, 1831",
+              "canonicalName": "Aquila pomarina",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480505",
+              "count": 612
+            },
+            {
+              "speciesKey": "2705181",
+              "scientificName": "Sorghum bicolor (L.) Moench",
+              "canonicalName": "Sorghum bicolor",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705181",
+              "count": 151
+            },
+            {
+              "speciesKey": "2705325",
+              "scientificName": "Eragrostis tef (Zuccagni) Trotter",
+              "canonicalName": "Eragrostis tef",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705325",
+              "count": 60
+            },
+            {
+              "speciesKey": "2486147",
+              "scientificName": "Pycnonotus barbatus (Desfontaines, 1789)",
+              "canonicalName": "Pycnonotus barbatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Pycnonotidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2486147",
+              "count": 56
+            },
+            {
+              "speciesKey": "2705862",
+              "scientificName": "Urochloa brizantha (A.Rich.) R.D.Webster",
+              "canonicalName": "Urochloa brizantha",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705862",
+              "count": 53
+            },
+            {
+              "speciesKey": "7340615",
+              "scientificName": "Cinnyris cupreus (Shaw, 1812)",
+              "canonicalName": "Cinnyris cupreus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Nectariniidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/7340615",
+              "count": 51
+            },
+            {
+              "speciesKey": "5645756",
+              "scientificName": "Strychnos innocua Delile",
+              "canonicalName": "Strychnos innocua",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Loganiaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5645756",
+              "count": 44
+            },
+            {
+              "speciesKey": "2900926",
+              "scientificName": "Breonadia salicina (Vahl) Hepper & J.R.I.Wood",
+              "canonicalName": "Breonadia salicina",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Rubiaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2900926",
+              "count": 43
+            }
+          ]
+        },
+        {
+          "key": "plantOccurrences",
+          "label": "Plant occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.10146842275419+8.951248601762902%2C36.692987207357916+8.951248601762902%2C36.692987207357916+11.985376722521387%2C34.10146842275419+11.985376722521387%2C34.10146842275419+8.951248601762902%29%29&limit=0&facet=speciesKey&facetLimit=8&kingdomKey=6",
+          "region": "Beneshangul Gumu",
+          "count": 6703,
+          "topSpecies": [
+            {
+              "speciesKey": "2705181",
+              "scientificName": "Sorghum bicolor (L.) Moench",
+              "canonicalName": "Sorghum bicolor",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705181",
+              "count": 151
+            },
+            {
+              "speciesKey": "2705325",
+              "scientificName": "Eragrostis tef (Zuccagni) Trotter",
+              "canonicalName": "Eragrostis tef",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705325",
+              "count": 60
+            },
+            {
+              "speciesKey": "2705862",
+              "scientificName": "Urochloa brizantha (A.Rich.) R.D.Webster",
+              "canonicalName": "Urochloa brizantha",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705862",
+              "count": 53
+            },
+            {
+              "speciesKey": "5645756",
+              "scientificName": "Strychnos innocua Delile",
+              "canonicalName": "Strychnos innocua",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Loganiaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5645756",
+              "count": 44
+            },
+            {
+              "speciesKey": "2900926",
+              "scientificName": "Breonadia salicina (Vahl) Hepper & J.R.I.Wood",
+              "canonicalName": "Breonadia salicina",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Rubiaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2900926",
+              "count": 43
+            },
+            {
+              "speciesKey": "4261595",
+              "scientificName": "Grewia mollis Juss.",
+              "canonicalName": "Grewia mollis",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Malvaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/4261595",
+              "count": 43
+            },
+            {
+              "speciesKey": "5350452",
+              "scientificName": "Phaseolus vulgaris L.",
+              "canonicalName": "Phaseolus vulgaris",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Fabaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5350452",
+              "count": 40
+            },
+            {
+              "speciesKey": "2714453",
+              "scientificName": "Cyperus cyperoides (L.) Kuntze",
+              "canonicalName": "Cyperus cyperoides",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Cyperaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2714453",
+              "count": 39
+            }
+          ]
+        },
+        {
+          "key": "birdOccurrences",
+          "label": "Bird occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.10146842275419+8.951248601762902%2C36.692987207357916+8.951248601762902%2C36.692987207357916+11.985376722521387%2C34.10146842275419+11.985376722521387%2C34.10146842275419+8.951248601762902%29%29&limit=0&facet=speciesKey&facetLimit=8&classKey=212",
+          "region": "Beneshangul Gumu",
+          "count": 3395,
+          "topSpecies": [
+            {
+              "speciesKey": "2480505",
+              "scientificName": "Aquila pomarina C.L.Brehm, 1831",
+              "canonicalName": "Aquila pomarina",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480505",
+              "count": 612
+            },
+            {
+              "speciesKey": "2486147",
+              "scientificName": "Pycnonotus barbatus (Desfontaines, 1789)",
+              "canonicalName": "Pycnonotus barbatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Pycnonotidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2486147",
+              "count": 56
+            },
+            {
+              "speciesKey": "7340615",
+              "scientificName": "Cinnyris cupreus (Shaw, 1812)",
+              "canonicalName": "Cinnyris cupreus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Nectariniidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/7340615",
+              "count": 51
+            },
+            {
+              "speciesKey": "2481909",
+              "scientificName": "Ciconia nigra (Linnaeus, 1758)",
+              "canonicalName": "Ciconia nigra",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Ciconiidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2481909",
+              "count": 42
+            },
+            {
+              "speciesKey": "5230801",
+              "scientificName": "Hirundo smithii Leach & K.D.Koenig, 1818",
+              "canonicalName": "Hirundo smithii",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Hirundinidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5230801",
+              "count": 37
+            },
+            {
+              "speciesKey": "2482497",
+              "scientificName": "Corvus rhipidurus Hartert, 1918",
+              "canonicalName": "Corvus rhipidurus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Corvidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2482497",
+              "count": 36
+            },
+            {
+              "speciesKey": "2493624",
+              "scientificName": "Lonchura cucullata (Swainson, 1837)",
+              "canonicalName": "Lonchura cucullata",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Estrildidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2493624",
+              "count": 36
+            },
+            {
+              "speciesKey": "7340870",
+              "scientificName": "Chalcomitra senegalensis (Linnaeus, 1766)",
+              "canonicalName": "Chalcomitra senegalensis",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Nectariniidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/7340870",
+              "count": 36
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "Gambela",
+      "bbox": {
+        "minLon": 33.002242216397,
+        "minLat": 6.281550931800635,
+        "maxLon": 35.39305851142095,
+        "maxLat": 8.709916498141308
+      },
+      "geometryNote": "GBIF was queried with the ADM1 bounding box for speed. Counts may include records just outside the region and should be replaced with polygon filtering for production.",
+      "groups": [
+        {
+          "key": "allOccurrences",
+          "label": "All coordinated occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2833.002242216397+6.281550931800635%2C35.39305851142095+6.281550931800635%2C35.39305851142095+8.709916498141308%2C33.002242216397+8.709916498141308%2C33.002242216397+6.281550931800635%29%29&limit=0&facet=speciesKey&facetLimit=8",
+          "region": "Gambela",
+          "count": 14499,
+          "topSpecies": [
+            {
+              "speciesKey": "2480505",
+              "scientificName": "Aquila pomarina C.L.Brehm, 1831",
+              "canonicalName": "Aquila pomarina",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480505",
+              "count": 681
+            },
+            {
+              "speciesKey": "2705181",
+              "scientificName": "Sorghum bicolor (L.) Moench",
+              "canonicalName": "Sorghum bicolor",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705181",
+              "count": 580
+            },
+            {
+              "speciesKey": "1641221",
+              "scientificName": "Sergentomyia ingrami (Newstead, 1914)",
+              "canonicalName": "Sergentomyia ingrami",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Psychodidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/1641221",
+              "count": 163
+            },
+            {
+              "speciesKey": "2486147",
+              "scientificName": "Pycnonotus barbatus (Desfontaines, 1789)",
+              "canonicalName": "Pycnonotus barbatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Pycnonotidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2486147",
+              "count": 137
+            },
+            {
+              "speciesKey": "2493723",
+              "scientificName": "Uraeginthus bengalus (Linnaeus, 1766)",
+              "canonicalName": "Uraeginthus bengalus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Estrildidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2493723",
+              "count": 128
+            },
+            {
+              "speciesKey": "5226308",
+              "scientificName": "Agama agama (Linnaeus, 1758)",
+              "canonicalName": "Agama agama",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Agamidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5226308",
+              "count": 128
+            },
+            {
+              "speciesKey": "2492762",
+              "scientificName": "Prinia subflava (Gmelin, 1789)",
+              "canonicalName": "Prinia subflava",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Cisticolidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2492762",
+              "count": 110
+            },
+            {
+              "speciesKey": "2480715",
+              "scientificName": "Necrosyrtes monachus (Temminck, 1823)",
+              "canonicalName": "Necrosyrtes monachus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480715",
+              "count": 109
+            }
+          ]
+        },
+        {
+          "key": "plantOccurrences",
+          "label": "Plant occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2833.002242216397+6.281550931800635%2C35.39305851142095+6.281550931800635%2C35.39305851142095+8.709916498141308%2C33.002242216397+8.709916498141308%2C33.002242216397+6.281550931800635%29%29&limit=0&facet=speciesKey&facetLimit=8&kingdomKey=6",
+          "region": "Gambela",
+          "count": 4882,
+          "topSpecies": [
+            {
+              "speciesKey": "2705181",
+              "scientificName": "Sorghum bicolor (L.) Moench",
+              "canonicalName": "Sorghum bicolor",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705181",
+              "count": 580
+            },
+            {
+              "speciesKey": "3698812",
+              "scientificName": "Combretum adenogonium Steud. ex A.Rich.",
+              "canonicalName": "Combretum adenogonium",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Combretaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/3698812",
+              "count": 50
+            },
+            {
+              "speciesKey": "2898652",
+              "scientificName": "Crossopteryx febrifuga (Afzel. ex G.Don) Benth.",
+              "canonicalName": "Crossopteryx febrifuga",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Rubiaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2898652",
+              "count": 40
+            },
+            {
+              "speciesKey": "10894265",
+              "scientificName": "Silene kiwuensis (T.C.E.Fr.) F.Jafari, Oxelman & Rabeler",
+              "canonicalName": "Silene kiwuensis",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Caryophyllaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/10894265",
+              "count": 39
+            },
+            {
+              "speciesKey": "3793847",
+              "scientificName": "Gymnosporia senegalensis (Lam.) Loes.",
+              "canonicalName": "Gymnosporia senegalensis",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Celastraceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/3793847",
+              "count": 32
+            },
+            {
+              "speciesKey": "2705953",
+              "scientificName": "Eleusine indica (L.) Gaertn.",
+              "canonicalName": "Eleusine indica",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Poaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2705953",
+              "count": 30
+            },
+            {
+              "speciesKey": "3085191",
+              "scientificName": "Celosia argentea L.",
+              "canonicalName": "Celosia argentea",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Amaranthaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/3085191",
+              "count": 29
+            },
+            {
+              "speciesKey": "3699477",
+              "scientificName": "Combretum collinum Fresen.",
+              "canonicalName": "Combretum collinum",
+              "rank": "SPECIES",
+              "kingdom": "Plantae",
+              "family": "Combretaceae",
+              "sourceUrl": "https://api.gbif.org/v1/species/3699477",
+              "count": 28
+            }
+          ]
+        },
+        {
+          "key": "birdOccurrences",
+          "label": "Bird occurrences",
+          "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2833.002242216397+6.281550931800635%2C35.39305851142095+6.281550931800635%2C35.39305851142095+8.709916498141308%2C33.002242216397+8.709916498141308%2C33.002242216397+6.281550931800635%29%29&limit=0&facet=speciesKey&facetLimit=8&classKey=212",
+          "region": "Gambela",
+          "count": 7665,
+          "topSpecies": [
+            {
+              "speciesKey": "2480505",
+              "scientificName": "Aquila pomarina C.L.Brehm, 1831",
+              "canonicalName": "Aquila pomarina",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480505",
+              "count": 681
+            },
+            {
+              "speciesKey": "2486147",
+              "scientificName": "Pycnonotus barbatus (Desfontaines, 1789)",
+              "canonicalName": "Pycnonotus barbatus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Pycnonotidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2486147",
+              "count": 137
+            },
+            {
+              "speciesKey": "2493723",
+              "scientificName": "Uraeginthus bengalus (Linnaeus, 1766)",
+              "canonicalName": "Uraeginthus bengalus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Estrildidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2493723",
+              "count": 128
+            },
+            {
+              "speciesKey": "2492762",
+              "scientificName": "Prinia subflava (Gmelin, 1789)",
+              "canonicalName": "Prinia subflava",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Cisticolidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2492762",
+              "count": 110
+            },
+            {
+              "speciesKey": "2480715",
+              "scientificName": "Necrosyrtes monachus (Temminck, 1823)",
+              "canonicalName": "Necrosyrtes monachus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2480715",
+              "count": 109
+            },
+            {
+              "speciesKey": "5229167",
+              "scientificName": "Milvus migrans (Boddaert, 1783)",
+              "canonicalName": "Milvus migrans",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Accipitridae",
+              "sourceUrl": "https://api.gbif.org/v1/species/5229167",
+              "count": 109
+            },
+            {
+              "speciesKey": "2494043",
+              "scientificName": "Ploceus taeniopterus (Reichenbach, 1863)",
+              "canonicalName": "Ploceus taeniopterus",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Ploceidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2494043",
+              "count": 108
+            },
+            {
+              "speciesKey": "2484871",
+              "scientificName": "Laniarius erythrogaster (Cretzschmar, 1829)",
+              "canonicalName": "Laniarius erythrogaster",
+              "rank": "SPECIES",
+              "kingdom": "Animalia",
+              "family": "Malaconotidae",
+              "sourceUrl": "https://api.gbif.org/v1/species/2484871",
+              "count": 107
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

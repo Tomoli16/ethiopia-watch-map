@@ -1,0 +1,22 @@
+{
+  "fetchedAt": "2026-06-27T19:19:28.809Z",
+  "source": "GBIF Occurrence API",
+  "note": "Counts only; occurrence records need spatial bias correction before direct scoring.",
+  "summaries": [
+    {
+      "key": "ethiopiaAllOccurrences",
+      "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&limit=0",
+      "count": 1066954
+    },
+    {
+      "key": "ethiopiaPlantOccurrences",
+      "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&kingdomKey=6&hasCoordinate=true&limit=0",
+      "count": 202207
+    },
+    {
+      "key": "ethiopiaBirdOccurrences",
+      "sourceUrl": "https://api.gbif.org/v1/occurrence/search?country=ET&classKey=212&hasCoordinate=true&limit=0",
+      "count": 788908
+    }
+  ]
+}

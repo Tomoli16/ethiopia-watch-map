@@ -1,0 +1,920 @@
+{
+  "fetchedAt": "2026-06-27T19:21:07.260Z",
+  "source": "ISRIC SoilGrids v2.0 REST API",
+  "description": "Real SoilGrids point samples for the four focus regions. Each sample is taken at one representative region-center coordinate and contains soil pH, soil organic carbon, clay, sand and silt for 0-5 cm, 5-15 cm and 15-30 cm depth bands. The app currently depth-weights these values to 0-30 cm and uses them as the first real data input for the ERP soil suitability component. This is not yet a full ADM3/woreda zonal aggregation.",
+  "note": "Point samples at region centroids; replace with zonal aggregation for production scoring.",
+  "samples": [
+    {
+      "key": "Oromia",
+      "lon": 39.4,
+      "lat": 7.8,
+      "sourceUrl": "https://rest.isric.org/soilgrids/v2.0/properties/query?lon=39.4&lat=7.8&property=phh2o&property=soc&property=clay&property=sand&property=silt&depth=0-5cm&depth=5-15cm&depth=15-30cm&value=mean",
+      "layers": [
+        {
+          "name": "clay",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 282
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 292
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 303
+              }
+            }
+          ]
+        },
+        {
+          "name": "phh2o",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "pH*10",
+            "target_units": "-",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 61
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 61
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 61
+              }
+            }
+          ]
+        },
+        {
+          "name": "sand",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 349
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 350
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 350
+              }
+            }
+          ]
+        },
+        {
+          "name": "silt",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 368
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 358
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 347
+              }
+            }
+          ]
+        },
+        {
+          "name": "soc",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "dg/kg",
+            "target_units": "g/kg",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 631
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 510
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 397
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "SNNPR",
+      "lon": 37.6,
+      "lat": 6.4,
+      "sourceUrl": "https://rest.isric.org/soilgrids/v2.0/properties/query?lon=37.6&lat=6.4&property=phh2o&property=soc&property=clay&property=sand&property=silt&depth=0-5cm&depth=5-15cm&depth=15-30cm&value=mean",
+      "layers": [
+        {
+          "name": "clay",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 313
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 318
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 385
+              }
+            }
+          ]
+        },
+        {
+          "name": "phh2o",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "pH*10",
+            "target_units": "-",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 59
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 59
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 59
+              }
+            }
+          ]
+        },
+        {
+          "name": "sand",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 342
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 354
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 317
+              }
+            }
+          ]
+        },
+        {
+          "name": "silt",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 345
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 328
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 299
+              }
+            }
+          ]
+        },
+        {
+          "name": "soc",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "dg/kg",
+            "target_units": "g/kg",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 484
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 308
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 291
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "Beneshangul Gumu",
+      "lon": 35.6,
+      "lat": 10.8,
+      "sourceUrl": "https://rest.isric.org/soilgrids/v2.0/properties/query?lon=35.6&lat=10.8&property=phh2o&property=soc&property=clay&property=sand&property=silt&depth=0-5cm&depth=5-15cm&depth=15-30cm&value=mean",
+      "layers": [
+        {
+          "name": "clay",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 364
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 388
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 452
+              }
+            }
+          ]
+        },
+        {
+          "name": "phh2o",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "pH*10",
+            "target_units": "-",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 57
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 57
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 57
+              }
+            }
+          ]
+        },
+        {
+          "name": "sand",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 278
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 266
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 239
+              }
+            }
+          ]
+        },
+        {
+          "name": "silt",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 358
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 346
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 309
+              }
+            }
+          ]
+        },
+        {
+          "name": "soc",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "dg/kg",
+            "target_units": "g/kg",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 590
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 470
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 333
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "Gambela",
+      "lon": 34.6,
+      "lat": 7.9,
+      "sourceUrl": "https://rest.isric.org/soilgrids/v2.0/properties/query?lon=34.6&lat=7.9&property=phh2o&property=soc&property=clay&property=sand&property=silt&depth=0-5cm&depth=5-15cm&depth=15-30cm&value=mean",
+      "layers": [
+        {
+          "name": "clay",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 279
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 280
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 294
+              }
+            }
+          ]
+        },
+        {
+          "name": "phh2o",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "pH*10",
+            "target_units": "-",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 61
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 60
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 60
+              }
+            }
+          ]
+        },
+        {
+          "name": "sand",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 409
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 408
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 396
+              }
+            }
+          ]
+        },
+        {
+          "name": "silt",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "g/kg",
+            "target_units": "%",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 312
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 312
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 310
+              }
+            }
+          ]
+        },
+        {
+          "name": "soc",
+          "unit_measure": {
+            "d_factor": 10,
+            "mapped_units": "dg/kg",
+            "target_units": "g/kg",
+            "uncertainty_unit": ""
+          },
+          "depths": [
+            {
+              "range": {
+                "top_depth": 0,
+                "bottom_depth": 5,
+                "unit_depth": "cm"
+              },
+              "label": "0-5cm",
+              "values": {
+                "mean": 409
+              }
+            },
+            {
+              "range": {
+                "top_depth": 5,
+                "bottom_depth": 15,
+                "unit_depth": "cm"
+              },
+              "label": "5-15cm",
+              "values": {
+                "mean": 272
+              }
+            },
+            {
+              "range": {
+                "top_depth": 15,
+                "bottom_depth": 30,
+                "unit_depth": "cm"
+              },
+              "label": "15-30cm",
+              "values": {
+                "mean": 136
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

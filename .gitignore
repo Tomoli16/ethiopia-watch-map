@@ -16,6 +16,9 @@ dist-ssr
 .nitro
 *.local
 
+# Large source datasets fetched for local geoprocessing
+data/raw/
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

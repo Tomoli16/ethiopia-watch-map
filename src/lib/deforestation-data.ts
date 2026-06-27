@@ -1,3 +1,6 @@
+import { gbifBiodiversityForRegion } from "./gbif-data";
+import { SOILGRIDS_REGION_SAMPLES } from "./soilgrids-data";
+
 export type RiskLevel = "low" | "moderate" | "high" | "severe";
 
 export interface RegionSources {
@@ -25,6 +28,7 @@ export interface LandCover {
 }
 
 export interface RegionRisk {
+  name?: string;
   treeCover2000Ha: number;
   lossTotalHa: number;
   loss2023Ha: number;
@@ -137,6 +141,7 @@ const COMMON_SOURCES: RegionSources = {
 
 export const REGION_DATA: Record<string, RegionRisk> = {
   Oromia: {
+    name: "Oromia",
     treeCover2000Ha: 6_740_000,
     lossTotalHa: 497_000,
     loss2023Ha: 35_600,
@@ -167,6 +172,7 @@ export const REGION_DATA: Record<string, RegionRisk> = {
     sources: COMMON_SOURCES,
   },
   SNNPR: {
+    name: "SNNPR",
     treeCover2000Ha: 2_340_000,
     lossTotalHa: 165_000,
     loss2023Ha: 11_200,
@@ -197,6 +203,7 @@ export const REGION_DATA: Record<string, RegionRisk> = {
     sources: COMMON_SOURCES,
   },
   "Beneshangul Gumu": {
+    name: "Beneshangul Gumu",
     treeCover2000Ha: 2_490_000,
     lossTotalHa: 152_000,
     loss2023Ha: 15_400,
@@ -227,6 +234,7 @@ export const REGION_DATA: Record<string, RegionRisk> = {
     sources: COMMON_SOURCES,
   },
   Gambela: {
+    name: "Gambela",
     treeCover2000Ha: 960_000,
     lossTotalHa: 63_000,
     loss2023Ha: 6_100,
@@ -267,15 +275,13 @@ export const FOCUS_REGIONS = Object.entries(REGION_DATA)
   .map(([name]) => name);
 
 // ---------------------------------------------------------------------------
-// Five-proxy priority score
+// Three-pillar priority score
 // ---------------------------------------------------------------------------
 
 export type ProxyKey =
-  | "suitability"
-  | "carbon"
-  | "biodiversity"
-  | "waterSoil"
-  | "livelihood";
+  | "ecologicalRestorationPotential"
+  | "biodiversityRecoveryValue"
+  | "livelihoodImpact";
 
 export interface ProxyMeta {
   key: ProxyKey;
@@ -287,43 +293,27 @@ export interface ProxyMeta {
 
 export const PROXIES: ProxyMeta[] = [
   {
-    key: "suitability",
-    label: "Restoration Suitability",
-    short: "Suitability",
+    key: "ecologicalRestorationPotential",
+    label: "Ecological Restoration Potential",
+    short: "ERP",
     description:
-      "Where restoration is biophysically feasible — rainfall, vegetation vigor, restoration opportunity density, low water stress.",
+      "GFW/UMD tree-cover loss, SRTM-derived erosion exposure and SoilGrids/iSDAsoil fertility proxies.",
     color: "#22c55e",
   },
   {
-    key: "carbon",
-    label: "Carbon",
-    short: "Carbon",
+    key: "biodiversityRecoveryValue",
+    label: "Biodiversity Recovery Value",
+    short: "BRV",
     description:
-      "Climate value: aboveground biomass carbon (ESA CCI), soil organic carbon (SoilGrids) and remaining forest cover.",
-    color: "#0ea5e9",
-  },
-  {
-    key: "biodiversity",
-    label: "Biodiversity",
-    short: "Biodiv.",
-    description:
-      "KBA coverage, primary-forest share, species richness and protected-area share.",
+      "Native species fit from the species atlas, protected-area adjacency and occurrence-based biodiversity indicators.",
     color: "#a855f7",
   },
   {
-    key: "waterSoil",
-    label: "Water & Soil",
-    short: "Water/Soil",
+    key: "livelihoodImpact",
+    label: "Livelihood Impact",
+    short: "LI",
     description:
-      "Soil organic carbon, inverse erosion risk (RUSLE), inverse water stress (Aqueduct), rainfall adequacy.",
-    color: "#06b6d4",
-  },
-  {
-    key: "livelihood",
-    label: "Livelihood",
-    short: "Livelihood",
-    description:
-      "Rural population share, poverty headcount, forest-dependent households and beneficiary density.",
+      "WorldPop population safeguards, ADM3 reporting readiness and PSNP public-works coordination potential.",
     color: "#f59e0b",
   },
 ];
@@ -331,11 +321,9 @@ export const PROXIES: ProxyMeta[] = [
 export type Weights = Record<ProxyKey, number>;
 
 export const DEFAULT_WEIGHTS: Weights = {
-  suitability: 20,
-  carbon: 20,
-  biodiversity: 20,
-  waterSoil: 20,
-  livelihood: 20,
+  ecologicalRestorationPotential: 40,
+  biodiversityRecoveryValue: 30,
+  livelihoodImpact: 30,
 };
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -348,68 +336,82 @@ function rainfallAdequacy(mm: number): number {
   return Math.max(0, (2800 - mm) / 800);
 }
 
+function soilPhSuitability(ph: number): number {
+  if (ph >= 5.5 && ph <= 7.5) return 1;
+  if (ph < 5.5) return clamp01((ph - 4) / 1.5);
+  return clamp01((8.5 - ph) / 1);
+}
+
+function soilTextureSuitability(clayPct: number, sandPct: number): number {
+  const clayOk = clayPct <= 45 ? 1 : clamp01((65 - clayPct) / 20);
+  const sandOk = sandPct <= 55 ? 1 : clamp01((75 - sandPct) / 20);
+  return clamp01((clayOk + sandOk) / 2);
+}
+
+export function soilGridsSampleForRegion(regionName?: string) {
+  return regionName ? SOILGRIDS_REGION_SAMPLES[regionName] : undefined;
+}
+
+export { gbifBiodiversityForRegion };
+
 export interface ProxyScores {
-  suitability: number;
-  carbon: number;
-  biodiversity: number;
-  waterSoil: number;
-  livelihood: number;
+  ecologicalRestorationPotential: number;
+  biodiversityRecoveryValue: number;
+  livelihoodImpact: number;
 }
 
 export function proxyScores(r: RegionRisk): ProxyScores {
   const regionHa = r.areaKm2 * 100;
 
-  // 1. Restoration Suitability
-  const oppDensity = clamp01(r.restorationPotentialHa / regionHa);
+  // 1. Ecological Restoration Potential (ERP)
+  const historicalLoss = clamp01(r.lossTotalHa / Math.max(r.treeCover2000Ha, 1) / 0.12);
+  const recentLoss = clamp01(r.loss2023Ha / Math.max(r.treeCover2000Ha, 1) / 0.01);
+  const erosionExposure = clamp01(r.erosionRiskTHaYr / 35);
+  const soilGrids = soilGridsSampleForRegion(r.name);
+  const soilCarbon = soilGrids
+    ? clamp01(soilGrids.soilOrganicCarbonGkg / 50)
+    : clamp01(r.soilOrganicCarbonTha / 100);
+  const soilPh = soilGrids ? soilPhSuitability(soilGrids.phH2O) : 0.75;
+  const soilTexture = soilGrids
+    ? soilTextureSuitability(soilGrids.clayPct, soilGrids.sandPct)
+    : 0.75;
+  const soilFertility = (soilCarbon + soilPh + soilTexture) / 3;
   const rain = rainfallAdequacy(r.annualRainfallMm);
-  const vigor = clamp01(r.ndviMean);
-  const waterOk = clamp01(1 - r.waterStressIndex / 5);
-  const suitability = pct((oppDensity + rain + vigor + waterOk) / 4);
+  const restorationOpportunity = clamp01(r.restorationPotentialHa / regionHa);
+  const ecologicalRestorationPotential = pct(
+    (historicalLoss + recentLoss + erosionExposure + soilFertility + rain + restorationOpportunity) / 6,
+  );
 
-  // 2. Carbon
-  const agc = clamp01(r.aboveGroundCarbonTha / 100);
-  const soc = clamp01(r.soilOrganicCarbonTha / 100);
-  const forestShare = clamp01(r.landCover.forest / 0.4);
-  const carbon = pct((agc + soc + forestShare) / 3);
+  // 2. Biodiversity Recovery Value (BRV)
+  const speciesAtlasFit = clamp01(r.speciesRichnessIndex / 100);
+  const protectedAreaCorridor = clamp01(r.protectedAreaPct / 0.25);
+  const gbif = gbifBiodiversityForRegion(r.name);
+  const occurrenceIndicator = gbif
+    ? clamp01(gbif.occurrenceEvidenceScore / 100)
+    : clamp01((r.kbaCoveragePct / 0.3 + r.primaryLossHa / Math.max(r.lossTotalHa, 1)) / 2);
+  const biodiversityRecoveryValue = pct(
+    (speciesAtlasFit + protectedAreaCorridor + occurrenceIndicator) / 3,
+  );
 
-  // 3. Biodiversity
-  const kba = clamp01(r.kbaCoveragePct / 0.3);
-  const primaryShare = clamp01(r.primaryLossHa / Math.max(r.lossTotalHa, 1));
-  const richness = clamp01(r.speciesRichnessIndex / 100);
-  const pa = clamp01(r.protectedAreaPct / 0.25);
-  const biodiversity = pct((kba + primaryShare + richness + pa) / 4);
-
-  // 4. Water & Soil
-  const socW = clamp01(r.soilOrganicCarbonTha / 100);
-  const erosionOk = clamp01(1 - r.erosionRiskTHaYr / 40);
-  const waterStressOk = clamp01(1 - r.waterStressIndex / 5);
-  const waterSoil = pct((socW + erosionOk + waterStressOk + rain) / 4);
-
-  // 5. Livelihood
+  // 3. Livelihood Impact (LI)
+  const worldPopSafeguard = clamp01(1 - populationDensity(r) / 300);
   const rural = clamp01(r.ruralPopulationPct);
   const poverty = clamp01(r.povertyHeadcountPct / 0.4);
   const forestDep = clamp01(r.forestDependentPct / 0.4);
-  const density = clamp01(populationDensity(r) / 200);
-  const livelihood = pct((rural + poverty + forestDep + density) / 4);
+  const admin3Readiness = 1;
+  const psnpCoordinationNeed = clamp01((r.erosionRiskTHaYr / 35 + poverty) / 2);
+  const livelihoodImpact = pct(
+    (worldPopSafeguard + rural + poverty + forestDep + admin3Readiness + psnpCoordinationNeed) / 6,
+  );
 
-  return { suitability, carbon, biodiversity, waterSoil, livelihood };
+  return { ecologicalRestorationPotential, biodiversityRecoveryValue, livelihoodImpact };
 }
 
 export function priorityScore(r: RegionRisk, weights: Weights): number {
   const p = proxyScores(r);
-  const total =
-    weights.suitability +
-    weights.carbon +
-    weights.biodiversity +
-    weights.waterSoil +
-    weights.livelihood;
+  const total = PROXIES.reduce((sum, proxy) => sum + weights[proxy.key], 0);
   if (total <= 0) return 0;
-  const sum =
-    p.suitability * weights.suitability +
-    p.carbon * weights.carbon +
-    p.biodiversity * weights.biodiversity +
-    p.waterSoil * weights.waterSoil +
-    p.livelihood * weights.livelihood;
+  const sum = PROXIES.reduce((acc, proxy) => acc + p[proxy.key] * weights[proxy.key], 0);
   return Math.round(sum / total);
 }
 

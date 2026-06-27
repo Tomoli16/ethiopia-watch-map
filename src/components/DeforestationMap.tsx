@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
 import L, { type Layer, type PathOptions } from "leaflet";
 import type { Feature } from "geojson";
 import "leaflet/dist/leaflet.css";
@@ -7,10 +7,12 @@ import {
   FOCUS_REGIONS,
   REGION_DATA,
   RISK_COLORS,
+  gbifBiodiversityForRegion,
   priorityLevel,
   priorityScore,
   type Weights,
 } from "@/lib/deforestation-data";
+import { SOILGRIDS_REGION_SAMPLES } from "@/lib/soilgrids-data";
 
 interface Props {
   selected: string | null;
@@ -21,6 +23,7 @@ interface Props {
 }
 
 export type AdminLevel = "adm1" | "adm2" | "adm3";
+type OverlayMode = "priority" | "soil" | "gbif";
 
 interface ZoneProps {
   shapeName?: string;
@@ -33,6 +36,49 @@ const ADMIN_LEVELS: { value: AdminLevel; label: string; description: string }[] 
   { value: "adm2", label: "ADM2", description: "Zones" },
   { value: "adm3", label: "ADM3", description: "Woredas" },
 ];
+
+const SOILGRIDS_SAMPLES = Object.values(SOILGRIDS_REGION_SAMPLES);
+
+function clamp01(x: number) {
+  return Math.min(1, Math.max(0, x));
+}
+
+function soilPhSuitability(ph: number) {
+  if (ph >= 5.5 && ph <= 7.5) return 1;
+  if (ph < 5.5) return clamp01((ph - 4) / 1.5);
+  return clamp01((8.5 - ph) / 1);
+}
+
+function soilTextureSuitability(clayPct: number, sandPct: number) {
+  const clayOk = clayPct <= 45 ? 1 : clamp01((65 - clayPct) / 20);
+  const sandOk = sandPct <= 55 ? 1 : clamp01((75 - sandPct) / 20);
+  return clamp01((clayOk + sandOk) / 2);
+}
+
+function soilSuitabilityScore(regionName: string) {
+  const sample = SOILGRIDS_REGION_SAMPLES[regionName];
+  if (!sample) return null;
+
+  const carbon = clamp01(sample.soilOrganicCarbonGkg / 50);
+  const ph = soilPhSuitability(sample.phH2O);
+  const texture = soilTextureSuitability(sample.clayPct, sample.sandPct);
+
+  return Math.round(((carbon + ph + texture) / 3) * 100);
+}
+
+function soilColor(score: number) {
+  if (score >= 80) return "#16a34a";
+  if (score >= 65) return "#84cc16";
+  if (score >= 50) return "#eab308";
+  return "#ea580c";
+}
+
+function gbifColor(score: number) {
+  if (score >= 90) return "#7c3aed";
+  if (score >= 75) return "#2563eb";
+  if (score >= 60) return "#0891b2";
+  return "#64748b";
+}
 
 function ZoomToSelection({ data, selected }: { data: GeoJSON.FeatureCollection | null; selected: string | null }) {
   const map = useMap();
@@ -60,6 +106,7 @@ export function DeforestationMap({
   const [zones, setZones] = useState<GeoJSON.FeatureCollection | null>(null);
   const [woredas, setWoredas] = useState<GeoJSON.FeatureCollection | null>(null);
   const [satellite, setSatellite] = useState(false);
+  const [overlayMode, setOverlayMode] = useState<OverlayMode>("priority");
   const [hoverZone, setHoverZone] = useState<string | null>(null);
 
   useEffect(() => {
@@ -149,6 +196,28 @@ export function DeforestationMap({
     };
   }, [adminLevel, zones, selected]);
 
+  const soilRegionData = useMemo<GeoJSON.FeatureCollection | null>(() => {
+    if (!regions) return null;
+    return {
+      type: "FeatureCollection",
+      features: regions.features.filter((f) => {
+        const name = (f.properties as ZoneProps | undefined)?.shapeName ?? "";
+        return Boolean(SOILGRIDS_REGION_SAMPLES[name]);
+      }),
+    };
+  }, [regions]);
+
+  const gbifRegionData = useMemo<GeoJSON.FeatureCollection | null>(() => {
+    if (!regions) return null;
+    return {
+      type: "FeatureCollection",
+      features: regions.features.filter((f) => {
+        const name = (f.properties as ZoneProps | undefined)?.shapeName ?? "";
+        return Boolean(gbifBiodiversityForRegion(name));
+      }),
+    };
+  }, [regions]);
+
   const zoneStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
     const isHover = name === hoverZone;
@@ -173,8 +242,92 @@ export function DeforestationMap({
     });
   };
 
+  const soilStyle = (feature?: Feature): PathOptions => {
+    const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
+    const score = soilSuitabilityScore(name);
+    const active = name === selected;
+    return {
+      fillColor: score === null ? "#737373" : soilColor(score),
+      fillOpacity: active ? 0.58 : 0.42,
+      color: active ? "#fafafa" : "#f59e0b",
+      weight: active ? 3 : 1.4,
+    };
+  };
+
+  const onEachSoilRegion = (feature: Feature, layer: Layer) => {
+    const name = (feature.properties as ZoneProps | undefined)?.shapeName ?? "";
+    const sample = SOILGRIDS_REGION_SAMPLES[name];
+    const score = soilSuitabilityScore(name);
+    if (!sample || score === null) return;
+
+    layer.bindTooltip(
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>Soil suitability: ${score}/100<br/>pH ${sample.phH2O.toFixed(1)} · SOC ${sample.soilOrganicCarbonGkg.toFixed(1)} g/kg</div>`,
+      { sticky: true, className: "deforest-tooltip" },
+    );
+    layer.bindPopup(
+      `<div style="min-width:180px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">SoilGrids-derived region soil suitability from one centroid sample.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Suitability</dt><dd style="margin:0;font-weight:700">${score}/100</dd><dt>pH H2O</dt><dd style="margin:0;font-weight:700">${sample.phH2O.toFixed(1)}</dd><dt>Soil C</dt><dd style="margin:0;font-weight:700">${sample.soilOrganicCarbonGkg.toFixed(1)} g/kg</dd><dt>Clay</dt><dd style="margin:0;font-weight:700">${sample.clayPct.toFixed(1)}%</dd><dt>Sand</dt><dd style="margin:0;font-weight:700">${sample.sandPct.toFixed(1)}%</dd></dl></div>`,
+    );
+    layer.on({
+      click: () => onSelect(name),
+      mouseover: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle({ fillOpacity: 0.68, weight: 3 });
+      },
+      mouseout: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle(soilStyle(feature));
+      },
+    });
+  };
+
+  const gbifStyle = (feature?: Feature): PathOptions => {
+    const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
+    const gbif = gbifBiodiversityForRegion(name);
+    const active = name === selected;
+    return {
+      fillColor: gbif ? gbifColor(gbif.occurrenceEvidenceScore) : "#737373",
+      fillOpacity: active ? 0.6 : 0.44,
+      color: active ? "#fafafa" : "#c4b5fd",
+      weight: active ? 3 : 1.4,
+    };
+  };
+
+  const onEachGbifRegion = (feature: Feature, layer: Layer) => {
+    const name = (feature.properties as ZoneProps | undefined)?.shapeName ?? "";
+    const gbif = gbifBiodiversityForRegion(name);
+    if (!gbif) return;
+
+    const topPlants = gbif.topPlantSpecies
+      .slice(0, 3)
+      .map((sp) => `${sp.canonicalName ?? sp.scientificName} (${sp.count.toLocaleString()})`)
+      .join("<br/>");
+    const topBirds = gbif.topBirdSpecies
+      .slice(0, 3)
+      .map((sp) => `${sp.canonicalName ?? sp.scientificName} (${sp.count.toLocaleString()})`)
+      .join("<br/>");
+
+    layer.bindTooltip(
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>GBIF evidence: ${gbif.occurrenceEvidenceScore}/100<br/>Plants: ${gbif.plantOccurrences.toLocaleString()} · Birds: ${gbif.birdOccurrences.toLocaleString()}</div>`,
+      { sticky: true, className: "deforest-tooltip" },
+    );
+    layer.bindPopup(
+      `<div style="min-width:230px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">Real GBIF coordinated occurrences, queried by ADM1 bounding box.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Evidence</dt><dd style="margin:0;font-weight:700">${gbif.occurrenceEvidenceScore}/100</dd><dt>All records</dt><dd style="margin:0;font-weight:700">${gbif.allOccurrences.toLocaleString()}</dd><dt>Plants</dt><dd style="margin:0;font-weight:700">${gbif.plantOccurrences.toLocaleString()}</dd><dt>Birds</dt><dd style="margin:0;font-weight:700">${gbif.birdOccurrences.toLocaleString()}</dd></dl><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;font-size:11px"><div><strong>Top plants</strong><br/>${topPlants}</div><div><strong>Top birds</strong><br/>${topBirds}</div></div><div style="margin-top:8px;color:#6b7280;font-size:10px">Not yet corrected for observer/sampling bias.</div></div>`,
+    );
+    layer.on({
+      click: () => onSelect(name),
+      mouseover: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle({ fillOpacity: 0.7, weight: 3 });
+      },
+      mouseout: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle(gbifStyle(feature));
+      },
+    });
+  };
+
   // Re-key GeoJSON layer when weights change so colors refresh
-  const weightKey = `${weights.suitability}-${weights.carbon}-${weights.biodiversity}-${weights.waterSoil}-${weights.livelihood}`;
+  const weightKey = Object.values(weights).join("-");
 
   return (
     <MapContainer
@@ -238,6 +391,77 @@ export function DeforestationMap({
           })}
         />
       )}
+      {overlayMode === "soil" && soilRegionData && (
+        <GeoJSON
+          key={`soil-regions-${selected ?? "none"}`}
+          data={soilRegionData}
+          style={soilStyle}
+          onEachFeature={onEachSoilRegion}
+        />
+      )}
+      {overlayMode === "gbif" && gbifRegionData && (
+        <GeoJSON
+          key={`gbif-regions-${selected ?? "none"}`}
+          data={gbifRegionData}
+          style={gbifStyle}
+          onEachFeature={onEachGbifRegion}
+        />
+      )}
+      {overlayMode === "soil" &&
+        SOILGRIDS_SAMPLES.map((sample) => {
+          const active = sample.region === selected;
+          return (
+            <CircleMarker
+              key={sample.region}
+              center={[sample.lat, sample.lon]}
+              radius={active ? 9 : 7}
+              pathOptions={{
+                color: active ? "#fafafa" : "#f59e0b",
+                fillColor: soilColor(soilSuitabilityScore(sample.region) ?? 0),
+                fillOpacity: active ? 0.95 : 0.78,
+                opacity: 1,
+                weight: active ? 3 : 2,
+              }}
+              eventHandlers={{
+                click: () => onSelect(sample.region),
+              }}
+            >
+              <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+                <div style={{ fontFamily: "inherit" }}>
+                  <strong>{sample.region}</strong>
+                  <br />
+                  SoilGrids sample
+                  <br />
+                  Soil suitability {soilSuitabilityScore(sample.region)}/100
+                  <br />
+                  pH {sample.phH2O.toFixed(1)} · SOC {sample.soilOrganicCarbonGkg.toFixed(1)} g/kg
+                </div>
+              </Tooltip>
+              <Popup>
+                <div style={{ minWidth: 180, fontFamily: "system-ui, sans-serif" }}>
+                  <strong>{sample.region}</strong>
+                  <div style={{ marginTop: 4, color: "#4b5563" }}>
+                    Real SoilGrids centroid sample, 0-30 cm depth-weighted.
+                  </div>
+                  <dl style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "3px 12px", margin: "8px 0 0" }}>
+                    <dt>Suitability</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{soilSuitabilityScore(sample.region)}/100</dd>
+                    <dt>pH H2O</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.phH2O.toFixed(1)}</dd>
+                    <dt>Soil C</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.soilOrganicCarbonGkg.toFixed(1)} g/kg</dd>
+                    <dt>Clay</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.clayPct.toFixed(1)}%</dd>
+                    <dt>Sand</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.sandPct.toFixed(1)}%</dd>
+                    <dt>Silt</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.siltPct.toFixed(1)}%</dd>
+                  </dl>
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
       <ZoomToSelection data={regions} selected={selected} />
       <div className="leaflet-top leaflet-right" style={{ pointerEvents: "none" }}>
         <div
@@ -294,6 +518,140 @@ export function DeforestationMap({
             <span aria-hidden>🛰️</span>
             {satellite ? "Satellite on" : "Satellite"}
           </button>
+          <button
+            type="button"
+            onClick={() => setOverlayMode((mode) => (mode === "soil" ? "priority" : "soil"))}
+            aria-pressed={overlayMode === "soil"}
+            title={overlayMode === "soil" ? "Show priority map" : "Show SoilGrids suitability layer"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              width: "100%",
+              padding: "6px 10px",
+              background: overlayMode === "soil" ? "#0c1410" : "#fff",
+              color: overlayMode === "soil" ? "#fafafa" : "#0c1410",
+              border: "none",
+              borderTop: "1px solid #d6d6d6",
+              font: "600 12px/1 system-ui, sans-serif",
+              cursor: "pointer",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 9,
+                height: 9,
+                borderRadius: 999,
+                background: "#f59e0b",
+                boxShadow: "0 0 0 2px currentColor",
+              }}
+            />
+            SoilGrids
+          </button>
+          <button
+            type="button"
+            onClick={() => setOverlayMode((mode) => (mode === "gbif" ? "priority" : "gbif"))}
+            aria-pressed={overlayMode === "gbif"}
+            title={overlayMode === "gbif" ? "Show priority map" : "Show GBIF biodiversity layer"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              width: "100%",
+              padding: "6px 10px",
+              background: overlayMode === "gbif" ? "#0c1410" : "#fff",
+              color: overlayMode === "gbif" ? "#fafafa" : "#0c1410",
+              border: "none",
+              borderTop: "1px solid #d6d6d6",
+              font: "600 12px/1 system-ui, sans-serif",
+              cursor: "pointer",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 9,
+                height: 9,
+                borderRadius: 999,
+                background: "#7c3aed",
+                boxShadow: "0 0 0 2px currentColor",
+              }}
+            />
+            GBIF
+          </button>
+          {overlayMode === "soil" ? (
+            <div
+              style={{
+                padding: "7px 10px 8px",
+                background: "#fff",
+                borderTop: "1px solid #d6d6d6",
+                color: "#0c1410",
+                font: "600 10px/1.2 system-ui, sans-serif",
+              }}
+            >
+              <div style={{ marginBottom: 5 }}>Soil suitability</div>
+              <div style={{ display: "grid", gap: 4 }}>
+                {[
+                  { label: "80-100", color: "#16a34a" },
+                  { label: "65-79", color: "#84cc16" },
+                  { label: "50-64", color: "#eab308" },
+                  { label: "< 50", color: "#ea580c" },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        display: "inline-block",
+                        width: 18,
+                        height: 8,
+                        borderRadius: 2,
+                        background: item.color,
+                      }}
+                    />
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {overlayMode === "gbif" ? (
+            <div
+              style={{
+                padding: "7px 10px 8px",
+                background: "#fff",
+                borderTop: "1px solid #d6d6d6",
+                color: "#0c1410",
+                font: "600 10px/1.2 system-ui, sans-serif",
+              }}
+            >
+              <div style={{ marginBottom: 5 }}>GBIF evidence</div>
+              <div style={{ display: "grid", gap: 4 }}>
+                {[
+                  { label: "90-100", color: "#7c3aed" },
+                  { label: "75-89", color: "#2563eb" },
+                  { label: "60-74", color: "#0891b2" },
+                  { label: "< 60", color: "#64748b" },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        display: "inline-block",
+                        width: 18,
+                        height: 8,
+                        borderRadius: 2,
+                        background: item.color,
+                      }}
+                    />
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </MapContainer>
