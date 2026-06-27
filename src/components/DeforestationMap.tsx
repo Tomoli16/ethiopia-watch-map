@@ -8,9 +8,13 @@ import {
   adm2UnitId,
   analysisUnitById,
   colorForScore,
+  gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
+  livelihoodPopulationForAdm2,
   livelihoodPopulationForRegion,
   priorityScoreForUnit,
+  soilGridsSampleForAdm2,
+  soilSuitabilityScoreForAdm2,
   soilSuitabilityScoreForRegion,
   type Weights,
 } from "@/lib/deforestation-data";
@@ -41,6 +45,18 @@ const ADMIN_LEVELS: { value: AdminLevel; label: string; description: string }[] 
 
 const SOILGRIDS_SAMPLES = Object.values(SOILGRIDS_REGION_SAMPLES);
 
+function regionNameForFeature(feature?: Feature) {
+  const props = feature?.properties as ZoneProps | undefined;
+  return props?.parent ?? props?.shapeName ?? "";
+}
+
+function adm2IdForFeature(feature?: Feature, adminLevel?: AdminLevel) {
+  const props = feature?.properties as ZoneProps | undefined;
+  const regionName = regionNameForFeature(feature);
+  if (!regionName || adminLevel === "adm1") return regionName;
+  return adm2UnitId(regionName, adminLevel === "adm2" ? props?.shapeName : props?.zoneParent);
+}
+
 function soilColor(score: number) {
   return colorForScore(score);
 }
@@ -53,18 +69,31 @@ function livelihoodColor(score: number) {
   return colorForScore(score);
 }
 
-function ZoomToSelection({ data, selected }: { data: GeoJSON.FeatureCollection | null; selected: string | null }) {
+function ZoomToSelection({
+  data,
+  selected,
+  adminLevel,
+}: {
+  data: GeoJSON.FeatureCollection | null;
+  selected: string | null;
+  adminLevel: AdminLevel;
+}) {
   const map = useMap();
   useEffect(() => {
     if (!data || !selected) return;
-    const feat = data.features.find(
-      (f) => (f.properties as { shapeName?: string } | undefined)?.shapeName === selected,
-    );
+    const selectedUnit = analysisUnitById(selected);
+    const feat = data.features.find((f) => {
+      const feature = f as Feature;
+      const props = feature.properties as ZoneProps | undefined;
+      if (adminLevel === "adm1") return props?.shapeName === selected;
+      if (adminLevel === "adm2") return adm2IdForFeature(feature, adminLevel) === selected;
+      return adm2IdForFeature(feature, adminLevel) === selected || props?.parent === selectedUnit?.region;
+    });
     if (!feat) return;
     const layer = L.geoJSON(feat as Feature);
     const bounds = layer.getBounds();
     if (bounds.isValid()) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 9 });
-  }, [data, selected, map]);
+  }, [adminLevel, data, selected, map]);
   return null;
 }
 
@@ -203,6 +232,21 @@ export function DeforestationMap({
     };
   }, [regions]);
 
+  const focusBoundaryData = useMemo<GeoJSON.FeatureCollection | null>(() => {
+    if (!boundaryData) return null;
+    return {
+      type: "FeatureCollection",
+      features: boundaryData.features.filter((feature) => {
+        const regionName = regionNameForFeature(feature as Feature);
+        return FOCUS_REGIONS.includes(regionName);
+      }),
+    };
+  }, [boundaryData]);
+
+  const soilOverlayData = adminLevel === "adm1" ? soilRegionData : focusBoundaryData;
+  const gbifOverlayData = adminLevel === "adm1" ? gbifRegionData : focusBoundaryData;
+  const livelihoodOverlayData = adminLevel === "adm1" ? livelihoodRegionData : focusBoundaryData;
+
   const zoneStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
     const isHover = name === hoverZone;
@@ -229,8 +273,13 @@ export function DeforestationMap({
 
   const soilStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
-    const score = soilSuitabilityScoreForRegion(name);
-    const active = name === selectedRegion;
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const score =
+      adminLevel === "adm1"
+        ? soilSuitabilityScoreForRegion(regionName)
+        : soilSuitabilityScoreForAdm2(unitId) ?? soilSuitabilityScoreForRegion(regionName);
+    const active = unitId === selected || regionName === selectedRegion;
     return {
       fillColor: score === null ? "#737373" : soilColor(score),
       fillOpacity: active ? 0.58 : 0.42,
@@ -240,20 +289,28 @@ export function DeforestationMap({
   };
 
   const onEachSoilRegion = (feature: Feature, layer: Layer) => {
-    const name = (feature.properties as ZoneProps | undefined)?.shapeName ?? "";
-    const sample = SOILGRIDS_REGION_SAMPLES[name];
-    const score = soilSuitabilityScoreForRegion(name);
+    const props = feature.properties as ZoneProps | undefined;
+    const name = props?.shapeName ?? "";
+    const regionName = regionNameForFeature(feature);
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const adm2Sample = adminLevel === "adm1" ? undefined : soilGridsSampleForAdm2(unitId);
+    const sample = adm2Sample ?? SOILGRIDS_REGION_SAMPLES[regionName];
+    const score =
+      adminLevel === "adm1"
+        ? soilSuitabilityScoreForRegion(regionName)
+        : soilSuitabilityScoreForAdm2(unitId) ?? soilSuitabilityScoreForRegion(regionName);
     if (!sample || score === null) return;
+    const sourceLabel = adm2Sample ? "ADM2 SoilGrids centroid sample" : "ADM1 SoilGrids centroid sample";
 
     layer.bindTooltip(
-      `<div style="font-family:inherit"><strong>${name}</strong><br/>Soil suitability: ${score}/100<br/>pH ${sample.phH2O.toFixed(1)} · SOC ${sample.soilOrganicCarbonGkg.toFixed(1)} g/kg</div>`,
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>${sourceLabel}<br/>Soil suitability: ${score}/100<br/>pH ${sample.phH2O.toFixed(1)} · SOC ${sample.soilOrganicCarbonGkg.toFixed(1)} g/kg</div>`,
       { sticky: true, className: "deforest-tooltip" },
     );
     layer.bindPopup(
-      `<div style="min-width:180px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">SoilGrids-derived region soil suitability from one centroid sample.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Suitability</dt><dd style="margin:0;font-weight:700">${score}/100</dd><dt>pH H2O</dt><dd style="margin:0;font-weight:700">${sample.phH2O.toFixed(1)}</dd><dt>Soil C</dt><dd style="margin:0;font-weight:700">${sample.soilOrganicCarbonGkg.toFixed(1)} g/kg</dd><dt>Clay</dt><dd style="margin:0;font-weight:700">${sample.clayPct.toFixed(1)}%</dd><dt>Sand</dt><dd style="margin:0;font-weight:700">${sample.sandPct.toFixed(1)}%</dd></dl></div>`,
+      `<div style="min-width:180px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">${sourceLabel}, 0-30 cm depth-weighted.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Suitability</dt><dd style="margin:0;font-weight:700">${score}/100</dd><dt>pH H2O</dt><dd style="margin:0;font-weight:700">${sample.phH2O.toFixed(1)}</dd><dt>Soil C</dt><dd style="margin:0;font-weight:700">${sample.soilOrganicCarbonGkg.toFixed(1)} g/kg</dd><dt>Clay</dt><dd style="margin:0;font-weight:700">${sample.clayPct.toFixed(1)}%</dd><dt>Sand</dt><dd style="margin:0;font-weight:700">${sample.sandPct.toFixed(1)}%</dd></dl></div>`,
     );
     layer.on({
-      click: () => onSelect(name),
+      click: () => onSelect(unitId ?? regionName),
       mouseover: (e) => {
         const l = e.target as { setStyle: (s: PathOptions) => void };
         l.setStyle({ fillOpacity: 0.68, weight: 3 });
@@ -266,9 +323,10 @@ export function DeforestationMap({
   };
 
   const gbifStyle = (feature?: Feature): PathOptions => {
-    const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
-    const gbif = gbifBiodiversityForRegion(name);
-    const active = name === selectedRegion;
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const gbif = adminLevel === "adm1" ? gbifBiodiversityForRegion(regionName) : gbifBiodiversityForAdm2(unitId) ?? gbifBiodiversityForRegion(regionName);
+    const active = unitId === selected || regionName === selectedRegion;
     return {
       fillColor: gbif ? gbifColor(gbif.occurrenceEvidenceScore) : "#737373",
       fillOpacity: active ? 0.6 : 0.44,
@@ -278,28 +336,39 @@ export function DeforestationMap({
   };
 
   const onEachGbifRegion = (feature: Feature, layer: Layer) => {
-    const name = (feature.properties as ZoneProps | undefined)?.shapeName ?? "";
-    const gbif = gbifBiodiversityForRegion(name);
+    const props = feature.properties as ZoneProps | undefined;
+    const name = props?.shapeName ?? "";
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const adm2Gbif = adminLevel === "adm1" ? undefined : gbifBiodiversityForAdm2(unitId);
+    const gbif = adm2Gbif ?? gbifBiodiversityForRegion(regionName);
     if (!gbif) return;
 
-    const topPlants = gbif.topPlantSpecies
-      .slice(0, 3)
-      .map((sp) => `${sp.canonicalName ?? sp.scientificName} (${sp.count.toLocaleString()})`)
-      .join("<br/>");
-    const topBirds = gbif.topBirdSpecies
-      .slice(0, 3)
-      .map((sp) => `${sp.canonicalName ?? sp.scientificName} (${sp.count.toLocaleString()})`)
-      .join("<br/>");
+    const sourceLabel = adm2Gbif ? "ADM2 GBIF bounding-box counts" : "ADM1 GBIF bounding-box counts";
+    const topPlants =
+      "topPlantSpecies" in gbif
+        ? gbif.topPlantSpecies
+            .slice(0, 3)
+            .map((sp) => `${sp.canonicalName ?? sp.scientificName} (${sp.count.toLocaleString()})`)
+            .join("<br/>")
+        : "";
+    const topBirds =
+      "topBirdSpecies" in gbif
+        ? gbif.topBirdSpecies
+            .slice(0, 3)
+            .map((sp) => `${sp.canonicalName ?? sp.scientificName} (${sp.count.toLocaleString()})`)
+            .join("<br/>")
+        : "";
 
     layer.bindTooltip(
-      `<div style="font-family:inherit"><strong>${name}</strong><br/>GBIF evidence: ${gbif.occurrenceEvidenceScore}/100<br/>Plants: ${gbif.plantOccurrences.toLocaleString()} · Birds: ${gbif.birdOccurrences.toLocaleString()}</div>`,
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>${sourceLabel}<br/>GBIF evidence: ${gbif.occurrenceEvidenceScore}/100<br/>Plants: ${gbif.plantOccurrences.toLocaleString()} · Birds: ${gbif.birdOccurrences.toLocaleString()}</div>`,
       { sticky: true, className: "deforest-tooltip" },
     );
     layer.bindPopup(
-      `<div style="min-width:230px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">Real GBIF coordinated occurrences, queried by ADM1 bounding box.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Evidence</dt><dd style="margin:0;font-weight:700">${gbif.occurrenceEvidenceScore}/100</dd><dt>All records</dt><dd style="margin:0;font-weight:700">${gbif.allOccurrences.toLocaleString()}</dd><dt>Plants</dt><dd style="margin:0;font-weight:700">${gbif.plantOccurrences.toLocaleString()}</dd><dt>Birds</dt><dd style="margin:0;font-weight:700">${gbif.birdOccurrences.toLocaleString()}</dd></dl><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;font-size:11px"><div><strong>Top plants</strong><br/>${topPlants}</div><div><strong>Top birds</strong><br/>${topBirds}</div></div><div style="margin-top:8px;color:#6b7280;font-size:10px">Not yet corrected for observer/sampling bias.</div></div>`,
+      `<div style="min-width:230px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">${sourceLabel}. Counts are real GBIF records.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Evidence</dt><dd style="margin:0;font-weight:700">${gbif.occurrenceEvidenceScore}/100</dd><dt>All records</dt><dd style="margin:0;font-weight:700">${gbif.allOccurrences.toLocaleString()}</dd><dt>Plants</dt><dd style="margin:0;font-weight:700">${gbif.plantOccurrences.toLocaleString()}</dd><dt>Birds</dt><dd style="margin:0;font-weight:700">${gbif.birdOccurrences.toLocaleString()}</dd></dl>${topPlants || topBirds ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;font-size:11px"><div><strong>Top plants</strong><br/>${topPlants}</div><div><strong>Top birds</strong><br/>${topBirds}</div></div>` : ""}<div style="margin-top:8px;color:#6b7280;font-size:10px">Not yet corrected for observer/sampling bias.</div></div>`,
     );
     layer.on({
-      click: () => onSelect(name),
+      click: () => onSelect(unitId ?? regionName),
       mouseover: (e) => {
         const l = e.target as { setStyle: (s: PathOptions) => void };
         l.setStyle({ fillOpacity: 0.7, weight: 3 });
@@ -312,9 +381,10 @@ export function DeforestationMap({
   };
 
   const livelihoodStyle = (feature?: Feature): PathOptions => {
-    const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
-    const livelihood = livelihoodPopulationForRegion(name);
-    const active = name === selectedRegion;
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const livelihood = adminLevel === "adm1" ? livelihoodPopulationForRegion(regionName) : livelihoodPopulationForAdm2(unitId) ?? livelihoodPopulationForRegion(regionName);
+    const active = unitId === selected || regionName === selectedRegion;
     return {
       fillColor: livelihood ? livelihoodColor(livelihood.livelihoodEvidenceScore) : "#737373",
       fillOpacity: active ? 0.62 : 0.46,
@@ -324,19 +394,24 @@ export function DeforestationMap({
   };
 
   const onEachLivelihoodRegion = (feature: Feature, layer: Layer) => {
-    const name = (feature.properties as ZoneProps | undefined)?.shapeName ?? "";
-    const livelihood = livelihoodPopulationForRegion(name);
+    const props = feature.properties as ZoneProps | undefined;
+    const name = props?.shapeName ?? "";
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const adm2Livelihood = adminLevel === "adm1" ? undefined : livelihoodPopulationForAdm2(unitId);
+    const livelihood = adm2Livelihood ?? livelihoodPopulationForRegion(regionName);
     if (!livelihood) return;
+    const sourceLabel = adm2Livelihood ? "ADM2 HDX/OCHA population aggregation" : "ADM1 HDX/OCHA population aggregation";
 
     layer.bindTooltip(
-      `<div style="font-family:inherit"><strong>${name}</strong><br/>Livelihood evidence: ${livelihood.livelihoodEvidenceScore}/100<br/>Population: ${livelihood.populationTotal.toLocaleString()}<br/>Density: ${livelihood.densityPerKm2.toFixed(1)}/km²</div>`,
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>${sourceLabel}<br/>Livelihood evidence: ${livelihood.livelihoodEvidenceScore}/100<br/>Population: ${livelihood.populationTotal.toLocaleString()}<br/>Density: ${livelihood.densityPerKm2.toFixed(1)}/km²</div>`,
       { sticky: true, className: "deforest-tooltip" },
     );
     layer.bindPopup(
-      `<div style="min-width:220px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">Real HDX/OCHA ADM3 projected population statistics, aggregated to focus region.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Evidence</dt><dd style="margin:0;font-weight:700">${livelihood.livelihoodEvidenceScore}/100</dd><dt>ADM3 units</dt><dd style="margin:0;font-weight:700">${livelihood.admin3Count.toLocaleString()}</dd><dt>Population</dt><dd style="margin:0;font-weight:700">${livelihood.populationTotal.toLocaleString()}</dd><dt>Density</dt><dd style="margin:0;font-weight:700">${livelihood.densityPerKm2.toFixed(1)}/km²</dd><dt>Children &lt;15</dt><dd style="margin:0;font-weight:700">${Math.round(livelihood.childShare * 100)}%</dd><dt>Women</dt><dd style="margin:0;font-weight:700">${Math.round(livelihood.femaleShare * 100)}%</dd><dt>Dependency</dt><dd style="margin:0;font-weight:700">${livelihood.dependencyRatio.toFixed(2)}</dd></dl></div>`,
+      `<div style="min-width:220px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">${sourceLabel}.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Evidence</dt><dd style="margin:0;font-weight:700">${livelihood.livelihoodEvidenceScore}/100</dd><dt>ADM3 units</dt><dd style="margin:0;font-weight:700">${livelihood.admin3Count.toLocaleString()}</dd><dt>Population</dt><dd style="margin:0;font-weight:700">${livelihood.populationTotal.toLocaleString()}</dd><dt>Density</dt><dd style="margin:0;font-weight:700">${livelihood.densityPerKm2.toFixed(1)}/km²</dd><dt>Children &lt;15</dt><dd style="margin:0;font-weight:700">${Math.round(livelihood.childShare * 100)}%</dd><dt>Women</dt><dd style="margin:0;font-weight:700">${Math.round(livelihood.femaleShare * 100)}%</dd><dt>Dependency</dt><dd style="margin:0;font-weight:700">${livelihood.dependencyRatio.toFixed(2)}</dd></dl></div>`,
     );
     layer.on({
-      click: () => onSelect(name),
+      click: () => onSelect(unitId ?? regionName),
       mouseover: (e) => {
         const l = e.target as { setStyle: (s: PathOptions) => void };
         l.setStyle({ fillOpacity: 0.72, weight: 3 });
@@ -397,7 +472,7 @@ export function DeforestationMap({
           onEachFeature={onEachZone}
         />
       )}
-      {adminLevel !== "adm1" && regions && selectedRegion && (
+      {adminLevel === "adm3" && regions && selectedRegion && (
         <GeoJSON
           key={`selected-region-${selectedRegion}`}
           data={{
@@ -413,26 +488,26 @@ export function DeforestationMap({
           })}
         />
       )}
-      {overlayMode === "soil" && soilRegionData && (
+      {overlayMode === "soil" && soilOverlayData && (
         <GeoJSON
           key={`soil-regions-${selected ?? "none"}`}
-          data={soilRegionData}
+          data={soilOverlayData}
           style={soilStyle}
           onEachFeature={onEachSoilRegion}
         />
       )}
-      {overlayMode === "gbif" && gbifRegionData && (
+      {overlayMode === "gbif" && gbifOverlayData && (
         <GeoJSON
           key={`gbif-regions-${selected ?? "none"}`}
-          data={gbifRegionData}
+          data={gbifOverlayData}
           style={gbifStyle}
           onEachFeature={onEachGbifRegion}
         />
       )}
-      {overlayMode === "livelihood" && livelihoodRegionData && (
+      {overlayMode === "livelihood" && livelihoodOverlayData && (
         <GeoJSON
           key={`livelihood-regions-${selected ?? "none"}`}
-          data={livelihoodRegionData}
+          data={livelihoodOverlayData}
           style={livelihoodStyle}
           onEachFeature={onEachLivelihoodRegion}
         />
@@ -492,7 +567,7 @@ export function DeforestationMap({
             </CircleMarker>
           );
         })}
-      <ZoomToSelection data={regions} selected={selectedRegion} />
+      <ZoomToSelection data={boundaryData} selected={selected} adminLevel={adminLevel} />
       <div className="leaflet-top leaflet-right" style={{ pointerEvents: "none" }}>
         <div
           className="leaflet-control leaflet-bar"

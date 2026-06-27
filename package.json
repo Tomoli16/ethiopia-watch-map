@@ -9,6 +9,8 @@
     "build:dev": "vite build --mode development",
     "data:fetch": "node scripts/fetch-real-datasets.mjs",
     "data:fetch:gbif": "node scripts/fetch-gbif-biodiversity.mjs",
+    "data:fetch:gbif:adm2": "node scripts/fetch-gbif-adm2-biodiversity.mjs",
+    "data:fetch:soilgrids:adm2": "node scripts/fetch-soilgrids-adm2-samples.mjs",
     "data:build:livelihood": "node scripts/build-livelihood-population.mjs",
     "data:build:livelihood:adm2": "node scripts/build-livelihood-adm2.mjs",
     "preview": "vite preview",

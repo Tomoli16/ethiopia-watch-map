@@ -1,0 +1,717 @@
+export interface GbifAdm2Biodiversity {
+  id: string;
+  region: string;
+  zone: string;
+  boundaryZone: string;
+  fetchedAt: string;
+  geometryNote: string;
+  allOccurrences: number;
+  plantOccurrences: number;
+  birdOccurrences: number;
+  occurrenceEvidenceScore: number;
+  sourceUrls: Record<string, string>;
+}
+
+export const GBIF_ADM2_BIODIVERSITY: Record<string, GbifAdm2Biodiversity> = {
+  "Gambela__Agnewak": {
+    "id": "Gambela__Agnewak",
+    "region": "Gambela",
+    "zone": "Agnewak",
+    "boundaryZone": "Agnuak",
+    "fetchedAt": "2026-06-27T20:50:10.462Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 13322,
+    "plantOccurrences": 4058,
+    "birdOccurrences": 7565,
+    "occurrenceEvidenceScore": 89,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2833.44043081256747+6.281550931800648%2C35.200219667049396+6.281550931800648%2C35.200219667049396+8.709916498141311%2C33.44043081256747+8.709916498141311%2C33.44043081256747+6.281550931800648%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2833.44043081256747+6.281550931800648%2C35.200219667049396+6.281550931800648%2C35.200219667049396+8.709916498141311%2C33.44043081256747+8.709916498141311%2C33.44043081256747+6.281550931800648%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2833.44043081256747+6.281550931800648%2C35.200219667049396+6.281550931800648%2C35.200219667049396+8.709916498141311%2C33.44043081256747+8.709916498141311%2C33.44043081256747+6.281550931800648%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Halaba": {
+    "id": "SNNPR__Halaba",
+    "region": "SNNPR",
+    "zone": "Halaba",
+    "boundaryZone": "Alaba",
+    "fetchedAt": "2026-06-27T20:50:16.163Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 2033,
+    "plantOccurrences": 178,
+    "birdOccurrences": 1687,
+    "occurrenceEvidenceScore": 68,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.985885824719126+7.208299449091226%2C38.43037128513457+7.208299449091226%2C38.43037128513457+7.611449364138982%2C37.985885824719126+7.611449364138982%2C37.985885824719126+7.208299449091226%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.985885824719126+7.208299449091226%2C38.43037128513457+7.208299449091226%2C38.43037128513457+7.611449364138982%2C37.985885824719126+7.611449364138982%2C37.985885824719126+7.208299449091226%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.985885824719126+7.208299449091226%2C38.43037128513457+7.208299449091226%2C38.43037128513457+7.611449364138982%2C37.985885824719126+7.611449364138982%2C37.985885824719126+7.208299449091226%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__Arsi": {
+    "id": "Oromia__Arsi",
+    "region": "Oromia",
+    "zone": "Arsi",
+    "boundaryZone": "Arsi",
+    "fetchedAt": "2026-06-27T20:50:21.762Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 195058,
+    "plantOccurrences": 16941,
+    "birdOccurrences": 170303,
+    "occurrenceEvidenceScore": 100,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.68776471255262+7.15435819501573%2C40.71717793729459+7.15435819501573%2C40.71717793729459+8.863218784502921%2C38.68776471255262+8.863218784502921%2C38.68776471255262+7.15435819501573%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.68776471255262+7.15435819501573%2C40.71717793729459+7.15435819501573%2C40.71717793729459+8.863218784502921%2C38.68776471255262+8.863218784502921%2C38.68776471255262+7.15435819501573%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.68776471255262+7.15435819501573%2C40.71717793729459+7.15435819501573%2C40.71717793729459+8.863218784502921%2C38.68776471255262+8.863218784502921%2C38.68776471255262+7.15435819501573%29%29&limit=0&classKey=212"
+    }
+  },
+  "Beneshangul Gumu__Assosa": {
+    "id": "Beneshangul Gumu__Assosa",
+    "region": "Beneshangul Gumu",
+    "zone": "Assosa",
+    "boundaryZone": "Asosa",
+    "fetchedAt": "2026-06-27T20:50:28.182Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 2916,
+    "plantOccurrences": 1679,
+    "birdOccurrences": 1073,
+    "occurrenceEvidenceScore": 75,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.10146842275419+8.963296269865472%2C35.349977295146196+8.963296269865472%2C35.349977295146196+10.901725204375074%2C34.10146842275419+10.901725204375074%2C34.10146842275419+8.963296269865472%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.10146842275419+8.963296269865472%2C35.349977295146196+8.963296269865472%2C35.349977295146196+10.901725204375074%2C34.10146842275419+10.901725204375074%2C34.10146842275419+8.963296269865472%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.10146842275419+8.963296269865472%2C35.349977295146196+8.963296269865472%2C35.349977295146196+10.901725204375074%2C34.10146842275419+10.901725204375074%2C34.10146842275419+8.963296269865472%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__Bale": {
+    "id": "Oromia__Bale",
+    "region": "Oromia",
+    "zone": "Bale",
+    "boundaryZone": "Bale",
+    "fetchedAt": "2026-06-27T20:50:34.669Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 114343,
+    "plantOccurrences": 24579,
+    "birdOccurrences": 74138,
+    "occurrenceEvidenceScore": 100,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2839.21844316385255+5.35474586238024%2C42.21076232350536+5.35474586238024%2C42.21076232350536+8.148550956524268%2C39.21844316385255+8.148550956524268%2C39.21844316385255+5.35474586238024%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2839.21844316385255+5.35474586238024%2C42.21076232350536+5.35474586238024%2C42.21076232350536+8.148550956524268%2C39.21844316385255+8.148550956524268%2C39.21844316385255+5.35474586238024%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2839.21844316385255+5.35474586238024%2C42.21076232350536+5.35474586238024%2C42.21076232350536+8.148550956524268%2C39.21844316385255+8.148550956524268%2C39.21844316385255+5.35474586238024%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Basketo": {
+    "id": "SNNPR__Basketo",
+    "region": "SNNPR",
+    "zone": "Basketo",
+    "boundaryZone": "Basketo",
+    "fetchedAt": "2026-06-27T20:50:40.599Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 62,
+    "plantOccurrences": 28,
+    "birdOccurrences": 18,
+    "occurrenceEvidenceScore": 35,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.399003201090494+6.142840359977141%2C36.69005991849896+6.142840359977141%2C36.69005991849896+6.386860477102335%2C36.399003201090494+6.386860477102335%2C36.399003201090494+6.142840359977141%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.399003201090494+6.142840359977141%2C36.69005991849896+6.142840359977141%2C36.69005991849896+6.386860477102335%2C36.399003201090494+6.386860477102335%2C36.399003201090494+6.142840359977141%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.399003201090494+6.142840359977141%2C36.69005991849896+6.142840359977141%2C36.69005991849896+6.386860477102335%2C36.399003201090494+6.386860477102335%2C36.399003201090494+6.142840359977141%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Bench Sheko": {
+    "id": "SNNPR__Bench Sheko",
+    "region": "SNNPR",
+    "zone": "Bench Sheko",
+    "boundaryZone": "Bench Maji",
+    "fetchedAt": "2026-06-27T20:50:47.091Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 4825,
+    "plantOccurrences": 2886,
+    "birdOccurrences": 1178,
+    "occurrenceEvidenceScore": 78,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.87783013638691+5.33033978271642%2C36.134412247228305+5.33033978271642%2C36.134412247228305+7.23523553909201%2C34.87783013638691+7.23523553909201%2C34.87783013638691+5.33033978271642%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.87783013638691+5.33033978271642%2C36.134412247228305+5.33033978271642%2C36.134412247228305+7.23523553909201%2C34.87783013638691+7.23523553909201%2C34.87783013638691+5.33033978271642%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.87783013638691+5.33033978271642%2C36.134412247228305+5.33033978271642%2C36.134412247228305+7.23523553909201%2C34.87783013638691+7.23523553909201%2C34.87783013638691+5.33033978271642%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__Borena": {
+    "id": "Oromia__Borena",
+    "region": "Oromia",
+    "zone": "Borena",
+    "boundaryZone": "Borena",
+    "fetchedAt": "2026-06-27T20:50:53.734Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 129144,
+    "plantOccurrences": 19550,
+    "birdOccurrences": 98313,
+    "occurrenceEvidenceScore": 100,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.64719372658588+3.511191788152185%2C39.746751949840515+3.511191788152185%2C39.746751949840515+6.597329582184396%2C36.64719372658588+6.597329582184396%2C36.64719372658588+3.511191788152185%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.64719372658588+3.511191788152185%2C39.746751949840515+3.511191788152185%2C39.746751949840515+6.597329582184396%2C36.64719372658588+6.597329582184396%2C36.64719372658588+3.511191788152185%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.64719372658588+3.511191788152185%2C39.746751949840515+3.511191788152185%2C39.746751949840515+6.597329582184396%2C36.64719372658588+6.597329582184396%2C36.64719372658588+3.511191788152185%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Dawuro": {
+    "id": "SNNPR__Dawuro",
+    "region": "SNNPR",
+    "zone": "Dawuro",
+    "boundaryZone": "Dawro",
+    "fetchedAt": "2026-06-27T20:50:59.937Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 1269,
+    "plantOccurrences": 681,
+    "birdOccurrences": 157,
+    "occurrenceEvidenceScore": 63,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.68029534784988+6.591120337530308%2C37.53635050478887+6.591120337530308%2C37.53635050478887+7.344638444696382%2C36.68029534784988+7.344638444696382%2C36.68029534784988+6.591120337530308%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.68029534784988+6.591120337530308%2C37.53635050478887+6.591120337530308%2C37.53635050478887+7.344638444696382%2C36.68029534784988+7.344638444696382%2C36.68029534784988+6.591120337530308%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.68029534784988+6.591120337530308%2C37.53635050478887+6.591120337530308%2C37.53635050478887+7.344638444696382%2C36.68029534784988+7.344638444696382%2C36.68029534784988+6.591120337530308%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__East Hararge": {
+    "id": "Oromia__East Hararge",
+    "region": "Oromia",
+    "zone": "East Hararge",
+    "boundaryZone": "East Harerge",
+    "fetchedAt": "2026-06-27T20:51:06.619Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 30124,
+    "plantOccurrences": 26937,
+    "birdOccurrences": 1667,
+    "occurrenceEvidenceScore": 90,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2841.17546380389623+7.516115323396505%2C42.98077820122813+7.516115323396505%2C42.98077820122813+9.777515212842083%2C41.17546380389623+9.777515212842083%2C41.17546380389623+7.516115323396505%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2841.17546380389623+7.516115323396505%2C42.98077820122813+7.516115323396505%2C42.98077820122813+9.777515212842083%2C41.17546380389623+9.777515212842083%2C41.17546380389623+7.516115323396505%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2841.17546380389623+7.516115323396505%2C42.98077820122813+7.516115323396505%2C42.98077820122813+9.777515212842083%2C41.17546380389623+9.777515212842083%2C41.17546380389623+7.516115323396505%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__East Shewa": {
+    "id": "Oromia__East Shewa",
+    "region": "Oromia",
+    "zone": "East Shewa",
+    "boundaryZone": "East Shewa",
+    "fetchedAt": "2026-06-27T20:51:13.242Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 273804,
+    "plantOccurrences": 23014,
+    "birdOccurrences": 238077,
+    "occurrenceEvidenceScore": 100,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.40165250705207+7.570629664856178%2C40.067820730577985+7.570629664856178%2C40.067820730577985+9.150299468909102%2C38.40165250705207+9.150299468909102%2C38.40165250705207+7.570629664856178%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.40165250705207+7.570629664856178%2C40.067820730577985+7.570629664856178%2C40.067820730577985+9.150299468909102%2C38.40165250705207+9.150299468909102%2C38.40165250705207+7.570629664856178%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.40165250705207+7.570629664856178%2C40.067820730577985+7.570629664856178%2C40.067820730577985+9.150299468909102%2C38.40165250705207+9.150299468909102%2C38.40165250705207+7.570629664856178%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__East Wellega": {
+    "id": "Oromia__East Wellega",
+    "region": "Oromia",
+    "zone": "East Wellega",
+    "boundaryZone": "East Wellega",
+    "fetchedAt": "2026-06-27T20:51:19.639Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 7770,
+    "plantOccurrences": 4990,
+    "birdOccurrences": 2052,
+    "occurrenceEvidenceScore": 84,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.10606773395382+8.512128712678866%2C37.187818413312854+8.512128712678866%2C37.187818413312854+10.368239242574752%2C36.10606773395382+10.368239242574752%2C36.10606773395382+8.512128712678866%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.10606773395382+8.512128712678866%2C37.187818413312854+8.512128712678866%2C37.187818413312854+10.368239242574752%2C36.10606773395382+10.368239242574752%2C36.10606773395382+8.512128712678866%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.10606773395382+8.512128712678866%2C37.187818413312854+8.512128712678866%2C37.187818413312854+10.368239242574752%2C36.10606773395382+10.368239242574752%2C36.10606773395382+8.512128712678866%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Gamo": {
+    "id": "SNNPR__Gamo",
+    "region": "SNNPR",
+    "zone": "Gamo",
+    "boundaryZone": "Gamo Gofa",
+    "fetchedAt": "2026-06-27T20:51:26.552Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 17868,
+    "plantOccurrences": 5282,
+    "birdOccurrences": 8626,
+    "occurrenceEvidenceScore": 91,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.37203339727804+5.618657589926983%2C37.85296909922621+5.618657589926983%2C37.85296909922621+6.712040832082367%2C36.37203339727804+6.712040832082367%2C36.37203339727804+5.618657589926983%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.37203339727804+5.618657589926983%2C37.85296909922621+5.618657589926983%2C37.85296909922621+6.712040832082367%2C36.37203339727804+6.712040832082367%2C36.37203339727804+5.618657589926983%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.37203339727804+5.618657589926983%2C37.85296909922621+5.618657589926983%2C37.85296909922621+6.712040832082367%2C36.37203339727804+6.712040832082367%2C36.37203339727804+5.618657589926983%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Gedeo": {
+    "id": "SNNPR__Gedeo",
+    "region": "SNNPR",
+    "zone": "Gedeo",
+    "boundaryZone": "Gedio",
+    "fetchedAt": "2026-06-27T20:51:33.233Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 2703,
+    "plantOccurrences": 1128,
+    "birdOccurrences": 1435,
+    "occurrenceEvidenceScore": 74,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.08068168989011+5.839937636176161%2C38.43979809790627+5.839937636176161%2C38.43979809790627+6.41697501309182%2C38.08068168989011+6.41697501309182%2C38.08068168989011+5.839937636176161%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.08068168989011+5.839937636176161%2C38.43979809790627+5.839937636176161%2C38.43979809790627+6.41697501309182%2C38.08068168989011+6.41697501309182%2C38.08068168989011+5.839937636176161%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.08068168989011+5.839937636176161%2C38.43979809790627+5.839937636176161%2C38.43979809790627+6.41697501309182%2C38.08068168989011+6.41697501309182%2C38.08068168989011+5.839937636176161%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__Guji": {
+    "id": "Oromia__Guji",
+    "region": "Oromia",
+    "zone": "Guji",
+    "boundaryZone": "Guji",
+    "fetchedAt": "2026-06-27T20:51:40.089Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 53418,
+    "plantOccurrences": 6957,
+    "birdOccurrences": 44352,
+    "occurrenceEvidenceScore": 97,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.27253245004713+4.656939257322584%2C40.034541236810085+4.656939257322584%2C40.034541236810085+6.441727914540871%2C38.27253245004713+6.441727914540871%2C38.27253245004713+4.656939257322584%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.27253245004713+4.656939257322584%2C40.034541236810085+4.656939257322584%2C40.034541236810085+6.441727914540871%2C38.27253245004713+6.441727914540871%2C38.27253245004713+4.656939257322584%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.27253245004713+4.656939257322584%2C40.034541236810085+4.656939257322584%2C40.034541236810085+6.441727914540871%2C38.27253245004713+6.441727914540871%2C38.27253245004713+4.656939257322584%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Guraghe": {
+    "id": "SNNPR__Guraghe",
+    "region": "SNNPR",
+    "zone": "Guraghe",
+    "boundaryZone": "Gurage",
+    "fetchedAt": "2026-06-27T20:51:46.886Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 15910,
+    "plantOccurrences": 2694,
+    "birdOccurrences": 11836,
+    "occurrenceEvidenceScore": 89,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.46338195818419+7.753139311445268%2C38.7168545141667+7.753139311445268%2C38.7168545141667+8.458712666907726%2C37.46338195818419+8.458712666907726%2C37.46338195818419+7.753139311445268%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.46338195818419+7.753139311445268%2C38.7168545141667+7.753139311445268%2C38.7168545141667+8.458712666907726%2C37.46338195818419+8.458712666907726%2C37.46338195818419+7.753139311445268%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.46338195818419+7.753139311445268%2C38.7168545141667+7.753139311445268%2C38.7168545141667+8.458712666907726%2C37.46338195818419+8.458712666907726%2C37.46338195818419+7.753139311445268%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Hadiya": {
+    "id": "SNNPR__Hadiya",
+    "region": "SNNPR",
+    "zone": "Hadiya",
+    "boundaryZone": "Hadiya",
+    "fetchedAt": "2026-06-27T20:51:53.191Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 2555,
+    "plantOccurrences": 1296,
+    "birdOccurrences": 953,
+    "occurrenceEvidenceScore": 73,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.33196084004001+7.062985477126849%2C38.12185424817147+7.062985477126849%2C38.12185424817147+7.916370892366323%2C37.33196084004001+7.916370892366323%2C37.33196084004001+7.062985477126849%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.33196084004001+7.062985477126849%2C38.12185424817147+7.062985477126849%2C38.12185424817147+7.916370892366323%2C37.33196084004001+7.916370892366323%2C37.33196084004001+7.062985477126849%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.33196084004001+7.062985477126849%2C38.12185424817147+7.062985477126849%2C38.12185424817147+7.916370892366323%2C37.33196084004001+7.916370892366323%2C37.33196084004001+7.062985477126849%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__Horo Gudru Wellega": {
+    "id": "Oromia__Horo Gudru Wellega",
+    "region": "Oromia",
+    "zone": "Horo Gudru Wellega",
+    "boundaryZone": "Horo Guduru",
+    "fetchedAt": "2026-06-27T20:51:59.444Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 1261,
+    "plantOccurrences": 682,
+    "birdOccurrences": 423,
+    "occurrenceEvidenceScore": 66,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.65200034616731+9.157919367174156%2C37.67531131300107+9.157919367174156%2C37.67531131300107+10.343402319357356%2C36.65200034616731+10.343402319357356%2C36.65200034616731+9.157919367174156%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.65200034616731+9.157919367174156%2C37.67531131300107+9.157919367174156%2C37.67531131300107+10.343402319357356%2C36.65200034616731+10.343402319357356%2C36.65200034616731+9.157919367174156%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.65200034616731+9.157919367174156%2C37.67531131300107+9.157919367174156%2C37.67531131300107+10.343402319357356%2C36.65200034616731+10.343402319357356%2C36.65200034616731+9.157919367174156%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__Ilu Aba Bora": {
+    "id": "Oromia__Ilu Aba Bora",
+    "region": "Oromia",
+    "zone": "Ilu Aba Bora",
+    "boundaryZone": "Ilubabor",
+    "fetchedAt": "2026-06-27T20:52:06.076Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 15856,
+    "plantOccurrences": 7323,
+    "birdOccurrences": 3517,
+    "occurrenceEvidenceScore": 89,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.9327277258259+7.646263195236756%2C36.82056549152522+7.646263195236756%2C36.82056549152522+9.081074917462827%2C34.9327277258259+9.081074917462827%2C34.9327277258259+7.646263195236756%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.9327277258259+7.646263195236756%2C36.82056549152522+7.646263195236756%2C36.82056549152522+9.081074917462827%2C34.9327277258259+9.081074917462827%2C34.9327277258259+7.646263195236756%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.9327277258259+7.646263195236756%2C36.82056549152522+7.646263195236756%2C36.82056549152522+9.081074917462827%2C34.9327277258259+9.081074917462827%2C34.9327277258259+7.646263195236756%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__Jimma": {
+    "id": "Oromia__Jimma",
+    "region": "Oromia",
+    "zone": "Jimma",
+    "boundaryZone": "Jimma",
+    "fetchedAt": "2026-06-27T20:52:12.875Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 41129,
+    "plantOccurrences": 21670,
+    "birdOccurrences": 11976,
+    "occurrenceEvidenceScore": 97,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.84938989006271+7.22570045055866%2C37.62469865048416+7.22570045055866%2C37.62469865048416+8.873164883138937%2C35.84938989006271+8.873164883138937%2C35.84938989006271+7.22570045055866%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.84938989006271+7.22570045055866%2C37.62469865048416+7.22570045055866%2C37.62469865048416+8.873164883138937%2C35.84938989006271+8.873164883138937%2C35.84938989006271+7.22570045055866%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.84938989006271+7.22570045055866%2C37.62469865048416+7.22570045055866%2C37.62469865048416+8.873164883138937%2C35.84938989006271+8.873164883138937%2C35.84938989006271+7.22570045055866%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Kefa": {
+    "id": "SNNPR__Kefa",
+    "region": "SNNPR",
+    "zone": "Kefa",
+    "boundaryZone": "Keffa",
+    "fetchedAt": "2026-06-27T20:52:19.351Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 25611,
+    "plantOccurrences": 17304,
+    "birdOccurrences": 3294,
+    "occurrenceEvidenceScore": 92,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.48193945762852+6.238810987954315%2C36.785018254545975+6.238810987954315%2C36.785018254545975+8.083556340106792%2C35.48193945762852+8.083556340106792%2C35.48193945762852+6.238810987954315%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.48193945762852+6.238810987954315%2C36.785018254545975+6.238810987954315%2C36.785018254545975+8.083556340106792%2C35.48193945762852+8.083556340106792%2C35.48193945762852+6.238810987954315%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.48193945762852+6.238810987954315%2C36.785018254545975+6.238810987954315%2C36.785018254545975+8.083556340106792%2C35.48193945762852+8.083556340106792%2C35.48193945762852+6.238810987954315%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__Kelem Wellega": {
+    "id": "Oromia__Kelem Wellega",
+    "region": "Oromia",
+    "zone": "Kelem Wellega",
+    "boundaryZone": "Kelem Wellega",
+    "fetchedAt": "2026-06-27T20:52:25.770Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 5789,
+    "plantOccurrences": 1904,
+    "birdOccurrences": 3319,
+    "occurrenceEvidenceScore": 81,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.14023202111278+8.24846544557912%2C35.430889131778535+8.24846544557912%2C35.430889131778535+9.368680160053826%2C34.14023202111278+9.368680160053826%2C34.14023202111278+8.24846544557912%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.14023202111278+8.24846544557912%2C35.430889131778535+8.24846544557912%2C35.430889131778535+9.368680160053826%2C34.14023202111278+9.368680160053826%2C34.14023202111278+8.24846544557912%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.14023202111278+8.24846544557912%2C35.430889131778535+8.24846544557912%2C35.430889131778535+9.368680160053826%2C34.14023202111278+9.368680160053826%2C34.14023202111278+8.24846544557912%29%29&limit=0&classKey=212"
+    }
+  },
+  "Beneshangul Gumu__Kamashi": {
+    "id": "Beneshangul Gumu__Kamashi",
+    "region": "Beneshangul Gumu",
+    "zone": "Kamashi",
+    "boundaryZone": "Kemashi",
+    "fetchedAt": "2026-06-27T20:52:32.321Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 7554,
+    "plantOccurrences": 4809,
+    "birdOccurrences": 2246,
+    "occurrenceEvidenceScore": 84,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.95733923386581+8.95124860176291%2C36.6929872073579+8.95124860176291%2C36.6929872073579+11.2301634997496%2C34.95733923386581+11.2301634997496%2C34.95733923386581+8.95124860176291%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.95733923386581+8.95124860176291%2C36.6929872073579+8.95124860176291%2C36.6929872073579+11.2301634997496%2C34.95733923386581+11.2301634997496%2C34.95733923386581+8.95124860176291%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.95733923386581+8.95124860176291%2C36.6929872073579+8.95124860176291%2C36.6929872073579+11.2301634997496%2C34.95733923386581+11.2301634997496%2C34.95733923386581+8.95124860176291%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Konta Special": {
+    "id": "SNNPR__Konta Special",
+    "region": "SNNPR",
+    "zone": "Konta Special",
+    "boundaryZone": "Konta",
+    "fetchedAt": "2026-06-27T20:52:38.708Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 1635,
+    "plantOccurrences": 892,
+    "birdOccurrences": 407,
+    "occurrenceEvidenceScore": 67,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.32190315333714+6.452910905534699%2C36.96659428110714+6.452910905534699%2C36.96659428110714+7.330890137666423%2C36.32190315333714+7.330890137666423%2C36.32190315333714+6.452910905534699%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.32190315333714+6.452910905534699%2C36.96659428110714+6.452910905534699%2C36.96659428110714+7.330890137666423%2C36.32190315333714+7.330890137666423%2C36.32190315333714+6.452910905534699%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2836.32190315333714+6.452910905534699%2C36.96659428110714+6.452910905534699%2C36.96659428110714+7.330890137666423%2C36.32190315333714+7.330890137666423%2C36.32190315333714+6.452910905534699%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Kembata Tembaro": {
+    "id": "SNNPR__Kembata Tembaro",
+    "region": "SNNPR",
+    "zone": "Kembata Tembaro",
+    "boundaryZone": "KT",
+    "fetchedAt": "2026-06-27T20:52:45.001Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 699,
+    "plantOccurrences": 313,
+    "birdOccurrences": 198,
+    "occurrenceEvidenceScore": 59,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.34799965276287+7.144318017658812%2C38.058944680584055+7.144318017658812%2C38.058944680584055+7.474977530886242%2C37.34799965276287+7.474977530886242%2C37.34799965276287+7.144318017658812%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.34799965276287+7.144318017658812%2C38.058944680584055+7.144318017658812%2C38.058944680584055+7.474977530886242%2C37.34799965276287+7.474977530886242%2C37.34799965276287+7.144318017658812%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.34799965276287+7.144318017658812%2C38.058944680584055+7.144318017658812%2C38.058944680584055+7.474977530886242%2C37.34799965276287+7.474977530886242%2C37.34799965276287+7.144318017658812%29%29&limit=0&classKey=212"
+    }
+  },
+  "Gambela__Majang": {
+    "id": "Gambela__Majang",
+    "region": "Gambela",
+    "zone": "Majang",
+    "boundaryZone": "Majang",
+    "fetchedAt": "2026-06-27T20:52:51.292Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 956,
+    "plantOccurrences": 592,
+    "birdOccurrences": 48,
+    "occurrenceEvidenceScore": 57,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.83727106968253+7.100832813543093%2C35.39305851142094+7.100832813543093%2C35.39305851142094+7.749136460844459%2C34.83727106968253+7.749136460844459%2C34.83727106968253+7.100832813543093%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.83727106968253+7.100832813543093%2C35.39305851142094+7.100832813543093%2C35.39305851142094+7.749136460844459%2C34.83727106968253+7.749136460844459%2C34.83727106968253+7.100832813543093%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.83727106968253+7.100832813543093%2C35.39305851142094+7.100832813543093%2C35.39305851142094+7.749136460844459%2C34.83727106968253+7.749136460844459%2C34.83727106968253+7.100832813543093%29%29&limit=0&classKey=212"
+    }
+  },
+  "Beneshangul Gumu__Metekel": {
+    "id": "Beneshangul Gumu__Metekel",
+    "region": "Beneshangul Gumu",
+    "zone": "Metekel",
+    "boundaryZone": "Metekel",
+    "fetchedAt": "2026-06-27T20:52:57.665Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 1703,
+    "plantOccurrences": 1188,
+    "birdOccurrences": 368,
+    "occurrenceEvidenceScore": 68,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.92647063553171+9.944508631619888%2C36.5788127341155+9.944508631619888%2C36.5788127341155+11.985376722521396%2C34.92647063553171+11.985376722521396%2C34.92647063553171+9.944508631619888%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.92647063553171+9.944508631619888%2C36.5788127341155+9.944508631619888%2C36.5788127341155+11.985376722521396%2C34.92647063553171+11.985376722521396%2C34.92647063553171+9.944508631619888%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.92647063553171+9.944508631619888%2C36.5788127341155+9.944508631619888%2C36.5788127341155+11.985376722521396%2C34.92647063553171+11.985376722521396%2C34.92647063553171+9.944508631619888%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__North Shewa (OR)": {
+    "id": "Oromia__North Shewa (OR)",
+    "region": "Oromia",
+    "zone": "North Shewa (OR)",
+    "boundaryZone": "North Shewa(R4)",
+    "fetchedAt": "2026-06-27T20:53:04.419Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 167334,
+    "plantOccurrences": 15822,
+    "birdOccurrences": 147859,
+    "occurrenceEvidenceScore": 100,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.933104717823326+8.911396975288508%2C39.45472948571644+8.911396975288508%2C39.45472948571644+10.387792414097724%2C37.933104717823326+10.387792414097724%2C37.933104717823326+8.911396975288508%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.933104717823326+8.911396975288508%2C39.45472948571644+8.911396975288508%2C39.45472948571644+10.387792414097724%2C37.933104717823326+10.387792414097724%2C37.933104717823326+8.911396975288508%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.933104717823326+8.911396975288508%2C39.45472948571644+8.911396975288508%2C39.45472948571644+10.387792414097724%2C37.933104717823326+10.387792414097724%2C37.933104717823326+8.911396975288508%29%29&limit=0&classKey=212"
+    }
+  },
+  "Gambela__Nuwer": {
+    "id": "Gambela__Nuwer",
+    "region": "Gambela",
+    "zone": "Nuwer",
+    "boundaryZone": "Nuer",
+    "fetchedAt": "2026-06-27T20:53:10.701Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 578,
+    "plantOccurrences": 100,
+    "birdOccurrences": 446,
+    "occurrenceEvidenceScore": 57,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2833.00224221639699+7.70737538497069%2C34.082918323914214+7.70737538497069%2C34.082918323914214+8.518699608795663%2C33.00224221639699+8.518699608795663%2C33.00224221639699+7.70737538497069%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2833.00224221639699+7.70737538497069%2C34.082918323914214+7.70737538497069%2C34.082918323914214+8.518699608795663%2C33.00224221639699+8.518699608795663%2C33.00224221639699+7.70737538497069%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2833.00224221639699+7.70737538497069%2C34.082918323914214+7.70737538497069%2C34.082918323914214+8.518699608795663%2C33.00224221639699+8.518699608795663%2C33.00224221639699+7.70737538497069%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Segen Peoples'": {
+    "id": "SNNPR__Segen Peoples'",
+    "region": "SNNPR",
+    "zone": "Segen Peoples'",
+    "boundaryZone": "Segen Peoples'",
+    "fetchedAt": "2026-06-27T20:53:17.065Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 15096,
+    "plantOccurrences": 2546,
+    "birdOccurrences": 7378,
+    "occurrenceEvidenceScore": 88,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.004104248351275+5.156487518198104%2C38.08970162170301+5.156487518198104%2C38.08970162170301+6.012251403976111%2C37.004104248351275+6.012251403976111%2C37.004104248351275+5.156487518198104%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.004104248351275+5.156487518198104%2C38.08970162170301+5.156487518198104%2C38.08970162170301+6.012251403976111%2C37.004104248351275+6.012251403976111%2C37.004104248351275+5.156487518198104%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.004104248351275+5.156487518198104%2C38.08970162170301+5.156487518198104%2C38.08970162170301+6.012251403976111%2C37.004104248351275+6.012251403976111%2C37.004104248351275+5.156487518198104%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Siltie": {
+    "id": "SNNPR__Siltie",
+    "region": "SNNPR",
+    "zone": "Siltie",
+    "boundaryZone": "Selti",
+    "fetchedAt": "2026-06-27T20:53:23.523Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 3935,
+    "plantOccurrences": 1005,
+    "birdOccurrences": 2263,
+    "occurrenceEvidenceScore": 76,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.865154362757075+7.405710148177316%2C38.52898679886419+7.405710148177316%2C38.52898679886419+8.100685538208262%2C37.865154362757075+8.100685538208262%2C37.865154362757075+7.405710148177316%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.865154362757075+7.405710148177316%2C38.52898679886419+7.405710148177316%2C38.52898679886419+8.100685538208262%2C37.865154362757075+8.100685538208262%2C37.865154362757075+7.405710148177316%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.865154362757075+7.405710148177316%2C38.52898679886419+7.405710148177316%2C38.52898679886419+8.100685538208262%2C37.865154362757075+8.100685538208262%2C37.865154362757075+7.405710148177316%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Sheka": {
+    "id": "SNNPR__Sheka",
+    "region": "SNNPR",
+    "zone": "Sheka",
+    "boundaryZone": "Sheka",
+    "fetchedAt": "2026-06-27T20:53:29.860Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 2028,
+    "plantOccurrences": 1067,
+    "birdOccurrences": 130,
+    "occurrenceEvidenceScore": 65,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.11639082533913+7.119092988861229%2C35.664932412623045+7.119092988861229%2C35.664932412623045+7.896755040070315%2C35.11639082533913+7.896755040070315%2C35.11639082533913+7.119092988861229%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.11639082533913+7.119092988861229%2C35.664932412623045+7.119092988861229%2C35.664932412623045+7.896755040070315%2C35.11639082533913+7.896755040070315%2C35.11639082533913+7.119092988861229%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.11639082533913+7.119092988861229%2C35.664932412623045+7.119092988861229%2C35.664932412623045+7.896755040070315%2C35.11639082533913+7.896755040070315%2C35.11639082533913+7.119092988861229%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Sidama": {
+    "id": "SNNPR__Sidama",
+    "region": "SNNPR",
+    "zone": "Sidama",
+    "boundaryZone": "Sidama",
+    "fetchedAt": "2026-06-27T20:53:36.412Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 85923,
+    "plantOccurrences": 6051,
+    "birdOccurrences": 77034,
+    "occurrenceEvidenceScore": 98,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.90640405509221+6.138736834547315%2C39.13270136601689+6.138736834547315%2C39.13270136601689+7.165660002163865%2C37.90640405509221+7.165660002163865%2C37.90640405509221+6.138736834547315%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.90640405509221+6.138736834547315%2C39.13270136601689+6.138736834547315%2C39.13270136601689+7.165660002163865%2C37.90640405509221+7.165660002163865%2C37.90640405509221+6.138736834547315%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.90640405509221+6.138736834547315%2C39.13270136601689+6.138736834547315%2C39.13270136601689+7.165660002163865%2C37.90640405509221+7.165660002163865%2C37.90640405509221+6.138736834547315%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__South Omo": {
+    "id": "SNNPR__South Omo",
+    "region": "SNNPR",
+    "zone": "South Omo",
+    "boundaryZone": "South Omo",
+    "fetchedAt": "2026-06-27T20:53:43.067Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 12123,
+    "plantOccurrences": 2694,
+    "birdOccurrences": 5303,
+    "occurrenceEvidenceScore": 86,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.73656619689155+4.440605853664494%2C37.06372581370625+4.440605853664494%2C37.06372581370625+6.459780960077342%2C35.73656619689155+6.459780960077342%2C35.73656619689155+4.440605853664494%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.73656619689155+4.440605853664494%2C37.06372581370625+4.440605853664494%2C37.06372581370625+6.459780960077342%2C35.73656619689155+6.459780960077342%2C35.73656619689155+4.440605853664494%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2835.73656619689155+4.440605853664494%2C37.06372581370625+4.440605853664494%2C37.06372581370625+6.459780960077342%2C35.73656619689155+6.459780960077342%2C35.73656619689155+4.440605853664494%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__South West Shewa": {
+    "id": "Oromia__South West Shewa",
+    "region": "Oromia",
+    "zone": "South West Shewa",
+    "boundaryZone": "South West Shewa",
+    "fetchedAt": "2026-06-27T20:53:49.594Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 50039,
+    "plantOccurrences": 5400,
+    "birdOccurrences": 41591,
+    "occurrenceEvidenceScore": 96,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.53574384426248+8.255352162264723%2C38.7675213090106+8.255352162264723%2C38.7675213090106+9.015176151509738%2C37.53574384426248+9.015176151509738%2C37.53574384426248+8.255352162264723%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.53574384426248+8.255352162264723%2C38.7675213090106+8.255352162264723%2C38.7675213090106+9.015176151509738%2C37.53574384426248+9.015176151509738%2C37.53574384426248+8.255352162264723%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.53574384426248+8.255352162264723%2C38.7675213090106+8.255352162264723%2C38.7675213090106+9.015176151509738%2C37.53574384426248+9.015176151509738%2C37.53574384426248+8.255352162264723%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__West Arsi": {
+    "id": "Oromia__West Arsi",
+    "region": "Oromia",
+    "zone": "West Arsi",
+    "boundaryZone": "West Arsi",
+    "fetchedAt": "2026-06-27T20:53:56.144Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 224937,
+    "plantOccurrences": 17920,
+    "birdOccurrences": 193250,
+    "occurrenceEvidenceScore": 100,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.06224843784271+6.292125488638816%2C39.7715095369883+6.292125488638816%2C39.7715095369883+7.706948604452058%2C38.06224843784271+7.706948604452058%2C38.06224843784271+6.292125488638816%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.06224843784271+6.292125488638816%2C39.7715095369883+6.292125488638816%2C39.7715095369883+7.706948604452058%2C38.06224843784271+7.706948604452058%2C38.06224843784271+6.292125488638816%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2838.06224843784271+6.292125488638816%2C39.7715095369883+6.292125488638816%2C39.7715095369883+7.706948604452058%2C38.06224843784271+7.706948604452058%2C38.06224843784271+6.292125488638816%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__West Hararge": {
+    "id": "Oromia__West Hararge",
+    "region": "Oromia",
+    "zone": "West Hararge",
+    "boundaryZone": "West Harerge",
+    "fetchedAt": "2026-06-27T20:54:02.732Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 68872,
+    "plantOccurrences": 5246,
+    "birdOccurrences": 61557,
+    "occurrenceEvidenceScore": 97,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2840.02604387649347+7.879353467864032%2C41.57096040663846+7.879353467864032%2C41.57096040663846+9.481989311993148%2C40.02604387649347+9.481989311993148%2C40.02604387649347+7.879353467864032%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2840.02604387649347+7.879353467864032%2C41.57096040663846+7.879353467864032%2C41.57096040663846+9.481989311993148%2C40.02604387649347+9.481989311993148%2C40.02604387649347+7.879353467864032%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2840.02604387649347+7.879353467864032%2C41.57096040663846+7.879353467864032%2C41.57096040663846+9.481989311993148%2C40.02604387649347+9.481989311993148%2C40.02604387649347+7.879353467864032%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__West Shewa": {
+    "id": "Oromia__West Shewa",
+    "region": "Oromia",
+    "zone": "West Shewa",
+    "boundaryZone": "West Shewa",
+    "fetchedAt": "2026-06-27T20:54:09.499Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 36188,
+    "plantOccurrences": 10856,
+    "birdOccurrences": 21272,
+    "occurrenceEvidenceScore": 96,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.02813490670279+8.312801111301837%2C38.71004119146281+8.312801111301837%2C38.71004119146281+9.936743386052472%2C37.02813490670279+9.936743386052472%2C37.02813490670279+8.312801111301837%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.02813490670279+8.312801111301837%2C38.71004119146281+8.312801111301837%2C38.71004119146281+9.936743386052472%2C37.02813490670279+9.936743386052472%2C37.02813490670279+8.312801111301837%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.02813490670279+8.312801111301837%2C38.71004119146281+8.312801111301837%2C38.71004119146281+9.936743386052472%2C37.02813490670279+9.936743386052472%2C37.02813490670279+8.312801111301837%29%29&limit=0&classKey=212"
+    }
+  },
+  "Oromia__West Wellega": {
+    "id": "Oromia__West Wellega",
+    "region": "Oromia",
+    "zone": "West Wellega",
+    "boundaryZone": "West Wellega",
+    "fetchedAt": "2026-06-27T20:54:15.834Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 2930,
+    "plantOccurrences": 1773,
+    "birdOccurrences": 958,
+    "occurrenceEvidenceScore": 74,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.34161638520012+8.661909210577486%2C36.05438913115099+8.661909210577486%2C36.05438913115099+9.997732989168725%2C34.34161638520012+9.997732989168725%2C34.34161638520012+8.661909210577486%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.34161638520012+8.661909210577486%2C36.05438913115099+8.661909210577486%2C36.05438913115099+9.997732989168725%2C34.34161638520012+9.997732989168725%2C34.34161638520012+8.661909210577486%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2834.34161638520012+8.661909210577486%2C36.05438913115099+8.661909210577486%2C36.05438913115099+9.997732989168725%2C34.34161638520012+9.997732989168725%2C34.34161638520012+8.661909210577486%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Wolayita": {
+    "id": "SNNPR__Wolayita",
+    "region": "SNNPR",
+    "zone": "Wolayita",
+    "boundaryZone": "Wolayita",
+    "fetchedAt": "2026-06-27T20:54:22.174Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 4365,
+    "plantOccurrences": 2286,
+    "birdOccurrences": 1760,
+    "occurrenceEvidenceScore": 79,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.22493817466698+6.511838714111177%2C38.13023316662645+6.511838714111177%2C38.13023316662645+7.188620333255556%2C37.22493817466698+7.188620333255556%2C37.22493817466698+6.511838714111177%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.22493817466698+6.511838714111177%2C38.13023316662645+6.511838714111177%2C38.13023316662645+7.188620333255556%2C37.22493817466698+7.188620333255556%2C37.22493817466698+6.511838714111177%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.22493817466698+6.511838714111177%2C38.13023316662645+6.511838714111177%2C38.13023316662645+7.188620333255556%2C37.22493817466698+7.188620333255556%2C37.22493817466698+6.511838714111177%29%29&limit=0&classKey=212"
+    }
+  },
+  "SNNPR__Yem Special": {
+    "id": "SNNPR__Yem Special",
+    "region": "SNNPR",
+    "zone": "Yem Special",
+    "boundaryZone": "Yem",
+    "fetchedAt": "2026-06-27T20:54:28.202Z",
+    "geometryNote": "GBIF was queried with the ADM2 boundary bounding box. Counts are real GBIF records but not polygon-clipped or corrected for observer effort.",
+    "allOccurrences": 421,
+    "plantOccurrences": 343,
+    "birdOccurrences": 67,
+    "occurrenceEvidenceScore": 54,
+    "sourceUrls": {
+      "allOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.388540978922585+7.565490853192383%2C37.60766212967737+7.565490853192383%2C37.60766212967737+8.01819499909717%2C37.388540978922585+8.01819499909717%2C37.388540978922585+7.565490853192383%29%29&limit=0",
+      "plantOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.388540978922585+7.565490853192383%2C37.60766212967737+7.565490853192383%2C37.60766212967737+8.01819499909717%2C37.388540978922585+8.01819499909717%2C37.388540978922585+7.565490853192383%29%29&limit=0&kingdomKey=6",
+      "birdOccurrences": "https://api.gbif.org/v1/occurrence/search?country=ET&hasCoordinate=true&geometry=POLYGON%28%2837.388540978922585+7.565490853192383%2C37.60766212967737+7.565490853192383%2C37.60766212967737+8.01819499909717%2C37.388540978922585+8.01819499909717%2C37.388540978922585+7.565490853192383%29%29&limit=0&classKey=212"
+    }
+  }
+};
+
+export function gbifBiodiversityForAdm2(id?: string) {
+  return id ? GBIF_ADM2_BIODIVERSITY[id] : undefined;
+}

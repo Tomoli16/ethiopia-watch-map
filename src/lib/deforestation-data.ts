@@ -1,10 +1,12 @@
 import { gbifBiodiversityForRegion } from "./gbif-data";
+import { gbifBiodiversityForAdm2 } from "./gbif-adm2-data";
 import {
   LIVELIHOOD_POPULATION_ADM2,
   livelihoodPopulationForAdm2,
   type LivelihoodPopulationAdm2,
 } from "./livelihood-adm2-data";
 import { livelihoodPopulationForRegion } from "./livelihood-data";
+import { SOILGRIDS_ADM2_SAMPLES, soilGridsSampleForAdm2 } from "./soilgrids-adm2-data";
 import { SOILGRIDS_REGION_SAMPLES } from "./soilgrids-data";
 
 export type RiskLevel = "low" | "moderate" | "high" | "severe";
@@ -43,6 +45,7 @@ export const ADM1_ANALYSIS_UNITS: AnalysisUnit[] = FOCUS_REGIONS.map((name) => (
 }));
 
 export const ADM2_ANALYSIS_UNITS: AnalysisUnit[] = Object.values(LIVELIHOOD_POPULATION_ADM2)
+  .filter((zone) => SOILGRIDS_ADM2_SAMPLES[zone.id])
   .map((zone) => ({
     id: zone.id,
     name: zone.zone,
@@ -175,10 +178,13 @@ export function soilGridsSampleForRegion(regionName?: string) {
   return regionName ? SOILGRIDS_REGION_SAMPLES[regionName] : undefined;
 }
 
-export function soilSuitabilityScoreForRegion(regionName?: string): number | null {
-  const sample = soilGridsSampleForRegion(regionName);
+function soilSuitabilityScoreFromSample(sample?: {
+  soilOrganicCarbonGkg: number;
+  phH2O: number;
+  clayPct: number;
+  sandPct: number;
+}): number | null {
   if (!sample) return null;
-
   const carbon = clamp01(sample.soilOrganicCarbonGkg / 50);
   const ph = soilPhSuitability(sample.phH2O);
   const texture = soilTextureSuitability(sample.clayPct, sample.sandPct);
@@ -186,9 +192,19 @@ export function soilSuitabilityScoreForRegion(regionName?: string): number | nul
   return pct((carbon + ph + texture) / 3);
 }
 
+export function soilSuitabilityScoreForRegion(regionName?: string): number | null {
+  return soilSuitabilityScoreFromSample(soilGridsSampleForRegion(regionName));
+}
+
+export function soilSuitabilityScoreForAdm2(id?: string): number | null {
+  return soilSuitabilityScoreFromSample(soilGridsSampleForAdm2(id));
+}
+
+export { gbifBiodiversityForAdm2 };
 export { gbifBiodiversityForRegion };
 export { livelihoodPopulationForAdm2 };
 export { livelihoodPopulationForRegion };
+export { soilGridsSampleForAdm2 };
 
 export interface ProxyScores {
   ecologicalRestorationPotential: number;
@@ -202,15 +218,33 @@ export function proxyScores(r: RegionRisk): ProxyScores {
 
 export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
   const region = unit.region;
+  const soilAdm2 = unit.level === "adm2" ? soilSuitabilityScoreForAdm2(unit.id) : null;
+  const gbifAdm2 = unit.level === "adm2" ? gbifBiodiversityForAdm2(unit.id) : undefined;
   const livelihoodAdm1 = livelihoodPopulationForRegion(region);
   const livelihoodAdm2 = unit.level === "adm2" ? livelihoodPopulationForAdm2(unit.id) : undefined;
 
   return {
-    ecologicalRestorationPotential: soilSuitabilityScoreForRegion(region) ?? 0,
+    ecologicalRestorationPotential: soilAdm2 ?? soilSuitabilityScoreForRegion(region) ?? 0,
     biodiversityRecoveryValue:
-      gbifBiodiversityForRegion(region)?.occurrenceEvidenceScore ?? 0,
+      gbifAdm2?.occurrenceEvidenceScore ??
+      gbifBiodiversityForRegion(region)?.occurrenceEvidenceScore ??
+      0,
     livelihoodImpact: livelihoodAdm2?.livelihoodEvidenceScore ?? livelihoodAdm1?.livelihoodEvidenceScore ?? 0,
   };
+}
+
+export function proxySourceLevelForUnit(unit: AnalysisUnit, key: ProxyKey): AnalysisLevel | "none" {
+  if (unit.level === "adm1") return "adm1";
+  if (key === "ecologicalRestorationPotential") {
+    return soilGridsSampleForAdm2(unit.id) ? "adm2" : soilGridsSampleForRegion(unit.region) ? "adm1" : "none";
+  }
+  if (key === "biodiversityRecoveryValue") {
+    return gbifBiodiversityForAdm2(unit.id) ? "adm2" : gbifBiodiversityForRegion(unit.region) ? "adm1" : "none";
+  }
+  if (key === "livelihoodImpact") {
+    return livelihoodPopulationForAdm2(unit.id) ? "adm2" : livelihoodPopulationForRegion(unit.region) ? "adm1" : "none";
+  }
+  return "none";
 }
 
 export function priorityScore(r: RegionRisk, weights: Weights): number {

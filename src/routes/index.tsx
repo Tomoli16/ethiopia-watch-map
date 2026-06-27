@@ -9,14 +9,18 @@ import {
   analysisUnitById,
   analysisUnitsForLevel,
   colorForScore,
+  gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
   livelihoodPopulationForAdm2,
   livelihoodPopulationForRegion,
   priorityLevel,
   priorityScoreForUnit,
+  proxySourceLevelForUnit,
   proxyScoresForUnit,
+  soilGridsSampleForAdm2,
   soilGridsSampleForRegion,
   type AnalysisLevel,
+  type AnalysisUnit,
   type ProxyKey,
   type ProxyScores,
   type Weights,
@@ -87,8 +91,14 @@ function Index() {
   const detailScore = detail ? priorityScoreForUnit(detail, weights) : 0;
   const detailLevel = detail ? priorityLevel(detailScore) : null;
   const detailProxies = detail ? proxyScoresForUnit(detail) : null;
-  const detailSoilGrids = detail ? soilGridsSampleForRegion(detail.region) : undefined;
-  const detailGbif = detail ? gbifBiodiversityForRegion(detail.region) : undefined;
+  const detailSoilGrids =
+    detail?.level === "adm2"
+      ? soilGridsSampleForAdm2(detail.id) ?? soilGridsSampleForRegion(detail.region)
+      : soilGridsSampleForRegion(detail?.region);
+  const detailGbif =
+    detail?.level === "adm2"
+      ? gbifBiodiversityForAdm2(detail.id) ?? gbifBiodiversityForRegion(detail.region)
+      : gbifBiodiversityForRegion(detail?.region);
   const detailLivelihood =
     detail?.level === "adm2"
       ? livelihoodPopulationForAdm2(detail.id)
@@ -248,13 +258,22 @@ function Index() {
                 </div>
               </div>
 
-              <ProxyPanel proxies={detailProxies} weights={weights} total={detailScore} />
+              <ProxyPanel
+                proxies={detailProxies}
+                weights={weights}
+                total={detailScore}
+                unit={detail}
+              />
 
               {detailSoilGrids ? (
                 <div className="rounded-md border border-border bg-card/50 p-3">
                   <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     <Sprout className="size-3.5" aria-hidden />
                     <span>SoilGrids ERP input</span>
+                    <SourceBadge
+                      inherited={proxySourceLevelForUnit(detail, "ecologicalRestorationPotential") !== detail.level}
+                      label={proxySourceLevelForUnit(detail, "ecologicalRestorationPotential").toUpperCase()}
+                    />
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     <Stat label="pH H2O" value={detailSoilGrids.phH2O.toFixed(1)} />
@@ -266,7 +285,7 @@ function Index() {
                   </div>
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real ISRIC SoilGrids v2.0 centroid sample, depth-weighted
-                    across 0-30 cm. {detail.level === "adm2" ? "ADM2 currently inherits this ERP input from its parent ADM1 region." : "The ERP score is calculated only from this fetched soil sample."}
+                    across 0-30 cm. {proxySourceLevelForUnit(detail, "ecologicalRestorationPotential") === "adm2" ? "This ERP input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this ERP input from its parent ADM1 region." : "The ERP score is calculated only from this fetched soil sample."}
                   </p>
                 </div>
               ) : (
@@ -279,6 +298,10 @@ function Index() {
                     <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       <Bird className="size-3.5" aria-hidden />
                       <span>GBIF BRV input</span>
+                      <SourceBadge
+                        inherited={proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") !== detail.level}
+                        label={proxySourceLevelForUnit(detail, "biodiversityRecoveryValue").toUpperCase()}
+                      />
                     </div>
                     <span className="text-[10px] text-muted-foreground">
                       evidence {detailGbif.occurrenceEvidenceScore}/100
@@ -289,13 +312,15 @@ function Index() {
                     <Stat label="Plants" value={detailGbif.plantOccurrences.toLocaleString()} />
                     <Stat label="Birds" value={detailGbif.birdOccurrences.toLocaleString()} />
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-[11px]">
-                    <SpeciesList title="Top plants" species={detailGbif.topPlantSpecies} />
-                    <SpeciesList title="Top birds" species={detailGbif.topBirdSpecies} />
-                  </div>
+                  {"topPlantSpecies" in detailGbif && "topBirdSpecies" in detailGbif ? (
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-[11px]">
+                      <SpeciesList title="Top plants" species={detailGbif.topPlantSpecies} />
+                      <SpeciesList title="Top birds" species={detailGbif.topBirdSpecies} />
+                    </div>
+                  ) : null}
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real GBIF coordinated occurrences, queried by ADM1 bounding
-                    box. {detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "The BRV score uses only this occurrence evidence and is"} not yet corrected for observer or road-access bias.
+                    box. {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "This BRV input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "The BRV score uses only this occurrence evidence and is"} not yet corrected for observer or road-access bias.
                   </p>
                 </div>
               ) : (
@@ -308,6 +333,7 @@ function Index() {
                     <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       <UsersRound className="size-3.5" aria-hidden />
                       <span>HDX/OCHA LI input</span>
+                      <SourceBadge inherited={false} label={detail.level.toUpperCase()} />
                     </div>
                     <span className="text-[10px] text-muted-foreground">
                       evidence {detailLivelihood.livelihoodEvidenceScore}/100
@@ -368,6 +394,24 @@ function MissingData({ label }: { label: string }) {
         No fetched real dataset is available for this region yet.
       </p>
     </div>
+  );
+}
+
+function SourceBadge({
+  inherited,
+  label,
+}: {
+  inherited: boolean;
+  label?: string;
+}) {
+  return (
+    <span
+      className={`rounded-sm px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
+        inherited ? "bg-amber-500/15 text-amber-300" : "bg-emerald-500/15 text-emerald-300"
+      }`}
+    >
+      {inherited ? `Inherited ${label ?? "ADM1"}` : label ?? "Native"}
+    </span>
   );
 }
 
@@ -469,10 +513,12 @@ function ProxyPanel({
   proxies,
   weights,
   total,
+  unit,
 }: {
   proxies: ProxyScores;
   weights: Weights;
   total: number;
+  unit: AnalysisUnit;
 }) {
   const sumW = PROXIES.reduce((sum, proxy) => sum + weights[proxy.key], 0);
   return (
@@ -491,6 +537,8 @@ function ProxyPanel({
           const v = proxies[p.key as ProxyKey];
           const share = sumW > 0 ? Math.round((weights[p.key] / sumW) * 100) : 0;
           const Icon = PROXY_ICONS[p.key];
+          const sourceLevel = proxySourceLevelForUnit(unit, p.key);
+          const inherited = sourceLevel !== unit.level;
           return (
             <div key={p.key} className="grid grid-cols-[112px_1fr_36px] items-center gap-2">
               <span className="flex items-center gap-1.5 text-[11px]">
@@ -516,6 +564,10 @@ function ProxyPanel({
                 {v}
               </span>
               <span className="col-span-3 -mt-0.5 pl-[120px] text-[10px] text-muted-foreground/80">
+                <SourceBadge
+                  inherited={inherited}
+                  label={sourceLevel.toUpperCase()}
+                />{" "}
                 {p.description}
               </span>
             </div>

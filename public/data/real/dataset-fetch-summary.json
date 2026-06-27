@@ -1,10 +1,32 @@
 {
-  "fetchedAt": "2026-06-27T19:21:07.265Z",
+  "fetchedAt": "2026-06-27T20:57:00.000Z",
   "generatedFiles": [
     "hdx-cod-ab-eth.metadata.json",
     "soilgrids-region-samples.json",
+    "soilgrids-adm2-samples.json",
     "gbif-ethiopia-summary.json",
+    "gbif-biodiversity-regions.json",
+    "gbif-biodiversity-adm2.json",
+    "livelihood-population-regions.json",
+    "livelihood-population-adm2.json",
     "worldpop-ethiopia.metadata.json"
+  ],
+  "usedInScore": [
+    {
+      "dataset": "ISRIC SoilGrids v2.0",
+      "level": "ADM1 and ADM2 boundary centroid samples",
+      "proxy": "ERP"
+    },
+    {
+      "dataset": "GBIF Occurrence API",
+      "level": "ADM1 and ADM2 bounding-box occurrence counts",
+      "proxy": "BRV"
+    },
+    {
+      "dataset": "HDX/OCHA ADM3 projected population 2022",
+      "level": "Aggregated to ADM1 and ADM2",
+      "proxy": "LI"
+    }
   ],
   "deferred": [
     {
