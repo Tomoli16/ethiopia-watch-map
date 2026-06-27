@@ -1,4 +1,5 @@
 import { gbifBiodiversityForRegion } from "./gbif-data";
+import { livelihoodPopulationForRegion } from "./livelihood-data";
 import { SOILGRIDS_REGION_SAMPLES } from "./soilgrids-data";
 
 export type RiskLevel = "low" | "moderate" | "high" | "severe";
@@ -353,6 +354,7 @@ export function soilGridsSampleForRegion(regionName?: string) {
 }
 
 export { gbifBiodiversityForRegion };
+export { livelihoodPopulationForRegion };
 
 export interface ProxyScores {
   ecologicalRestorationPotential: number;
@@ -394,15 +396,18 @@ export function proxyScores(r: RegionRisk): ProxyScores {
   );
 
   // 3. Livelihood Impact (LI)
-  const worldPopSafeguard = clamp01(1 - populationDensity(r) / 300);
-  const rural = clamp01(r.ruralPopulationPct);
-  const poverty = clamp01(r.povertyHeadcountPct / 0.4);
-  const forestDep = clamp01(r.forestDependentPct / 0.4);
-  const admin3Readiness = 1;
-  const psnpCoordinationNeed = clamp01((r.erosionRiskTHaYr / 35 + poverty) / 2);
-  const livelihoodImpact = pct(
-    (worldPopSafeguard + rural + poverty + forestDep + admin3Readiness + psnpCoordinationNeed) / 6,
-  );
+  const livelihoodPopulation = livelihoodPopulationForRegion(r.name);
+  const livelihoodImpact = livelihoodPopulation
+    ? livelihoodPopulation.livelihoodEvidenceScore
+    : pct(
+        (clamp01(1 - populationDensity(r) / 300) +
+          clamp01(r.ruralPopulationPct) +
+          clamp01(r.povertyHeadcountPct / 0.4) +
+          clamp01(r.forestDependentPct / 0.4) +
+          1 +
+          clamp01((r.erosionRiskTHaYr / 35 + clamp01(r.povertyHeadcountPct / 0.4)) / 2)) /
+          6,
+      );
 
   return { ecologicalRestorationPotential, biodiversityRecoveryValue, livelihoodImpact };
 }

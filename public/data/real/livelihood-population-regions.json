@@ -1,0 +1,73 @@
+{
+  "fetchedAt": "2026-06-27T20:15:06.969Z",
+  "source": "HDX/OCHA Ethiopia Subnational Population Statistics, ADM3 projected population 2022",
+  "sourceFile": "public/data/real/eth-admpop-adm3-2022.csv",
+  "sourceUrl": "https://data.humdata.org/dataset/cod-ps-eth/resource/3f8150d4-6d5d-4659-a0a8-586e4689ae65",
+  "description": "Aggregated ADM3/woreda population statistics for the four focus regions. Used as the first real Livelihood Impact input. Scores combine population density, child share, dependency ratio and female population share as a proxy for safeguard and livelihood relevance.",
+  "regions": [
+    {
+      "region": "Oromia",
+      "admin3Count": 336,
+      "populationTotal": 39075002,
+      "maleTotal": 19548349,
+      "femaleTotal": 19526650,
+      "childrenUnder15": 18317540,
+      "workingAge15To64": 19302289,
+      "older65Plus": 1455172,
+      "areaKm2": 284538,
+      "densityPerKm2": 137.3,
+      "femaleShare": 0.5,
+      "childShare": 0.469,
+      "dependencyRatio": 1.024,
+      "livelihoodEvidenceScore": 86
+    },
+    {
+      "region": "Beneshangul Gumu",
+      "admin3Count": 24,
+      "populationTotal": 1187997,
+      "maleTotal": 602572,
+      "femaleTotal": 585426,
+      "childrenUnder15": 526212,
+      "workingAge15To64": 634700,
+      "older65Plus": 27078,
+      "areaKm2": 50699,
+      "densityPerKm2": 23.4,
+      "femaleShare": 0.493,
+      "childShare": 0.443,
+      "dependencyRatio": 0.872,
+      "livelihoodEvidenceScore": 64
+    },
+    {
+      "region": "SNNPR",
+      "admin3Count": 231,
+      "populationTotal": 20691545,
+      "maleTotal": 10259364,
+      "femaleTotal": 10432183,
+      "childrenUnder15": 9613723,
+      "workingAge15To64": 10542304,
+      "older65Plus": 535510,
+      "areaKm2": 75223,
+      "densityPerKm2": 275.1,
+      "femaleShare": 0.504,
+      "childShare": 0.465,
+      "dependencyRatio": 0.963,
+      "livelihoodEvidenceScore": 99
+    },
+    {
+      "region": "Gambela",
+      "admin3Count": 15,
+      "populationTotal": 492002,
+      "maleTotal": 256002,
+      "femaleTotal": 236000,
+      "childrenUnder15": 216006,
+      "workingAge15To64": 268234,
+      "older65Plus": 7760,
+      "areaKm2": 29783,
+      "densityPerKm2": 16.5,
+      "femaleShare": 0.48,
+      "childShare": 0.439,
+      "dependencyRatio": 0.834,
+      "livelihoodEvidenceScore": 62
+    }
+  ]
+}

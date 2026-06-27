@@ -8,6 +8,7 @@ import {
   REGION_DATA,
   RISK_COLORS,
   gbifBiodiversityForRegion,
+  livelihoodPopulationForRegion,
   priorityLevel,
   priorityScore,
   type Weights,
@@ -23,7 +24,7 @@ interface Props {
 }
 
 export type AdminLevel = "adm1" | "adm2" | "adm3";
-type OverlayMode = "priority" | "soil" | "gbif";
+type OverlayMode = "priority" | "soil" | "gbif" | "livelihood";
 
 interface ZoneProps {
   shapeName?: string;
@@ -78,6 +79,13 @@ function gbifColor(score: number) {
   if (score >= 75) return "#2563eb";
   if (score >= 60) return "#0891b2";
   return "#64748b";
+}
+
+function livelihoodColor(score: number) {
+  if (score >= 90) return "#be123c";
+  if (score >= 75) return "#f97316";
+  if (score >= 60) return "#facc15";
+  return "#65a30d";
 }
 
 function ZoomToSelection({ data, selected }: { data: GeoJSON.FeatureCollection | null; selected: string | null }) {
@@ -218,6 +226,17 @@ export function DeforestationMap({
     };
   }, [regions]);
 
+  const livelihoodRegionData = useMemo<GeoJSON.FeatureCollection | null>(() => {
+    if (!regions) return null;
+    return {
+      type: "FeatureCollection",
+      features: regions.features.filter((f) => {
+        const name = (f.properties as ZoneProps | undefined)?.shapeName ?? "";
+        return Boolean(livelihoodPopulationForRegion(name));
+      }),
+    };
+  }, [regions]);
+
   const zoneStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
     const isHover = name === hoverZone;
@@ -326,6 +345,43 @@ export function DeforestationMap({
     });
   };
 
+  const livelihoodStyle = (feature?: Feature): PathOptions => {
+    const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
+    const livelihood = livelihoodPopulationForRegion(name);
+    const active = name === selected;
+    return {
+      fillColor: livelihood ? livelihoodColor(livelihood.livelihoodEvidenceScore) : "#737373",
+      fillOpacity: active ? 0.62 : 0.46,
+      color: active ? "#fafafa" : "#fed7aa",
+      weight: active ? 3 : 1.4,
+    };
+  };
+
+  const onEachLivelihoodRegion = (feature: Feature, layer: Layer) => {
+    const name = (feature.properties as ZoneProps | undefined)?.shapeName ?? "";
+    const livelihood = livelihoodPopulationForRegion(name);
+    if (!livelihood) return;
+
+    layer.bindTooltip(
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>Livelihood evidence: ${livelihood.livelihoodEvidenceScore}/100<br/>Population: ${livelihood.populationTotal.toLocaleString()}<br/>Density: ${livelihood.densityPerKm2.toFixed(1)}/km²</div>`,
+      { sticky: true, className: "deforest-tooltip" },
+    );
+    layer.bindPopup(
+      `<div style="min-width:220px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">Real HDX/OCHA ADM3 projected population statistics, aggregated to focus region.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Evidence</dt><dd style="margin:0;font-weight:700">${livelihood.livelihoodEvidenceScore}/100</dd><dt>ADM3 units</dt><dd style="margin:0;font-weight:700">${livelihood.admin3Count.toLocaleString()}</dd><dt>Population</dt><dd style="margin:0;font-weight:700">${livelihood.populationTotal.toLocaleString()}</dd><dt>Density</dt><dd style="margin:0;font-weight:700">${livelihood.densityPerKm2.toFixed(1)}/km²</dd><dt>Children &lt;15</dt><dd style="margin:0;font-weight:700">${Math.round(livelihood.childShare * 100)}%</dd><dt>Women</dt><dd style="margin:0;font-weight:700">${Math.round(livelihood.femaleShare * 100)}%</dd><dt>Dependency</dt><dd style="margin:0;font-weight:700">${livelihood.dependencyRatio.toFixed(2)}</dd></dl></div>`,
+    );
+    layer.on({
+      click: () => onSelect(name),
+      mouseover: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle({ fillOpacity: 0.72, weight: 3 });
+      },
+      mouseout: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle(livelihoodStyle(feature));
+      },
+    });
+  };
+
   // Re-key GeoJSON layer when weights change so colors refresh
   const weightKey = Object.values(weights).join("-");
 
@@ -405,6 +461,14 @@ export function DeforestationMap({
           data={gbifRegionData}
           style={gbifStyle}
           onEachFeature={onEachGbifRegion}
+        />
+      )}
+      {overlayMode === "livelihood" && livelihoodRegionData && (
+        <GeoJSON
+          key={`livelihood-regions-${selected ?? "none"}`}
+          data={livelihoodRegionData}
+          style={livelihoodStyle}
+          onEachFeature={onEachLivelihoodRegion}
         />
       )}
       {overlayMode === "soil" &&
@@ -582,6 +646,38 @@ export function DeforestationMap({
             />
             GBIF
           </button>
+          <button
+            type="button"
+            onClick={() => setOverlayMode((mode) => (mode === "livelihood" ? "priority" : "livelihood"))}
+            aria-pressed={overlayMode === "livelihood"}
+            title={overlayMode === "livelihood" ? "Show priority map" : "Show livelihood impact layer"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              width: "100%",
+              padding: "6px 10px",
+              background: overlayMode === "livelihood" ? "#0c1410" : "#fff",
+              color: overlayMode === "livelihood" ? "#fafafa" : "#0c1410",
+              border: "none",
+              borderTop: "1px solid #d6d6d6",
+              font: "600 12px/1 system-ui, sans-serif",
+              cursor: "pointer",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 9,
+                height: 9,
+                borderRadius: 999,
+                background: "#f97316",
+                boxShadow: "0 0 0 2px currentColor",
+              }}
+            />
+            Livelihood
+          </button>
           {overlayMode === "soil" ? (
             <div
               style={{
@@ -634,6 +730,41 @@ export function DeforestationMap({
                   { label: "75-89", color: "#2563eb" },
                   { label: "60-74", color: "#0891b2" },
                   { label: "< 60", color: "#64748b" },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        display: "inline-block",
+                        width: 18,
+                        height: 8,
+                        borderRadius: 2,
+                        background: item.color,
+                      }}
+                    />
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {overlayMode === "livelihood" ? (
+            <div
+              style={{
+                padding: "7px 10px 8px",
+                background: "#fff",
+                borderTop: "1px solid #d6d6d6",
+                color: "#0c1410",
+                font: "600 10px/1.2 system-ui, sans-serif",
+              }}
+            >
+              <div style={{ marginBottom: 5 }}>Livelihood evidence</div>
+              <div style={{ display: "grid", gap: 4 }}>
+                {[
+                  { label: "90-100", color: "#be123c" },
+                  { label: "75-89", color: "#f97316" },
+                  { label: "60-74", color: "#facc15" },
+                  { label: "< 60", color: "#65a30d" },
                 ].map((item) => (
                   <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span

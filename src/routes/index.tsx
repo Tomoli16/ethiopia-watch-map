@@ -11,6 +11,7 @@ import {
   priorityScore,
   proxyScores,
   gbifBiodiversityForRegion,
+  livelihoodPopulationForRegion,
   soilGridsSampleForRegion,
   type ProxyKey,
   type ProxyScores,
@@ -74,6 +75,7 @@ function Index() {
   const detailProxies = detail ? proxyScores(detail) : null;
   const detailSoilGrids = selected ? soilGridsSampleForRegion(selected) : undefined;
   const detailGbif = selected ? gbifBiodiversityForRegion(selected) : undefined;
+  const detailLivelihood = selected ? livelihoodPopulationForRegion(selected) : undefined;
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -277,6 +279,31 @@ function Index() {
                     Real GBIF coordinated occurrences, queried by ADM1 bounding
                     box. Used in BRV as occurrence evidence; not yet corrected
                     for observer or road-access bias.
+                  </p>
+                </div>
+              ) : null}
+
+              {detailLivelihood ? (
+                <div className="rounded-md border border-border bg-card/50 p-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Livelihood population input
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      evidence {detailLivelihood.livelihoodEvidenceScore}/100
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <Stat label="ADM3 units" value={detailLivelihood.admin3Count.toLocaleString()} />
+                    <Stat label="Population" value={detailLivelihood.populationTotal.toLocaleString()} />
+                    <Stat label="Density" value={`${detailLivelihood.densityPerKm2.toFixed(1)} /km²`} />
+                    <Stat label="Children <15" value={`${Math.round(detailLivelihood.childShare * 100)}%`} />
+                    <Stat label="Women" value={`${Math.round(detailLivelihood.femaleShare * 100)}%`} />
+                    <Stat label="Dependency" value={detailLivelihood.dependencyRatio.toFixed(2)} />
+                  </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                    Real HDX/OCHA ADM3 2022 projected population statistics,
+                    aggregated to the app's focus regions. Used directly in LI.
                   </p>
                 </div>
               ) : null}

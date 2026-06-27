@@ -110,6 +110,18 @@
           "reason": "Provides the woreda polygons needed to clip, aggregate and report all raster and vector indicators at MfM's management level."
         },
         {
+          "priority": 2,
+          "dataset": "HDX / OCHA Subnational Population Statistics",
+          "status": "adm3-population-fetched-used-in-score",
+          "localFiles": [
+            "public/data/real/eth-admpop-adm3-2022.csv",
+            "public/data/real/livelihood-population-regions.json",
+            "src/lib/livelihood-data.ts"
+          ],
+          "nextStep": "Join exact ADM3 population records to the current 2025 ADM3 boundaries and calculate LI per woreda.",
+          "reason": "Provides projected sex and age disaggregated ADM3 population statistics that make Livelihood Impact measurable instead of purely static."
+        },
+        {
           "priority": 3,
           "dataset": "PSNP Public Works Data",
           "status": "deferred",
