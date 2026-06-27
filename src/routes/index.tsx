@@ -1,13 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
+  DEFAULT_WEIGHTS,
   FOCUS_REGIONS,
+  PROXIES,
   REGION_DATA,
   RISK_COLORS,
   populationDensity,
-  riskLevel,
-  riskScore,
-  rpsBreakdown,
+  priorityLevel,
+  priorityScore,
+  proxyScores,
+  type ProxyKey,
+  type ProxyScores,
+  type Weights,
 } from "@/lib/deforestation-data";
 import { recommendSpecies } from "@/lib/species-recommender";
 import type { SpeciesPick } from "@/lib/species-recommender";
@@ -51,17 +56,18 @@ function fmtDensity(d: number): string {
 function Index() {
   const [selected, setSelected] = useState<string | null>("Oromia");
   const [mounted, setMounted] = useState(false);
+  const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   useEffect(() => setMounted(true), []);
 
   const ranked = FOCUS_REGIONS.map((name) => {
     const r = REGION_DATA[name];
-    return { name, ...r, score: riskScore(r) };
+    return { name, ...r, score: priorityScore(r, weights) };
   }).sort((a, b) => b.score - a.score);
 
   const detail = selected ? REGION_DATA[selected] : null;
-  const detailScore = detail ? riskScore(detail) : 0;
-  const detailLevel = detail ? riskLevel(detailScore) : null;
-  const detailRps = detail ? rpsBreakdown(detail) : null;
+  const detailScore = detail ? priorityScore(detail, weights) : 0;
+  const detailLevel = detail ? priorityLevel(detailScore) : null;
+  const detailProxies = detail ? proxyScores(detail) : null;
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -72,16 +78,16 @@ function Index() {
               Southwest Ethiopia · Forest Risk & Restoration Opportunity
             </h1>
             <p className="text-xs text-muted-foreground">
-              Pairs deforestation risk from{" "}
+              Five-proxy priority score (Restoration Suitability · Carbon · Biodiversity · Water/Soil · Livelihood). Layers from{" "}
               <a
                 className="underline decoration-dotted hover:text-foreground"
                 href="https://www.globalforestwatch.org/dashboards/country/ETH/"
                 target="_blank"
                 rel="noreferrer"
               >
-                Global Forest Watch
+                GFW
               </a>
-              {" "}with restoration context (CHIRPS rainfall, ESA WorldCover, WDPA, WRI Atlas). Boundaries from HDX{" "}
+              , ESA CCI Biomass, SoilGrids, WRI Aqueduct, KBA, World Bank. Boundaries from HDX{" "}
               <a
                 className="underline decoration-dotted hover:text-foreground"
                 href="https://data.humdata.org/dataset/cod-ab-eth"
@@ -98,45 +104,49 @@ function Index() {
       </header>
 
       <div className="grid flex-1 min-h-0 grid-cols-[320px_1fr_360px]">
-        <aside className="overflow-y-auto border-r border-border">
-          <div className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Southwest regions · ranked by risk
-          </div>
-          <ul>
-            {ranked.map((r) => {
-              const level = riskLevel(r.score);
-              const active = r.name === selected;
-              return (
-                <li key={r.name}>
-                  <button
-                    onClick={() => setSelected(r.name)}
-                    className={`flex w-full items-center justify-between gap-3 border-l-2 px-4 py-3 text-left transition-colors hover:bg-secondary ${
-                      active ? "border-primary bg-secondary" : "border-transparent"
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{r.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {fmtKha(r.loss2023Ha)} kha lost in 2023
+        <aside className="flex flex-col overflow-hidden border-r border-border">
+          <div className="overflow-y-auto">
+            <div className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Southwest regions · ranked by priority
+            </div>
+            <ul>
+              {ranked.map((r) => {
+                const level = priorityLevel(r.score);
+                const active = r.name === selected;
+                return (
+                  <li key={r.name}>
+                    <button
+                      onClick={() => setSelected(r.name)}
+                      className={`flex w-full items-center justify-between gap-3 border-l-2 px-4 py-3 text-left transition-colors hover:bg-secondary ${
+                        active ? "border-primary bg-secondary" : "border-transparent"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">{r.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {fmtKha(r.loss2023Ha)} kha lost in 2023
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="inline-block size-2 rounded-full"
-                        style={{ backgroundColor: RISK_COLORS[level] }}
-                      />
-                      <span className="tabular-nums text-sm font-semibold">{r.score}</span>
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="px-4 pb-4 pt-2 text-[11px] leading-relaxed text-muted-foreground">
-            Scope covers Oromia, SNNPR (which now includes the South West
-            Ethiopia Peoples' Region — Kaffa, Sheka, Bench Sheko), Gambela and
-            Benishangul-Gumuz. Together they hold nearly all of Ethiopia's
-            remaining moist forest.
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="inline-block size-2 rounded-full"
+                          style={{ backgroundColor: RISK_COLORS[level] }}
+                        />
+                        <span className="tabular-nums text-sm font-semibold">{r.score}</span>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="border-t border-border">
+              <WeightsPanel weights={weights} onChange={setWeights} />
+            </div>
+            <div className="px-4 pb-4 pt-2 text-[11px] leading-relaxed text-muted-foreground">
+              Scope covers Oromia, SNNPR (incl. South West Ethiopia Peoples'),
+              Gambela and Benishangul-Gumuz — nearly all of Ethiopia's
+              remaining moist forest.
+            </div>
           </div>
         </aside>
 
@@ -149,7 +159,7 @@ function Index() {
                 </div>
               }
             >
-              <DeforestationMap selected={selected} onSelect={setSelected} />
+              <DeforestationMap selected={selected} onSelect={setSelected} weights={weights} />
             </Suspense>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -159,7 +169,7 @@ function Index() {
         </main>
 
         <aside className="overflow-y-auto border-l border-border p-5">
-          {detail && selected && detailLevel ? (
+          {detail && selected && detailLevel && detailProxies ? (
             <div className="space-y-5">
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -171,13 +181,15 @@ function Index() {
                     className="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wider"
                     style={{ backgroundColor: RISK_COLORS[detailLevel], color: "#0b0f0c" }}
                   >
-                    {detailLevel} risk
+                    {detailLevel} priority
                   </span>
                   <span className="text-sm text-muted-foreground">
                     score {detailScore} / 100
                   </span>
                 </div>
               </div>
+
+              <ProxyPanel proxies={detailProxies} weights={weights} total={detailScore} />
 
               <div className="grid grid-cols-2 gap-3">
                 <Stat label="Tree cover 2000" value={`${fmtMha(detail.treeCover2000Ha)} Mha`} />
@@ -192,9 +204,13 @@ function Index() {
                   label="Pop. density"
                   value={`${fmtDensity(populationDensity(detail))} /km²`}
                 />
+                <Stat label="AGB carbon" value={`${detail.aboveGroundCarbonTha} tC/ha`} />
+                <Stat label="Soil C (0–30cm)" value={`${detail.soilOrganicCarbonTha} tC/ha`} />
+                <Stat label="Erosion" value={`${detail.erosionRiskTHaYr} t/ha·yr`} />
+                <Stat label="Water stress" value={`${detail.waterStressIndex.toFixed(1)} / 5`} />
+                <Stat label="KBA coverage" value={`${Math.round(detail.kbaCoveragePct * 100)}%`} />
+                <Stat label="Forest-dependent" value={`${Math.round(detail.forestDependentPct * 100)}%`} />
               </div>
-
-              {detailRps ? <RpsPanel rps={detailRps} ndvi={detail.ndviMean} evi={detail.eviMean} trend={detail.ndviTrend} /> : null}
 
               <div>
                 <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -269,10 +285,6 @@ function Index() {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                  Heuristic match of site rainfall, elevation and land cover to a curated species list
-                  (ICRAF Agroforestree DB, Ethiopia NFSDP). Validate with local nurseries before planting.
-                </p>
               </div>
 
               <div>
@@ -285,100 +297,10 @@ function Index() {
               </div>
 
               <div className="rounded-md border border-border bg-card/50 p-3 text-xs text-muted-foreground">
-                Tree-cover-loss values from Global Forest Watch (Hansen et al.
-                2013, v1.11) at 30% canopy threshold. Risk score weights 2023
-                loss intensity (55%), primary-forest loss share (30%) and
-                absolute 2023 loss (15%). Pair with live Sentinel imagery
-                before fieldwork.
-              </div>
-
-              <div>
-                <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Sources
-                </h3>
-                <ul className="mt-2 space-y-1 text-xs">
-                  <li>
-                    Forest stats ·{" "}
-                    <a
-                      className="underline decoration-dotted hover:text-foreground"
-                      href={detail.sources.forest.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {detail.sources.forest.label}
-                    </a>
-                  </li>
-                  <li>
-                    NDVI / EVI ·{" "}
-                    <a className="underline decoration-dotted hover:text-foreground" href={detail.sources.vegIndex.url} target="_blank" rel="noreferrer">
-                      {detail.sources.vegIndex.label}
-                    </a>
-                  </li>
-                  <li>
-                    Population ·{" "}
-                    <a
-                      className="underline decoration-dotted hover:text-foreground"
-                      href={detail.sources.population.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {detail.sources.population.label}
-                    </a>
-                  </li>
-                  <li>
-                    Area ·{" "}
-                    <a
-                      className="underline decoration-dotted hover:text-foreground"
-                      href={detail.sources.area.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {detail.sources.area.label}
-                    </a>
-                  </li>
-                  <li>
-                    Rainfall ·{" "}
-                    <a className="underline decoration-dotted hover:text-foreground" href={detail.sources.rainfall.url} target="_blank" rel="noreferrer">
-                      {detail.sources.rainfall.label}
-                    </a>
-                  </li>
-                  <li>
-                    Elevation ·{" "}
-                    <a className="underline decoration-dotted hover:text-foreground" href={detail.sources.elevation.url} target="_blank" rel="noreferrer">
-                      {detail.sources.elevation.label}
-                    </a>
-                  </li>
-                  <li>
-                    Land cover ·{" "}
-                    <a className="underline decoration-dotted hover:text-foreground" href={detail.sources.landcover.url} target="_blank" rel="noreferrer">
-                      {detail.sources.landcover.label}
-                    </a>
-                  </li>
-                  <li>
-                    Protected areas ·{" "}
-                    <a className="underline decoration-dotted hover:text-foreground" href={detail.sources.protected.url} target="_blank" rel="noreferrer">
-                      {detail.sources.protected.label}
-                    </a>
-                  </li>
-                  <li>
-                    Restoration ·{" "}
-                    <a className="underline decoration-dotted hover:text-foreground" href={detail.sources.restoration.url} target="_blank" rel="noreferrer">
-                      {detail.sources.restoration.label}
-                    </a>
-                  </li>
-                  <li>
-                    Species ·{" "}
-                    <a className="underline decoration-dotted hover:text-foreground" href="https://apps.worldagroforestry.org/products/switchboard/index.php/name_like/" target="_blank" rel="noreferrer">
-                      ICRAF Agroforestree Database
-                    </a>
-                  </li>
-                </ul>
-                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                  Indicative reference values — verify against the linked
-                  sources before operational use. SNNPR figures reflect the
-                  pre-2020 footprint (now split across SNNPR, Sidama, South
-                  West Ethiopia Peoples', and Central Ethiopia regions).
-                </p>
+                Priority = weighted mean of 5 proxies (sliders, left). Each
+                proxy is a 0–100 composite of public datasets — adjust weights
+                to reflect the decision you're making (e.g. carbon-finance vs
+                biodiversity-led prioritization).
               </div>
             </div>
           ) : (
@@ -433,83 +355,147 @@ function LandCoverBar({ lc }: { lc: { forest: number; cropland: number; grasslan
   );
 }
 
-function RpsPanel({
-  rps,
-  ndvi,
-  evi,
-  trend,
+function WeightsPanel({
+  weights,
+  onChange,
 }: {
-  rps: { total: number; degradation: number; vigor: number; trend: number; opportunity: number };
-  ndvi: number;
-  evi: number;
-  trend: number;
+  weights: Weights;
+  onChange: (w: Weights) => void;
 }) {
-  const rows: { label: string; value: number; weight: string; detail: string }[] = [
-    { label: "Degradation", value: rps.degradation, weight: "35%", detail: "GFW risk score" },
-    { label: "NDVI vigor", value: rps.vigor, weight: "20%", detail: `mean NDVI ${ndvi.toFixed(2)} · EVI ${evi.toFixed(2)}` },
-    { label: "Greening loss", value: rps.trend, weight: "25%", detail: `NDVI trend ${trend > 0 ? "+" : ""}${trend.toFixed(4)}/yr` },
-    { label: "Opportunity", value: rps.opportunity, weight: "20%", detail: "WRI restoration ha ÷ region ha" },
-  ];
+  const total =
+    weights.suitability +
+    weights.carbon +
+    weights.biodiversity +
+    weights.waterSoil +
+    weights.livelihood;
+  const reset = () => onChange(DEFAULT_WEIGHTS);
+  return (
+    <div className="px-4 py-3">
+      <div className="mb-2 flex items-baseline justify-between">
+        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Proxy weights
+        </div>
+        <button
+          type="button"
+          onClick={reset}
+          className="text-[10px] text-muted-foreground underline decoration-dotted hover:text-foreground"
+        >
+          Reset
+        </button>
+      </div>
+      <div className="space-y-2.5">
+        {PROXIES.map((p) => {
+          const w = weights[p.key];
+          const share = total > 0 ? Math.round((w / total) * 100) : 0;
+          return (
+            <div key={p.key}>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block size-2 rounded-sm"
+                    style={{ backgroundColor: p.color }}
+                  />
+                  <span className="font-medium">{p.label}</span>
+                </span>
+                <span className="tabular-nums text-muted-foreground">{share}%</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={w}
+                onChange={(e) =>
+                  onChange({ ...weights, [p.key]: Number(e.target.value) })
+                }
+                className="mt-1 w-full accent-primary"
+                aria-label={`${p.label} weight`}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+        Weights are normalized to 100%. Move a slider to see the priority
+        score, region ranking and map colors update live.
+      </p>
+    </div>
+  );
+}
+
+function ProxyPanel({
+  proxies,
+  weights,
+  total,
+}: {
+  proxies: ProxyScores;
+  weights: Weights;
+  total: number;
+}) {
+  const sumW =
+    weights.suitability +
+    weights.carbon +
+    weights.biodiversity +
+    weights.waterSoil +
+    weights.livelihood;
   return (
     <div>
       <div className="flex items-baseline justify-between">
         <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Restoration Protection Score
+          Priority breakdown
         </h3>
         <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold tabular-nums">{rps.total}</span>
+          <span className="text-2xl font-semibold tabular-nums">{total}</span>
           <span className="text-[10px] text-muted-foreground">/ 100</span>
         </div>
       </div>
       <div className="mt-2 space-y-1.5">
-        {rows.map((r) => (
-          <div key={r.label} className="grid grid-cols-[88px_1fr_36px] items-center gap-2">
-            <span className="text-[11px] text-muted-foreground">
-              {r.label} <span className="text-[9px] text-muted-foreground/60">({r.weight})</span>
-            </span>
-            <div className="h-1.5 overflow-hidden rounded-sm bg-secondary">
-              <div
-                className="h-full"
-                style={{
-                  width: `${r.value}%`,
-                  backgroundColor: r.value >= 70 ? "#b91c1c" : r.value >= 45 ? "#ea580c" : r.value >= 25 ? "#eab308" : "#16a34a",
-                }}
-              />
+        {PROXIES.map((p) => {
+          const v = proxies[p.key as ProxyKey];
+          const share = sumW > 0 ? Math.round((weights[p.key] / sumW) * 100) : 0;
+          return (
+            <div key={p.key} className="grid grid-cols-[96px_1fr_36px] items-center gap-2">
+              <span className="text-[11px]">
+                <span className="font-medium">{p.short}</span>{" "}
+                <span className="text-[9px] text-muted-foreground/70">({share}%)</span>
+              </span>
+              <div className="h-1.5 overflow-hidden rounded-sm bg-secondary">
+                <div
+                  className="h-full"
+                  style={{ width: `${v}%`, backgroundColor: p.color }}
+                />
+              </div>
+              <span className="text-right text-[10px] tabular-nums text-muted-foreground">
+                {v}
+              </span>
+              <span className="col-span-3 -mt-0.5 pl-[104px] text-[10px] text-muted-foreground/80">
+                {p.description}
+              </span>
             </div>
-            <span className="text-right text-[10px] tabular-nums text-muted-foreground">{r.value}</span>
-            <span className="col-span-3 -mt-0.5 pl-[96px] text-[10px] text-muted-foreground/80">
-              {r.detail}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
-      <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-        RPS = 0.35·degradation + 0.20·NDVI vigor + 0.25·greening loss + 0.20·opportunity. Higher = act sooner. NDVI/EVI from MODIS MOD13Q1 250 m.
-      </p>
     </div>
   );
 }
 
 function FitBreakdown({ sp }: { sp: SpeciesPick }) {
   const b = sp.breakdown;
-  const rows: { label: string; value: number; detail: string; weight: string }[] = [
+  const rows: { label: string; value: number; detail: string }[] = [
     {
       label: "Elevation",
       value: b.elevation,
       detail: `site ${b.siteElevation} m · ideal ${sp.elevMin}–${sp.elevMax} m`,
-      weight: "climate ½",
     },
     {
       label: "Rainfall",
       value: b.rainfall,
       detail: `site ${b.siteRainfall} mm · ideal ${sp.rainMin}–${sp.rainMax} mm`,
-      weight: "climate ½",
     },
     {
       label: "Niche",
       value: b.niche,
       detail: b.matchedNiche ? `best match: ${b.matchedNiche.replace("-", " ")}` : "—",
-      weight: "×0.7–1.0",
     },
   ];
   return (
@@ -535,9 +521,6 @@ function FitBreakdown({ sp }: { sp: SpeciesPick }) {
           </span>
         </div>
       ))}
-      <div className="pl-[72px] pt-0.5 text-[10px] text-muted-foreground/80">
-        Fit = √(elev × rain) × (0.7 + 0.3 × niche)
-      </div>
     </div>
   );
 }
