@@ -5,25 +5,28 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { fileURLToPath } from "node:url";
+
+const ssrStub = fileURLToPath(new URL("./src/lib/leaflet-ssr-stub.ts", import.meta.url));
 
 export default defineConfig({
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
     server: { entry: "server" },
   },
   vite: {
-    build: {
-      rollupOptions: {
-        output: {
-          // Isolate leaflet / react-leaflet into their own chunk so their
-          // window-touching IIFE never gets pulled into a shared SSR chunk
-          // (otherwise routes import it just to grab React and SSR 500s).
-          manualChunks(id: string) {
-            if (id.includes("node_modules/leaflet/") || id.includes("node_modules/react-leaflet/") || id.includes("node_modules/@react-leaflet/")) {
-              return "leaflet";
-            }
-          },
+    environments: {
+      ssr: {
+        resolve: {
+          // Map browser-only leaflet packages to a no-op stub during SSR so
+          // their top-level `window` access never runs in the worker. The map
+          // component is loaded via a useEffect-based dynamic import, so SSR
+          // never actually renders it.
+          alias: [
+            { find: /^leaflet$/, replacement: ssrStub },
+            { find: /^leaflet\/.*/, replacement: ssrStub },
+            { find: /^react-leaflet$/, replacement: ssrStub },
+            { find: /^@react-leaflet\/core$/, replacement: ssrStub },
+          ],
         },
       },
     },
