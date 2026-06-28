@@ -267,7 +267,7 @@ function Index() {
           }`}
           aria-hidden={!rankingOpen}
         >
-          <div className="overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {analysisLevel === "adm2" ? "ADM2 zones" : "Focus regions"} · ranked by priority
             </div>
@@ -302,9 +302,6 @@ function Index() {
                 );
               })}
             </ul>
-            <div className="border-t border-border">
-              <WeightsPanel weights={weights} onChange={setWeights} />
-            </div>
             <div className="px-4 pb-4 pt-2 text-[11px] leading-relaxed text-muted-foreground">
               Map boundaries use HDX COD-AB-ETH{" "}
               <span className="font-medium text-foreground/80">{adminLevel.toUpperCase()}</span>{" "}
@@ -314,6 +311,9 @@ function Index() {
             <div className="px-4 pb-4 text-[11px] leading-relaxed text-muted-foreground">
               Current focus regions: Oromia, SNNPR, Gambela and Benishangul-Gumuz.
             </div>
+          </div>
+          <div className="shrink-0 border-t border-border bg-background/95 shadow-[0_-10px_24px_rgba(0,0,0,0.18)] backdrop-blur">
+            <WeightsPanel weights={weights} onChange={setWeights} />
           </div>
         </aside>
 
@@ -1190,7 +1190,7 @@ function WeightsPanel({
           Reset
         </button>
       </div>
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         {PROXIES.map((p) => {
           const w = weights[p.key];
           const share = total > 0 ? Math.round((w / total) * 100) : 0;
@@ -1200,10 +1200,10 @@ function WeightsPanel({
               <div className="flex items-center justify-between text-[11px]">
                 <span className="flex items-center gap-1.5">
                   <span
-                    className="flex size-5 items-center justify-center rounded-sm"
+                    className="flex size-4 items-center justify-center rounded-sm"
                     style={{ backgroundColor: `${p.color}26`, color: p.color }}
                   >
-                    <Icon className="size-3.5" aria-hidden />
+                    <Icon className="size-3" aria-hidden />
                   </span>
                   <span className="font-medium">{p.label}</span>
                 </span>
@@ -1218,14 +1218,14 @@ function WeightsPanel({
                 onChange={(e) =>
                   onChange({ ...weights, [p.key]: Number(e.target.value) })
                 }
-                className="mt-1 w-full accent-primary"
+                className="mt-0.5 h-4 w-full accent-primary"
                 aria-label={`${p.label} weight`}
               />
             </div>
           );
         })}
       </div>
-      <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+      <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
         Weights are normalized to 100%. Move a slider to see the priority
         score, region ranking and map colors update live.
       </p>
