@@ -223,14 +223,6 @@ function Index() {
                 className="h-11 w-auto object-contain"
               />
             </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-lg font-semibold tracking-tight">
-                Ethiopia Watch
-              </h1>
-              <p className="truncate text-xs text-muted-foreground">
-                Restoration priority planner
-              </p>
-            </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button
