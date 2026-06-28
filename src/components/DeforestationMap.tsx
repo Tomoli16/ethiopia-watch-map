@@ -19,10 +19,12 @@ import {
   livelihoodPopulationForAdm2,
   livelihoodPopulationForRegion,
   priorityScoreForUnit,
+  proxyScoresForUnit,
   soilGridsSampleForAdm2,
   soilSuitabilityScoreForAdm2,
   soilSuitabilityScoreForRegion,
   terrainSampleForAdm2,
+  type ProxyKey,
   type Weights,
 } from "@/lib/deforestation-data";
 import { SOILGRIDS_REGION_SAMPLES } from "@/lib/soilgrids-data";
@@ -37,7 +39,18 @@ interface Props {
 }
 
 export type AdminLevel = "adm1" | "adm2" | "adm3";
-type OverlayMode = "priority" | "soil" | "gbif" | "livelihood" | "climate" | "terrain" | "landcover" | "gfw";
+type OverlayMode =
+  | "priority"
+  | "erp"
+  | "brv"
+  | "li"
+  | "soil"
+  | "gbif"
+  | "livelihood"
+  | "climate"
+  | "terrain"
+  | "landcover"
+  | "gfw";
 
 interface ZoneProps {
   shapeName?: string;
@@ -51,56 +64,128 @@ const ADMIN_LEVELS: { value: AdminLevel; label: string; description: string }[] 
   { value: "adm3", label: "ADM3", description: "Woredas" },
 ];
 
-const OVERLAY_OPTIONS: { value: OverlayMode; label: string; description: string; color: string }[] = [
-  {
-    value: "priority",
-    label: "Priority map",
-    description: "Weighted restoration priority score for the selected admin level.",
+const PILLAR_CONFIG: Record<
+  "erp" | "brv" | "li",
+  { key: ProxyKey; label: string; short: string; color: string; datasets: string[] }
+> = {
+  erp: {
+    key: "ecologicalRestorationPotential",
+    label: "Ecological Restoration Potential",
+    short: "ERP",
+    color: "#22c55e",
+    datasets: ["SoilGrids", "NASA POWER climate", "Open-Meteo terrain", "GFW/UMD tree-cover loss"],
+  },
+  brv: {
+    key: "biodiversityRecoveryValue",
+    label: "Biodiversity Recovery Value",
+    short: "BRV",
+    color: "#8b5cf6",
+    datasets: ["GBIF occurrences", "ESA WorldCover habitat context"],
+  },
+  li: {
+    key: "livelihoodImpact",
+    label: "Livelihood Impact",
+    short: "LI",
     color: "#f97316",
+    datasets: ["HDX/OCHA ADM3 population aggregation"],
+  },
+};
+
+const OVERLAY_GROUPS: { label: string; options: { value: OverlayMode; label: string; description: string; color: string }[] }[] = [
+  {
+    label: "Overall",
+    options: [
+      {
+        value: "priority",
+        label: "Priority map",
+        description: "Weighted score from ERP, BRV and LI.",
+        color: "#f97316",
+      },
+    ],
   },
   {
-    value: "soil",
-    label: "SoilGrids",
-    description: "Soil suitability input for ecological restoration potential.",
-    color: "#f59e0b",
+    label: "Pillars",
+    options: [
+      {
+        value: "erp",
+        label: "ERP · combined",
+        description: "SoilGrids, climate, terrain and GFW loss.",
+        color: PILLAR_CONFIG.erp.color,
+      },
+      {
+        value: "brv",
+        label: "BRV · combined",
+        description: "GBIF evidence blended with ESA habitat context.",
+        color: PILLAR_CONFIG.brv.color,
+      },
+      {
+        value: "li",
+        label: "LI · combined",
+        description: "HDX/OCHA population and livelihood evidence.",
+        color: PILLAR_CONFIG.li.color,
+      },
+    ],
   },
   {
-    value: "gbif",
-    label: "GBIF",
-    description: "Biodiversity evidence from area-normalized occurrence records.",
-    color: "#7c3aed",
+    label: "ERP inputs",
+    options: [
+      {
+        value: "soil",
+        label: "SoilGrids",
+        description: "Soil suitability input for ERP.",
+        color: "#f59e0b",
+      },
+      {
+        value: "climate",
+        label: "NASA climate",
+        description: "NASA POWER climate suitability input for ERP.",
+        color: "#38bdf8",
+      },
+      {
+        value: "terrain",
+        label: "Terrain relief",
+        description: "Open-Meteo elevation relief input for ERP.",
+        color: "#84cc16",
+      },
+      {
+        value: "gfw",
+        label: "GFW loss",
+        description: "GFW/UMD tree-cover-loss pressure input for ERP.",
+        color: "#fb7185",
+      },
+    ],
   },
   {
-    value: "livelihood",
-    label: "Livelihood",
-    description: "Population pressure and livelihood evidence from HDX/OCHA inputs.",
-    color: "#f97316",
+    label: "BRV inputs",
+    options: [
+      {
+        value: "gbif",
+        label: "GBIF",
+        description: "Biodiversity evidence from area-normalized occurrences.",
+        color: "#7c3aed",
+      },
+      {
+        value: "landcover",
+        label: "ESA WorldCover",
+        description: "Habitat context for BRV and land-use safeguard checks.",
+        color: "#10b981",
+      },
+    ],
   },
   {
-    value: "climate",
-    label: "Climate",
-    description: "NASA POWER climate suitability at ADM2 centroid level.",
-    color: "#38bdf8",
-  },
-  {
-    value: "terrain",
-    label: "Terrain",
-    description: "Open-Meteo elevation relief proxy for erosion-sensitive terrain.",
-    color: "#84cc16",
-  },
-  {
-    value: "gfw",
-    label: "GFW loss",
-    description: "GFW/UMD tree-cover-loss pressure used inside ERP.",
-    color: "#fb7185",
-  },
-  {
-    value: "landcover",
-    label: "Landcover",
-    description: "ESA WorldCover land-use safeguard context and sample points.",
-    color: "#10b981",
+    label: "LI inputs",
+    options: [
+      {
+        value: "livelihood",
+        label: "HDX/OCHA population",
+        description: "Population pressure and livelihood evidence for LI.",
+        color: "#f97316",
+      },
+    ],
   },
 ];
+
+const OVERLAY_OPTIONS = OVERLAY_GROUPS.flatMap((group) => group.options);
 
 const SCORE_LEGEND = [
   { label: "Very low", color: "#2dd4bf" },
@@ -405,6 +490,51 @@ export function DeforestationMap({
     layer.on({
       mouseover: () => setHoverZone(name),
       mouseout: () => setHoverZone(null),
+    });
+  };
+
+  const pillarStyle = (pillar: keyof typeof PILLAR_CONFIG) => (feature?: Feature): PathOptions => {
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const unit = analysisUnitById(unitId);
+    const score = unit ? proxyScoresForUnit(unit)[PILLAR_CONFIG[pillar].key] : null;
+    const active = unitId === selected || regionName === selectedRegion;
+    return {
+      fillColor: score === null ? "#737373" : colorForScore(score),
+      fillOpacity: active ? 0.66 : 0.48,
+      color: active ? "#fafafa" : PILLAR_CONFIG[pillar].color,
+      weight: active ? 3 : 1.4,
+    };
+  };
+
+  const onEachPillarRegion = (pillar: keyof typeof PILLAR_CONFIG) => (feature: Feature, layer: Layer) => {
+    const props = feature.properties as ZoneProps | undefined;
+    const name = props?.shapeName ?? "";
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const unit = analysisUnitById(unitId);
+    if (!unit) return;
+    const config = PILLAR_CONFIG[pillar];
+    const score = proxyScoresForUnit(unit)[config.key];
+    const datasetList = config.datasets.map((dataset) => `<li>${dataset}</li>`).join("");
+
+    layer.bindTooltip(
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>${config.short}: ${score}/100<br/><span>${config.datasets.join(" · ")}</span></div>`,
+      { sticky: true, className: "deforest-tooltip" },
+    );
+    layer.bindPopup(
+      `<div style="min-width:230px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">${config.label}</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>${config.short} score</dt><dd style="margin:0;font-weight:700">${score}/100</dd><dt>Admin unit</dt><dd style="margin:0;font-weight:700">${unit.level.toUpperCase()}</dd></dl><div style="margin-top:9px;font-size:11px"><strong>Datasets used</strong><ul style="margin:5px 0 0 16px;padding:0">${datasetList}</ul></div></div>`,
+    );
+    layer.on({
+      click: () => onSelect(unitId ?? regionName),
+      mouseover: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle({ fillOpacity: 0.74, weight: 3 });
+      },
+      mouseout: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle(pillarStyle(pillar)(feature));
+      },
     });
   };
 
@@ -810,6 +940,30 @@ export function DeforestationMap({
           })}
         />
       )}
+      {overlayMode === "erp" && focusBoundaryData && (
+        <GeoJSON
+          key={`erp-regions-${selected ?? "none"}-${weightKey}`}
+          data={focusBoundaryData}
+          style={pillarStyle("erp")}
+          onEachFeature={onEachPillarRegion("erp")}
+        />
+      )}
+      {overlayMode === "brv" && focusBoundaryData && (
+        <GeoJSON
+          key={`brv-regions-${selected ?? "none"}-${weightKey}`}
+          data={focusBoundaryData}
+          style={pillarStyle("brv")}
+          onEachFeature={onEachPillarRegion("brv")}
+        />
+      )}
+      {overlayMode === "li" && focusBoundaryData && (
+        <GeoJSON
+          key={`li-regions-${selected ?? "none"}-${weightKey}`}
+          data={focusBoundaryData}
+          style={pillarStyle("li")}
+          onEachFeature={onEachPillarRegion("li")}
+        />
+      )}
       {overlayMode === "soil" && soilOverlayData && (
         <GeoJSON
           key={`soil-regions-${selected ?? "none"}`}
@@ -992,183 +1146,180 @@ export function DeforestationMap({
           style={{
             pointerEvents: "auto",
             margin: 10,
-            width: 245,
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 6,
+            maxWidth: "calc(100vw - 120px)",
             borderRadius: 8,
-            border: "1px solid rgba(12,20,16,0.2)",
-            background: "rgba(255,255,255,0.96)",
-            boxShadow: "0 12px 32px rgba(0,0,0,0.22)",
-            color: "#0c1410",
-            overflow: "hidden",
+            border: "1px solid rgba(255,255,255,0.18)",
+            background: "rgba(12,20,16,0.86)",
+            boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
+            color: "#fafafa",
+            padding: 6,
             fontFamily: "system-ui, sans-serif",
+            backdropFilter: "blur(8px)",
           }}
         >
-          <div style={{ display: "grid", gap: 10, padding: 12 }}>
-            <label style={{ display: "grid", gap: 5, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
-              Admin boundary
-              <select
-                value={adminLevel}
-                onChange={(event) => onAdminLevelChange(event.target.value as AdminLevel)}
-                style={{
-                  width: "100%",
-                  border: "1px solid #cbd5d1",
-                  borderRadius: 6,
-                  background: "#fff",
-                  color: "#0c1410",
-                  padding: "7px 8px",
-                  font: "600 12px/1.2 system-ui, sans-serif",
-                }}
-              >
-                {ADMIN_LEVELS.map((level) => (
-                  <option key={level.value} value={level.value}>
-                    {level.label} · {level.description}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <select
+            aria-label="Admin boundary"
+            value={adminLevel}
+            onChange={(event) => onAdminLevelChange(event.target.value as AdminLevel)}
+            style={{
+              width: 126,
+              border: "1px solid rgba(255,255,255,0.18)",
+              borderRadius: 6,
+              background: "rgba(255,255,255,0.92)",
+              color: "#0c1410",
+              padding: "6px 8px",
+              font: "700 11px/1.2 system-ui, sans-serif",
+            }}
+          >
+            {ADMIN_LEVELS.map((level) => (
+              <option key={level.value} value={level.value}>
+                {level.label} · {level.description}
+              </option>
+            ))}
+          </select>
 
-            <label style={{ display: "grid", gap: 5, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
-              Data layer
-              <select
-                value={overlayMode}
-                onChange={(event) => setOverlayMode(event.target.value as OverlayMode)}
-                style={{
-                  width: "100%",
-                  border: "1px solid #cbd5d1",
-                  borderRadius: 6,
-                  background: "#fff",
-                  color: "#0c1410",
-                  padding: "7px 8px",
-                  font: "600 12px/1.2 system-ui, sans-serif",
-                }}
-              >
-                {OVERLAY_OPTIONS.map((option) => (
+          <select
+            aria-label="Data layer"
+            value={overlayMode}
+            onChange={(event) => setOverlayMode(event.target.value as OverlayMode)}
+            style={{
+              width: 145,
+              border: "1px solid rgba(255,255,255,0.18)",
+              borderRadius: 6,
+              background: "rgba(255,255,255,0.92)",
+              color: "#0c1410",
+              padding: "6px 8px",
+              font: "700 11px/1.2 system-ui, sans-serif",
+            }}
+          >
+            {OVERLAY_GROUPS.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
-              </select>
-            </label>
+              </optgroup>
+            ))}
+          </select>
 
-            <div>
-              <div style={{ marginBottom: 5, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
-                Basemap
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", overflow: "hidden", border: "1px solid #cbd5d1", borderRadius: 6 }}>
-                {[
-                  { label: "Map", value: false },
-                  { label: "Satellite", value: true },
-                ].map((item) => {
-                  const active = satellite === item.value;
-                  return (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => setSatellite(item.value)}
-                      aria-pressed={active}
-                      style={{
-                        border: "none",
-                        borderRight: item.value ? "none" : "1px solid #cbd5d1",
-                        background: active ? "#0c1410" : "#fff",
-                        color: active ? "#fafafa" : "#0c1410",
-                        padding: "7px 8px",
-                        font: "700 11px/1 system-ui, sans-serif",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div style={{ borderTop: "1px solid #e2e8e4", paddingTop: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <span
-                  aria-hidden
-                  style={{
-                    display: "inline-block",
-                    width: 9,
-                    height: 9,
-                    borderRadius: 999,
-                    background: activeOverlay.color,
-                    boxShadow: "0 0 0 2px #0c1410",
-                    flex: "0 0 auto",
-                  }}
-                />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ font: "700 12px/1.2 system-ui, sans-serif" }}>{activeOverlay.label}</div>
-                  <div style={{ marginTop: 2, color: "#475569", font: "500 10px/1.35 system-ui, sans-serif" }}>
-                    {activeOverlay.description}
-                  </div>
-                </div>
-              </div>
-
-              {overlayMode !== "priority" ? (
+          <div style={{ display: "flex", overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 6 }}>
+            {[
+              { label: "Map", value: false },
+              { label: "Sat", value: true },
+            ].map((item) => {
+              const active = satellite === item.value;
+              return (
                 <button
+                  key={item.label}
                   type="button"
-                  onClick={() => setOverlayMode("priority")}
+                  onClick={() => setSatellite(item.value)}
+                  aria-pressed={active}
                   style={{
-                    width: "100%",
-                    marginTop: 9,
-                    border: "1px solid #0c1410",
-                    borderRadius: 6,
-                    background: "#0c1410",
-                    color: "#fafafa",
+                    minWidth: 42,
+                    border: "none",
+                    borderRight: item.value ? "none" : "1px solid rgba(255,255,255,0.18)",
+                    background: active ? "#fafafa" : "transparent",
+                    color: active ? "#0c1410" : "#fafafa",
                     padding: "7px 8px",
                     font: "700 11px/1 system-ui, sans-serif",
                     cursor: "pointer",
                   }}
                 >
-                  Back to priority map
+                  {item.label}
                 </button>
-              ) : null}
-            </div>
+              );
+            })}
           </div>
 
-          <div style={{ borderTop: "1px solid #e2e8e4", padding: "9px 12px 11px" }}>
-            <div style={{ marginBottom: 6, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
-              Score scale
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", overflow: "hidden", borderRadius: 4 }}>
-              {SCORE_LEGEND.map((item) => (
-                <span key={item.label} title={item.label} style={{ height: 8, background: item.color }} />
+          {overlayMode !== "priority" ? (
+            <button
+              type="button"
+              onClick={() => setOverlayMode("priority")}
+              style={{
+                border: "1px solid rgba(255,255,255,0.18)",
+                borderRadius: 6,
+                background: "rgba(255,255,255,0.1)",
+                color: "#fafafa",
+                padding: "7px 9px",
+                font: "700 11px/1 system-ui, sans-serif",
+                cursor: "pointer",
+              }}
+            >
+              Priority
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="leaflet-bottom leaflet-right" style={{ pointerEvents: "none" }}>
+        <div
+          className="leaflet-control"
+          style={{
+            pointerEvents: "auto",
+            margin: 10,
+            width: overlayMode === "landcover" ? 218 : 154,
+            borderRadius: 8,
+            border: "1px solid rgba(255,255,255,0.16)",
+            background: "rgba(12,20,16,0.78)",
+            color: "#fafafa",
+            padding: "8px 9px",
+            boxShadow: "0 10px 24px rgba(0,0,0,0.2)",
+            fontFamily: "system-ui, sans-serif",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 8,
+                height: 8,
+                borderRadius: 999,
+                background: activeOverlay.color,
+                boxShadow: "0 0 0 1px #fafafa",
+              }}
+            />
+            <span style={{ font: "700 10px/1 system-ui, sans-serif" }}>{activeOverlay.label}</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", overflow: "hidden", borderRadius: 999 }}>
+            {SCORE_LEGEND.map((item) => (
+              <span key={item.label} title={item.label} style={{ height: 6, background: item.color }} />
+            ))}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, color: "rgba(250,250,250,0.76)", font: "700 9px/1 system-ui, sans-serif" }}>
+            <span>Low</span>
+            <span>High</span>
+          </div>
+
+          {overlayMode === "landcover" ? (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 8px", marginTop: 8, paddingTop: 7, borderTop: "1px solid rgba(255,255,255,0.14)" }}>
+              {LANDCOVER_SAMPLE_LEGEND.map((item) => (
+                <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                  <span
+                    aria-hidden
+                    style={{
+                      display: "inline-block",
+                      width: 7,
+                      height: 7,
+                      borderRadius: 999,
+                      background: item.color,
+                      boxShadow: "0 0 0 1px rgba(250,250,250,0.8)",
+                      flex: "0 0 auto",
+                    }}
+                  />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", font: "600 8.5px/1 system-ui, sans-serif" }}>
+                    {item.label}
+                  </span>
+                </div>
               ))}
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, color: "#475569", font: "600 9px/1 system-ui, sans-serif" }}>
-              <span>Low</span>
-              <span>High</span>
-            </div>
-
-            {overlayMode === "landcover" ? (
-              <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px solid #e2e8e4" }}>
-                <div style={{ marginBottom: 6, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
-                  Sample points
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 8px" }}>
-                  {LANDCOVER_SAMPLE_LEGEND.map((item) => (
-                    <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-                      <span
-                        aria-hidden
-                        style={{
-                          display: "inline-block",
-                          width: 8,
-                          height: 8,
-                          borderRadius: 999,
-                          background: item.color,
-                          boxShadow: "0 0 0 1px #0c1410",
-                          flex: "0 0 auto",
-                        }}
-                      />
-                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", font: "600 9px/1.1 system-ui, sans-serif" }}>
-                        {item.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
 

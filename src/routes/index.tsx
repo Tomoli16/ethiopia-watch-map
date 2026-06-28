@@ -20,8 +20,6 @@ import {
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
   DEFAULT_WEIGHTS,
-  FOCUS_REGIONS,
-  PRIORITY_COLOR_STOPS,
   PROXIES,
   analysisUnitById,
   analysisUnitsForLevel,
@@ -183,44 +181,26 @@ function Index() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="border-b border-border px-6 py-4">
-        <div className="flex items-baseline justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">
-              Southwest Ethiopia · Real Data Priority Map
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Three-pillar score from fetched{" "}
-              <a
-                className="underline decoration-dotted hover:text-foreground"
-                href="https://soilgrids.org/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                SoilGrids
-              </a>
-              ,{" "}
-              <a
-                className="underline decoration-dotted hover:text-foreground"
-                href="https://www.gbif.org/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                GBIF
-              </a>
-              , GFW/UMD tree-cover loss, NASA POWER climate, Open-Meteo terrain and HDX/OCHA ADM3 population data. Boundaries from HDX{" "}
-              <a
-                className="underline decoration-dotted hover:text-foreground"
-                href="https://data.humdata.org/dataset/cod-ab-eth"
-                target="_blank"
-                rel="noreferrer"
-              >
-                COD-AB-ETH
-              </a>
-              .
-            </p>
+      <header className="border-b border-border bg-background/95 px-5 py-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex shrink-0 items-center rounded-md border border-emerald-500/25 bg-white px-3 py-1 shadow-sm">
+              <img
+                src="/brand/ecoimpacto-logo-transparent.png"
+                alt="EcoImpacto"
+                className="h-11 w-auto object-contain"
+              />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-semibold tracking-tight">
+                Ethiopia Watch
+              </h1>
+              <p className="truncate text-xs text-muted-foreground">
+                Restoration priority planner
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={() => setBriefingOpen(true)}
@@ -250,7 +230,6 @@ function Index() {
                 {detailOpen ? <PanelRightClose className="size-4" /> : <PanelRightOpen className="size-4" />}
               </button>
             </div>
-            <Legend />
           </div>
         </div>
       </header>
@@ -268,8 +247,13 @@ function Index() {
           aria-hidden={!rankingOpen}
         >
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {analysisLevel === "adm2" ? "ADM2 zones" : "Focus regions"} · ranked by priority
+            <div className="flex items-baseline justify-between gap-3 px-4 py-3">
+              <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Priority ranking
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {analysisLevel === "adm2" ? `${ranked.length} ADM2` : `${ranked.length} ADM1`}
+              </div>
             </div>
             <ul>
               {ranked.map((r) => {
@@ -302,15 +286,6 @@ function Index() {
                 );
               })}
             </ul>
-            <div className="px-4 pb-4 pt-2 text-[11px] leading-relaxed text-muted-foreground">
-              Map boundaries use HDX COD-AB-ETH{" "}
-              <span className="font-medium text-foreground/80">{adminLevel.toUpperCase()}</span>{" "}
-              {adminLevel === "adm1" ? "regions" : adminLevel === "adm2" ? "zones" : "woredas"}.
-              {" "}{adminLevel === "adm1" ? "ADM1 scores aggregate the mapped ADM2 zones." : adminLevel === "adm2" ? "ADM2 colors use ADM2-native real inputs where available." : "ADM3 colors display the matched ADM2 zone score."}
-            </div>
-            <div className="px-4 pb-4 text-[11px] leading-relaxed text-muted-foreground">
-              Current focus regions: Oromia, SNNPR, Gambela and Benishangul-Gumuz.
-            </div>
           </div>
           <div className="shrink-0 border-t border-border bg-background/95 shadow-[0_-10px_24px_rgba(0,0,0,0.18)] backdrop-blur">
             <WeightsPanel weights={weights} onChange={setWeights} />
@@ -1180,7 +1155,7 @@ function WeightsPanel({
     <div className="px-4 py-3">
       <div className="mb-2 flex items-baseline justify-between">
         <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Proxy weights
+          Weights
         </div>
         <button
           type="button"
@@ -1226,8 +1201,7 @@ function WeightsPanel({
         })}
       </div>
       <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
-        Weights are normalized to 100%. Move a slider to see the priority
-        score, region ranking and map colors update live.
+        Normalized to 100%. Updates ranking and map colors live.
       </p>
     </div>
   );
@@ -1297,27 +1271,6 @@ function ProxyPanel({
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-}
-
-function Legend() {
-  const gradient = `linear-gradient(90deg, ${PRIORITY_COLOR_STOPS
-    .map((stop) => `${stop.color} ${stop.value}%`)
-    .join(", ")})`;
-  return (
-    <div className="w-48 text-xs text-muted-foreground">
-      <div className="mb-1 flex justify-between">
-        <span>Low</span>
-        <span>Priority</span>
-        <span>High</span>
-      </div>
-      <div className="h-2 rounded-sm" style={{ background: gradient }} />
-      <div className="mt-1 flex justify-between font-mono text-[10px]">
-        {PRIORITY_COLOR_STOPS.map((stop) => (
-          <span key={stop.value}>{stop.label}</span>
-        ))}
       </div>
     </div>
   );
