@@ -10,6 +10,7 @@ import {
   analysisUnitById,
   climateSampleForAdm2,
   colorForScore,
+  gbifAreaNormalizedEvidenceScoreForAdm2,
   gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
   landCoverForAdm2,
@@ -373,9 +374,11 @@ export function DeforestationMap({
     const unitId = adm2IdForFeature(feature, adminLevel);
     const regionName = regionNameForFeature(feature);
     const gbif = adminLevel === "adm1" ? gbifBiodiversityForRegion(regionName) : gbifBiodiversityForAdm2(unitId) ?? gbifBiodiversityForRegion(regionName);
+    const evidenceScore =
+      adminLevel === "adm1" ? gbif?.occurrenceEvidenceScore : gbifAreaNormalizedEvidenceScoreForAdm2(unitId) ?? gbif?.occurrenceEvidenceScore;
     const active = unitId === selected || regionName === selectedRegion;
     return {
-      fillColor: gbif ? gbifColor(gbif.occurrenceEvidenceScore) : "#737373",
+      fillColor: evidenceScore !== undefined ? gbifColor(evidenceScore) : "#737373",
       fillOpacity: active ? 0.6 : 0.44,
       color: active ? "#fafafa" : "#c4b5fd",
       weight: active ? 3 : 1.4,
@@ -390,8 +393,13 @@ export function DeforestationMap({
     const adm2Gbif = adminLevel === "adm1" ? undefined : gbifBiodiversityForAdm2(unitId);
     const gbif = adm2Gbif ?? gbifBiodiversityForRegion(regionName);
     if (!gbif) return;
+    const evidenceScore = adm2Gbif
+      ? gbifAreaNormalizedEvidenceScoreForAdm2(unitId) ?? gbif.occurrenceEvidenceScore
+      : gbif.occurrenceEvidenceScore;
+    const areaKm2 = unitId ? landCoverForAdm2(unitId)?.areaKm2 : undefined;
+    const occurrenceDensity = areaKm2 && "allOccurrences" in gbif ? gbif.allOccurrences / areaKm2 : null;
 
-    const sourceLabel = adm2Gbif ? "ADM2 GBIF bounding-box counts" : "ADM1 GBIF bounding-box counts";
+    const sourceLabel = adm2Gbif ? "ADM2 GBIF bounding-box counts per km2" : "ADM1 GBIF bounding-box counts";
     const topPlants =
       "topPlantSpecies" in gbif
         ? gbif.topPlantSpecies
@@ -408,11 +416,11 @@ export function DeforestationMap({
         : "";
 
     layer.bindTooltip(
-      `<div style="font-family:inherit"><strong>${name}</strong><br/>${sourceLabel}<br/>GBIF evidence: ${gbif.occurrenceEvidenceScore}/100<br/>Plants: ${gbif.plantOccurrences.toLocaleString()} · Birds: ${gbif.birdOccurrences.toLocaleString()}</div>`,
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>${sourceLabel}<br/>GBIF evidence: ${evidenceScore}/100${occurrenceDensity === null ? "" : `<br/>Records/km²: ${occurrenceDensity.toFixed(2)}`}<br/>Plants: ${gbif.plantOccurrences.toLocaleString()} · Birds: ${gbif.birdOccurrences.toLocaleString()}</div>`,
       { sticky: true, className: "deforest-tooltip" },
     );
     layer.bindPopup(
-      `<div style="min-width:230px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">${sourceLabel}. Counts are real GBIF records.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Evidence</dt><dd style="margin:0;font-weight:700">${gbif.occurrenceEvidenceScore}/100</dd><dt>All records</dt><dd style="margin:0;font-weight:700">${gbif.allOccurrences.toLocaleString()}</dd><dt>Plants</dt><dd style="margin:0;font-weight:700">${gbif.plantOccurrences.toLocaleString()}</dd><dt>Birds</dt><dd style="margin:0;font-weight:700">${gbif.birdOccurrences.toLocaleString()}</dd></dl>${topPlants || topBirds ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;font-size:11px"><div><strong>Top plants</strong><br/>${topPlants}</div><div><strong>Top birds</strong><br/>${topBirds}</div></div>` : ""}<div style="margin-top:8px;color:#6b7280;font-size:10px">Not yet corrected for observer/sampling bias.</div></div>`,
+      `<div style="min-width:230px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">${sourceLabel}. Counts are real GBIF records${adm2Gbif ? " normalized by ADM2 area" : ""}.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Evidence</dt><dd style="margin:0;font-weight:700">${evidenceScore}/100</dd>${occurrenceDensity === null ? "" : `<dt>Records/km²</dt><dd style="margin:0;font-weight:700">${occurrenceDensity.toFixed(2)}</dd>`}<dt>All records</dt><dd style="margin:0;font-weight:700">${gbif.allOccurrences.toLocaleString()}</dd><dt>Plants</dt><dd style="margin:0;font-weight:700">${gbif.plantOccurrences.toLocaleString()}</dd><dt>Birds</dt><dd style="margin:0;font-weight:700">${gbif.birdOccurrences.toLocaleString()}</dd></dl>${topPlants || topBirds ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;font-size:11px"><div><strong>Top plants</strong><br/>${topPlants}</div><div><strong>Top birds</strong><br/>${topBirds}</div></div>` : ""}<div style="margin-top:8px;color:#6b7280;font-size:10px">Normalized for area, but not yet corrected for observer/sampling bias.</div></div>`,
     );
     layer.on({
       click: () => onSelect(unitId ?? regionName),

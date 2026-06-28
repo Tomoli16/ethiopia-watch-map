@@ -228,6 +228,37 @@ function average(values: number[]): number {
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
+function weightedAverage(items: { value: number; weight: number }[]): number {
+  const usable = items.filter((item) => item.weight > 0);
+  if (usable.length === 0) return average(items.map((item) => item.value));
+  const totalWeight = usable.reduce((sum, item) => sum + item.weight, 0);
+  return Math.round(usable.reduce((sum, item) => sum + item.value * item.weight, 0) / totalWeight);
+}
+
+function adm2AreaKm2(id?: string): number {
+  if (!id) return 0;
+  return landCoverForAdm2(id)?.areaKm2 ?? livelihoodPopulationForAdm2(id)?.areaKm2 ?? 0;
+}
+
+function logScale(value: number, low: number, high: number): number {
+  if (value <= 0 || high <= low) return 0;
+  return clamp01((Math.log10(value) - Math.log10(low)) / (Math.log10(high) - Math.log10(low)));
+}
+
+export function gbifAreaNormalizedEvidenceScoreForAdm2(id?: string): number | null {
+  const gbif = gbifBiodiversityForAdm2(id);
+  const areaKm2 = adm2AreaKm2(id);
+  if (!gbif || areaKm2 <= 0) return null;
+  const allDensity = gbif.allOccurrences / areaKm2;
+  const plantDensity = gbif.plantOccurrences / areaKm2;
+  const birdDensity = gbif.birdOccurrences / areaKm2;
+  return pct(
+    logScale(allDensity, 0.05, 30) * 0.4 +
+      logScale(plantDensity, 0.005, 3) * 0.3 +
+      logScale(birdDensity, 0.02, 25) * 0.3,
+  );
+}
+
 export function proxyScores(r: RegionRisk): ProxyScores {
   return proxyScoresForUnit({ id: r.name, name: r.name, level: "adm1", region: r.name });
 }
@@ -238,9 +269,24 @@ export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
     if (children.length > 0) {
       const childScores = children.map((child) => proxyScoresForUnit(child));
       return {
-        ecologicalRestorationPotential: average(childScores.map((score) => score.ecologicalRestorationPotential)),
-        biodiversityRecoveryValue: average(childScores.map((score) => score.biodiversityRecoveryValue)),
-        livelihoodImpact: average(childScores.map((score) => score.livelihoodImpact)),
+        ecologicalRestorationPotential: weightedAverage(
+          childScores.map((score, index) => ({
+            value: score.ecologicalRestorationPotential,
+            weight: adm2AreaKm2(children[index].id),
+          })),
+        ),
+        biodiversityRecoveryValue: weightedAverage(
+          childScores.map((score, index) => ({
+            value: score.biodiversityRecoveryValue,
+            weight: adm2AreaKm2(children[index].id),
+          })),
+        ),
+        livelihoodImpact: weightedAverage(
+          childScores.map((score, index) => ({
+            value: score.livelihoodImpact,
+            weight: adm2AreaKm2(children[index].id),
+          })),
+        ),
       };
     }
   }
@@ -258,6 +304,7 @@ export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
   );
   const rawEcologicalRestorationPotential = average(ecologicalInputs);
   const rawBiodiversityRecoveryValue =
+    gbifAreaNormalizedEvidenceScoreForAdm2(unit.id) ??
     gbifAdm2?.occurrenceEvidenceScore ??
     gbifBiodiversityForRegion(region)?.occurrenceEvidenceScore ??
     0;
@@ -267,7 +314,7 @@ export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
     ecologicalRestorationPotential:
       unit.level === "adm2" ? scaleRange(rawEcologicalRestorationPotential, 50, 90) : rawEcologicalRestorationPotential,
     biodiversityRecoveryValue:
-      unit.level === "adm2" ? scaleRange(rawBiodiversityRecoveryValue, 35, 100) : rawBiodiversityRecoveryValue,
+      unit.level === "adm2" ? scaleRange(rawBiodiversityRecoveryValue, 12, 98) : rawBiodiversityRecoveryValue,
     livelihoodImpact: unit.level === "adm2" ? scaleRange(rawLivelihoodImpact, 64, 99) : rawLivelihoodImpact,
   };
 }

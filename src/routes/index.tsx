@@ -10,6 +10,7 @@ import {
   analysisUnitsForLevel,
   climateSampleForAdm2,
   colorForScore,
+  gbifAreaNormalizedEvidenceScoreForAdm2,
   gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
   landCoverForAdm2,
@@ -118,6 +119,14 @@ function Index() {
   const detailClimate = detail?.level === "adm2" ? climateSampleForAdm2(detail.id) : undefined;
   const detailTerrain = detail?.level === "adm2" ? terrainSampleForAdm2(detail.id) : undefined;
   const detailLandCover = detail?.level === "adm2" ? landCoverForAdm2(detail.id) : undefined;
+  const detailGbifEvidenceScore =
+    detail?.level === "adm2"
+      ? gbifAreaNormalizedEvidenceScoreForAdm2(detail.id) ?? detailGbif?.occurrenceEvidenceScore
+      : detailGbif?.occurrenceEvidenceScore;
+  const detailGbifDensity =
+    detail?.level === "adm2" && detailGbif && detailLandCover?.areaKm2
+      ? detailGbif.allOccurrences / detailLandCover.areaKm2
+      : null;
   const handleAdminLevelChange = (level: AdminLevel) => {
     const current = analysisUnitById(selected ?? undefined);
     setAdminLevel(level);
@@ -359,10 +368,13 @@ function Index() {
                       />
                     </div>
                     <span className="text-[10px] text-muted-foreground">
-                      evidence {detailGbif.occurrenceEvidenceScore}/100
+                      evidence {detailGbifEvidenceScore}/100
                     </span>
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2">
+                    {detailGbifDensity === null ? null : (
+                      <Stat label="Records/km2" value={detailGbifDensity.toFixed(2)} />
+                    )}
                     <Stat label="All records" value={detailGbif.allOccurrences.toLocaleString()} />
                     <Stat label="Plants" value={detailGbif.plantOccurrences.toLocaleString()} />
                     <Stat label="Birds" value={detailGbif.birdOccurrences.toLocaleString()} />
@@ -374,7 +386,7 @@ function Index() {
                     </div>
                   ) : null}
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real GBIF coordinated occurrences, queried by {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "ADM2 bounding box." : "ADM1 bounding box."} {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "This BRV input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "ADM1 BRV is aggregated from the mapped ADM2 zone scores and is"} not yet corrected for observer or road-access bias.
+                    Real GBIF coordinated occurrences, queried by {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "ADM2 bounding box and normalized by ADM2 area." : "ADM1 bounding box."} {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "This BRV input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "ADM1 BRV is area-weighted from the mapped ADM2 zone scores and is"} not yet corrected for observer or road-access bias.
                   </p>
                 </div>
               ) : (
