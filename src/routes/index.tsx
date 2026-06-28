@@ -34,6 +34,15 @@ const PROXY_ICONS: Record<ProxyKey, LucideIcon> = {
   livelihoodImpact: UsersRound,
 };
 
+function sourceLevelLabel(level: ReturnType<typeof proxySourceLevelForUnit>) {
+  if (level === "adm2-aggregate") return "ADM2 AVG";
+  return level.toUpperCase();
+}
+
+function sourceIsInherited(level: ReturnType<typeof proxySourceLevelForUnit>, unitLevel: AnalysisLevel) {
+  return level !== unitLevel && level !== "adm2-aggregate";
+}
+
 const DeforestationMap = lazy(() =>
   import("@/components/DeforestationMap").then((m) => ({ default: m.DeforestationMap })),
 );
@@ -273,8 +282,11 @@ function Index() {
                     <Sprout className="size-3.5" aria-hidden />
                     <span>SoilGrids ERP input</span>
                     <SourceBadge
-                      inherited={proxySourceLevelForUnit(detail, "ecologicalRestorationPotential") !== detail.level}
-                      label={proxySourceLevelForUnit(detail, "ecologicalRestorationPotential").toUpperCase()}
+                      inherited={sourceIsInherited(
+                        proxySourceLevelForUnit(detail, "ecologicalRestorationPotential"),
+                        detail.level,
+                      )}
+                      label={sourceLevelLabel(proxySourceLevelForUnit(detail, "ecologicalRestorationPotential"))}
                     />
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2">
@@ -301,8 +313,11 @@ function Index() {
                       <Bird className="size-3.5" aria-hidden />
                       <span>GBIF BRV input</span>
                       <SourceBadge
-                        inherited={proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") !== detail.level}
-                        label={proxySourceLevelForUnit(detail, "biodiversityRecoveryValue").toUpperCase()}
+                        inherited={sourceIsInherited(
+                          proxySourceLevelForUnit(detail, "biodiversityRecoveryValue"),
+                          detail.level,
+                        )}
+                        label={sourceLevelLabel(proxySourceLevelForUnit(detail, "biodiversityRecoveryValue"))}
                       />
                     </div>
                     <span className="text-[10px] text-muted-foreground">
@@ -386,6 +401,9 @@ function Index() {
                 Priority = weighted mean of the available real-source proxy
                 scores above. Missing datasets contribute 0 until fetched and
                 wired in, so no placeholder values are silently used.
+                {detail.level === "adm2"
+                  ? " ADM2 proxy scores are scaled across the currently mapped ADM2 zones, so the ranking shows relative priority instead of compressed raw suitability values."
+                  : ""}
               </div>
             </div>
           ) : (
@@ -564,7 +582,7 @@ function ProxyPanel({
           const share = sumW > 0 ? Math.round((weights[p.key] / sumW) * 100) : 0;
           const Icon = PROXY_ICONS[p.key];
           const sourceLevel = proxySourceLevelForUnit(unit, p.key);
-          const inherited = sourceLevel !== unit.level;
+          const inherited = sourceIsInherited(sourceLevel, unit.level);
           return (
             <div key={p.key} className="grid grid-cols-[112px_1fr_36px] items-center gap-2">
               <span className="flex items-center gap-1.5 text-[11px]">
@@ -590,9 +608,9 @@ function ProxyPanel({
                 {v}
               </span>
               <span className="col-span-3 -mt-0.5 pl-[120px] text-[10px] text-muted-foreground/80">
-                <SourceBadge
+                  <SourceBadge
                   inherited={inherited}
-                  label={sourceLevel.toUpperCase()}
+                  label={sourceLevelLabel(sourceLevel)}
                 />{" "}
                 {p.description}
               </span>

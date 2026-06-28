@@ -163,6 +163,11 @@ export const DEFAULT_WEIGHTS: Weights = {
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const pct = (x: number) => Math.round(clamp01(x) * 100);
 
+function scaleRange(value: number, low: number, high: number): number {
+  if (high <= low) return Math.round(value);
+  return pct((value - low) / (high - low));
+}
+
 function soilPhSuitability(ph: number): number {
   if (ph >= 5.5 && ph <= 7.5) return 1;
   if (ph < 5.5) return clamp01((ph - 4) / 1.5);
@@ -213,11 +218,28 @@ export interface ProxyScores {
   livelihoodImpact: number;
 }
 
+function average(values: number[]): number {
+  if (values.length === 0) return 0;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
+
 export function proxyScores(r: RegionRisk): ProxyScores {
   return proxyScoresForUnit({ id: r.name, name: r.name, level: "adm1", region: r.name });
 }
 
 export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
+  if (unit.level === "adm1") {
+    const children = ADM2_ANALYSIS_UNITS.filter((child) => child.region === unit.region);
+    if (children.length > 0) {
+      const childScores = children.map((child) => proxyScoresForUnit(child));
+      return {
+        ecologicalRestorationPotential: average(childScores.map((score) => score.ecologicalRestorationPotential)),
+        biodiversityRecoveryValue: average(childScores.map((score) => score.biodiversityRecoveryValue)),
+        livelihoodImpact: average(childScores.map((score) => score.livelihoodImpact)),
+      };
+    }
+  }
+
   const region = unit.region;
   const soilAdm2 = unit.level === "adm2" ? soilSuitabilityScoreForAdm2(unit.id) : null;
   const climateAdm2 = unit.level === "adm2" ? climateSampleForAdm2(unit.id)?.climateSuitabilityScore : null;
@@ -225,21 +247,27 @@ export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
   const livelihoodAdm1 = livelihoodPopulationForRegion(region);
   const livelihoodAdm2 = unit.level === "adm2" ? livelihoodPopulationForAdm2(unit.id) : undefined;
   const soilScore = soilAdm2 ?? soilSuitabilityScoreForRegion(region) ?? 0;
-  const ecologicalRestorationPotential =
+  const rawEcologicalRestorationPotential =
     climateAdm2 === null || climateAdm2 === undefined ? soilScore : Math.round((soilScore + climateAdm2) / 2);
+  const rawBiodiversityRecoveryValue =
+    gbifAdm2?.occurrenceEvidenceScore ??
+    gbifBiodiversityForRegion(region)?.occurrenceEvidenceScore ??
+    0;
+  const rawLivelihoodImpact = livelihoodAdm2?.livelihoodEvidenceScore ?? livelihoodAdm1?.livelihoodEvidenceScore ?? 0;
 
   return {
-    ecologicalRestorationPotential,
+    ecologicalRestorationPotential:
+      unit.level === "adm2" ? scaleRange(rawEcologicalRestorationPotential, 72, 98) : rawEcologicalRestorationPotential,
     biodiversityRecoveryValue:
-      gbifAdm2?.occurrenceEvidenceScore ??
-      gbifBiodiversityForRegion(region)?.occurrenceEvidenceScore ??
-      0,
-    livelihoodImpact: livelihoodAdm2?.livelihoodEvidenceScore ?? livelihoodAdm1?.livelihoodEvidenceScore ?? 0,
+      unit.level === "adm2" ? scaleRange(rawBiodiversityRecoveryValue, 35, 100) : rawBiodiversityRecoveryValue,
+    livelihoodImpact: unit.level === "adm2" ? scaleRange(rawLivelihoodImpact, 64, 99) : rawLivelihoodImpact,
   };
 }
 
-export function proxySourceLevelForUnit(unit: AnalysisUnit, key: ProxyKey): AnalysisLevel | "none" {
-  if (unit.level === "adm1") return "adm1";
+export function proxySourceLevelForUnit(unit: AnalysisUnit, key: ProxyKey): AnalysisLevel | "adm2-aggregate" | "none" {
+  if (unit.level === "adm1") {
+    return ADM2_ANALYSIS_UNITS.some((child) => child.region === unit.region) ? "adm2-aggregate" : "adm1";
+  }
   if (key === "ecologicalRestorationPotential") {
     return soilGridsSampleForAdm2(unit.id) || climateSampleForAdm2(unit.id)
       ? "adm2"
