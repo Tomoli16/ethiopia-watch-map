@@ -10,25 +10,31 @@ import { fileURLToPath } from "node:url";
 const ssrStub = fileURLToPath(new URL("./src/lib/leaflet-ssr-stub.ts", import.meta.url));
 
 export default defineConfig({
+const SSR_STUB_TARGETS = new Set([
+  "leaflet",
+  "react-leaflet",
+  "@react-leaflet/core",
+]);
+
+export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
   vite: {
-    environments: {
-      ssr: {
-        resolve: {
-          // Map browser-only leaflet packages to a no-op stub during SSR so
-          // their top-level `window` access never runs in the worker. The map
-          // component is loaded via a useEffect-based dynamic import, so SSR
-          // never actually renders it.
-          alias: [
-            { find: /^leaflet$/, replacement: ssrStub },
-            { find: /^leaflet\/.*/, replacement: ssrStub },
-            { find: /^react-leaflet$/, replacement: ssrStub },
-            { find: /^@react-leaflet\/core$/, replacement: ssrStub },
-          ],
+    plugins: [
+      {
+        name: "ssr-stub-leaflet",
+        enforce: "pre",
+        // During the SSR build, redirect leaflet / react-leaflet imports to a
+        // tiny no-op stub so their browser-only IIFE never runs in the
+        // worker. The map component is loaded via a client-only dynamic
+        // import, so SSR never actually renders it.
+        async resolveId(source, importer, options) {
+          if (!options?.ssr) return null;
+          if (!SSR_STUB_TARGETS.has(source) && !source.startsWith("leaflet/")) return null;
+          return this.resolve(ssrStub, importer, { ...options, skipSelf: true });
         },
       },
-    },
+    ],
   },
 });
