@@ -17,7 +17,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import {
   DEFAULT_WEIGHTS,
   PROXIES,
@@ -40,6 +40,8 @@ import {
   proxyScoresForUnit,
   soilGridsSampleForAdm2,
   soilGridsSampleForRegion,
+  soilSuitabilityScoreForAdm2,
+  soilSuitabilityScoreForRegion,
   terrainSampleForAdm2,
   type AnalysisLevel,
   type AnalysisUnit,
@@ -129,6 +131,10 @@ function Index() {
     detail?.level === "adm2"
       ? soilGridsSampleForAdm2(detail.id) ?? soilGridsSampleForRegion(detail.region)
       : soilGridsSampleForRegion(detail?.region);
+  const detailSoilScore =
+    detail?.level === "adm2"
+      ? soilSuitabilityScoreForAdm2(detail.id) ?? soilSuitabilityScoreForRegion(detail.region)
+      : soilSuitabilityScoreForRegion(detail?.region);
   const detailGbif =
     detail?.level === "adm2"
       ? gbifBiodiversityForAdm2(detail.id) ?? gbifBiodiversityForRegion(detail.region)
@@ -349,24 +355,36 @@ function Index() {
         >
           {detail && selected && detailLevel && detailProxies ? (
             <div className="space-y-5">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Selected region
-                </div>
-                <h2 className="mt-1 text-2xl font-semibold">{detail.name}</h2>
-                {detail.level === "adm2" ? (
-                  <div className="mt-1 text-xs text-muted-foreground">{detail.region} · ADM2 zone</div>
-                ) : null}
-                <div className="mt-2 flex items-center gap-2">
-                  <span
-                    className="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wider"
-                    style={{ backgroundColor: colorForScore(detailScore), color: "#0b0f0c" }}
+              <div className="rounded-md border border-border bg-card/45 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Selected area
+                    </div>
+                    <h2 className="mt-1 truncate text-2xl font-semibold">{detail.name}</h2>
+                    {detail.level === "adm2" ? (
+                      <div className="mt-1 text-xs text-muted-foreground">{detail.region} · ADM2 zone</div>
+                    ) : null}
+                  </div>
+                  <div
+                    className="rounded-md px-2.5 py-1.5 text-right"
+                    style={{ backgroundColor: `${colorForScore(detailScore)}22` }}
                   >
-                    {detailLevel} priority
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    score {detailScore} / 100
-                  </span>
+                    <div className="text-xl font-semibold tabular-nums">{detailScore}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-muted-foreground">RPS</div>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <ScoreBar value={detailScore} />
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ backgroundColor: colorForScore(detailScore), color: "#0b0f0c" }}
+                    >
+                      {detailLevel} priority
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Relative project ranking</span>
+                  </div>
                 </div>
               </div>
 
@@ -380,44 +398,32 @@ function Index() {
               />
 
               {detailLandCover ? (
-                <div className="rounded-md border border-border bg-card/50 p-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <Layers className="size-3.5" aria-hidden />
-                      <span>ESA WorldCover safeguard</span>
-                      <SourceBadge inherited={false} label="ADM2" />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      safeguard {detailLandCover.landUseSafeguardScore}/100
-                    </span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    <Stat label="Cropland" value={`${Math.round(detailLandCover.croplandShare * 100)}%`} />
-                    <Stat label="Built-up" value={`${Math.round(detailLandCover.builtUpShare * 100)}%`} />
-                    <Stat label="Tree cover" value={`${Math.round(detailLandCover.treeCoverShare * 100)}%`} />
-                    <Stat label="Open veg." value={`${Math.round(detailLandCover.openVegetationShare * 100)}%`} />
-                    <Stat label="Water/wet." value={`${Math.round(detailLandCover.waterWetlandShare * 100)}%`} />
-                    <Stat
-                      label="Samples"
-                      value={`${detailLandCover.samples.length} (${detailLandCover.sampleGridSize}x${detailLandCover.sampleGridSize})`}
-                    />
-                  </div>
-                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real ESA WorldCover 2021 land-cover classes sampled with an
-                    area-scaled ADM2 grid. This is a separate land-use safeguard, not a
-                    fourth weighted priority pillar. Low values warn about
-                    cropland, built-up or water/wetland conflicts.
-                  </p>
-                </div>
+                <DataCard
+                  icon={Layers}
+                  title="ESA WorldCover"
+                  badge={<SourceBadge inherited={false} label="ADM2" />}
+                  score={detailLandCover.landUseSafeguardScore}
+                  scoreLabel="safeguard"
+                >
+                  <Stat label="Cropland" value={`${Math.round(detailLandCover.croplandShare * 100)}%`} />
+                  <Stat label="Built-up" value={`${Math.round(detailLandCover.builtUpShare * 100)}%`} />
+                  <Stat label="Tree cover" value={`${Math.round(detailLandCover.treeCoverShare * 100)}%`} />
+                  <Stat label="Open veg." value={`${Math.round(detailLandCover.openVegetationShare * 100)}%`} />
+                  <Stat label="Water/wet." value={`${Math.round(detailLandCover.waterWetlandShare * 100)}%`} />
+                  <Stat
+                    label="Samples"
+                    value={`${detailLandCover.samples.length} (${detailLandCover.sampleGridSize}x${detailLandCover.sampleGridSize})`}
+                  />
+                </DataCard>
               ) : detail?.level === "adm2" ? (
                 <MissingData label="ESA WorldCover safeguard" />
               ) : null}
 
               {detailSoilGrids ? (
-                <div className="rounded-md border border-border bg-card/50 p-3">
-                  <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    <Sprout className="size-3.5" aria-hidden />
-                    <span>SoilGrids ERP input</span>
+                <DataCard
+                  icon={Sprout}
+                  title="SoilGrids"
+                  badge={
                     <SourceBadge
                       inherited={sourceIsInherited(
                         proxySourceLevelForUnit(detail, "ecologicalRestorationPotential"),
@@ -425,185 +431,128 @@ function Index() {
                       )}
                       label={sourceLevelLabel(proxySourceLevelForUnit(detail, "ecologicalRestorationPotential"))}
                     />
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    <Stat label="pH H2O" value={detailSoilGrids.phH2O.toFixed(1)} />
-                    <Stat label="Soil C" value={`${detailSoilGrids.soilOrganicCarbonGkg.toFixed(1)} g/kg`} />
-                    <Stat label="Clay" value={`${detailSoilGrids.clayPct.toFixed(1)}%`} />
-                    <Stat label="Sand" value={`${detailSoilGrids.sandPct.toFixed(1)}%`} />
-                    <Stat label="Silt" value={`${detailSoilGrids.siltPct.toFixed(1)}%`} />
-                    <Stat label="Depth" value={detailSoilGrids.depthRangeCm} />
-                  </div>
-                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real ISRIC SoilGrids v2.0 centroid sample, depth-weighted
-                    across 0-30 cm. {proxySourceLevelForUnit(detail, "ecologicalRestorationPotential") === "adm2" ? "This ERP input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this ERP input from its parent ADM1 region." : "ADM1 ERP is aggregated from the mapped ADM2 zone scores."}
-                  </p>
-                </div>
+                  }
+                  score={detailSoilScore}
+                  scoreLabel="soil"
+                >
+                  <Stat label="pH H2O" value={detailSoilGrids.phH2O.toFixed(1)} />
+                  <Stat label="Soil C" value={`${detailSoilGrids.soilOrganicCarbonGkg.toFixed(1)} g/kg`} />
+                  <Stat label="Clay" value={`${detailSoilGrids.clayPct.toFixed(1)}%`} />
+                  <Stat label="Sand" value={`${detailSoilGrids.sandPct.toFixed(1)}%`} />
+                  <Stat label="Silt" value={`${detailSoilGrids.siltPct.toFixed(1)}%`} />
+                  <Stat label="Depth" value={detailSoilGrids.depthRangeCm} />
+                </DataCard>
               ) : (
                 <MissingData label="SoilGrids ERP input" />
               )}
 
               {detailGbif ? (
-                <div className="rounded-md border border-border bg-card/50 p-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <Bird className="size-3.5" aria-hidden />
-                      <span>GBIF BRV input</span>
-                      <SourceBadge
-                        inherited={sourceIsInherited(
-                          proxySourceLevelForUnit(detail, "biodiversityRecoveryValue"),
-                          detail.level,
-                        )}
-                        label={sourceLevelLabel(proxySourceLevelForUnit(detail, "biodiversityRecoveryValue"))}
-                      />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      evidence {detailGbifEvidenceScore}/100
-                    </span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    {detailGbifDensity === null ? null : (
-                      <Stat label="Records/km2" value={detailGbifDensity.toFixed(2)} />
-                    )}
-                    {detailGbifDensityScore === null ? null : (
-                      <Stat label="GBIF dens." value={`${detailGbifDensityScore}/100`} />
-                    )}
-                    {detailHabitatScore === null ? null : (
-                      <Stat label="ESA habitat" value={`${detailHabitatScore}/100`} />
-                    )}
-                    <Stat label="All records" value={detailGbif.allOccurrences.toLocaleString()} />
-                    <Stat label="Plants" value={detailGbif.plantOccurrences.toLocaleString()} />
-                    <Stat label="Birds" value={detailGbif.birdOccurrences.toLocaleString()} />
-                  </div>
+                <DataCard
+                  icon={Bird}
+                  title="GBIF"
+                  badge={
+                    <SourceBadge
+                      inherited={sourceIsInherited(
+                        proxySourceLevelForUnit(detail, "biodiversityRecoveryValue"),
+                        detail.level,
+                      )}
+                      label={sourceLevelLabel(proxySourceLevelForUnit(detail, "biodiversityRecoveryValue"))}
+                    />
+                  }
+                  score={detailGbifEvidenceScore}
+                  scoreLabel="evidence"
+                >
+                  {detailGbifDensity === null ? null : (
+                    <Stat label="Records/km2" value={detailGbifDensity.toFixed(2)} />
+                  )}
+                  {detailGbifDensityScore === null ? null : (
+                    <Stat label="GBIF dens." value={`${detailGbifDensityScore}/100`} />
+                  )}
+                  {detailHabitatScore === null ? null : (
+                    <Stat label="ESA habitat" value={`${detailHabitatScore}/100`} />
+                  )}
+                  <Stat label="All records" value={detailGbif.allOccurrences.toLocaleString()} />
+                  <Stat label="Plants" value={detailGbif.plantOccurrences.toLocaleString()} />
+                  <Stat label="Birds" value={detailGbif.birdOccurrences.toLocaleString()} />
                   {"topPlantSpecies" in detailGbif && "topBirdSpecies" in detailGbif ? (
-                    <div className="mt-3 grid grid-cols-2 gap-3 text-[11px]">
+                    <div className="col-span-3 mt-1 grid grid-cols-2 gap-3 rounded-md bg-secondary/25 p-2 text-[11px]">
                       <SpeciesList title="Top plants" species={detailGbif.topPlantSpecies} />
                       <SpeciesList title="Top birds" species={detailGbif.topBirdSpecies} />
                     </div>
                   ) : null}
-                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real GBIF coordinated occurrences, queried by {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "ADM2 bounding box and normalized by ADM2 area. ADM2 BRV blends this GBIF density evidence with ESA WorldCover habitat context." : "ADM1 bounding box."} {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "This BRV input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "ADM1 BRV is area-weighted from the mapped ADM2 zone scores and is"} not yet corrected for observer or road-access bias.
-                  </p>
-                </div>
+                </DataCard>
               ) : (
                 <MissingData label="GBIF BRV input" />
               )}
 
               {detailClimate ? (
-                <div className="rounded-md border border-border bg-card/50 p-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <CloudSun className="size-3.5" aria-hidden />
-                      <span>NASA POWER climate input</span>
-                      <SourceBadge inherited={false} label="ADM2" />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      suitability {detailClimate.climateSuitabilityScore}/100
-                    </span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    <Stat label="Rainfall" value={`${detailClimate.annualRainfallMm.toLocaleString()} mm/yr`} />
-                    <Stat label="Temp." value={`${detailClimate.annualTemperatureC.toFixed(1)} C`} />
-                    <Stat label="Elevation" value={`${detailClimate.elevationM.toFixed(0)} m`} />
-                  </div>
-                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real NASA POWER MERRA2 20-year climatology at the ADM2 centroid.
-                    Used with SoilGrids and terrain relief in ADM2 ERP.
-                  </p>
-                </div>
+                <DataCard
+                  icon={CloudSun}
+                  title="NASA POWER"
+                  badge={<SourceBadge inherited={false} label="ADM2" />}
+                  score={detailClimate.climateSuitabilityScore}
+                  scoreLabel="climate"
+                >
+                  <Stat label="Rainfall" value={`${detailClimate.annualRainfallMm.toLocaleString()} mm/yr`} />
+                  <Stat label="Temp." value={`${detailClimate.annualTemperatureC.toFixed(1)} C`} />
+                  <Stat label="Elevation" value={`${detailClimate.elevationM.toFixed(0)} m`} />
+                </DataCard>
               ) : null}
 
               {detailTerrain ? (
-                <div className="rounded-md border border-border bg-card/50 p-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <Mountain className="size-3.5" aria-hidden />
-                      <span>Open-Meteo terrain input</span>
-                      <SourceBadge inherited={false} label="ADM2" />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      relief {detailTerrain.terrainReliefScore}/100
-                    </span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    <Stat label="Range" value={`${detailTerrain.elevationRangeM.toLocaleString()} m`} />
-                    <Stat label="Max slope" value={`${detailTerrain.maxSlopePercent.toFixed(1)}%`} />
-                    <Stat label="Mean slope" value={`${detailTerrain.meanSlopePercent.toFixed(1)}%`} />
-                  </div>
-                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real Open-Meteo elevation samples at the ADM2 centroid plus
-                    north/south/east/west points. Used in ADM2 ERP as a
-                    lightweight terrain relief proxy, not full DEM zonal statistics.
-                  </p>
-                </div>
+                <DataCard
+                  icon={Mountain}
+                  title="Terrain"
+                  badge={<SourceBadge inherited={false} label="ADM2" />}
+                  score={detailTerrain.terrainReliefScore}
+                  scoreLabel="relief"
+                >
+                  <Stat label="Range" value={`${detailTerrain.elevationRangeM.toLocaleString()} m`} />
+                  <Stat label="Max slope" value={`${detailTerrain.maxSlopePercent.toFixed(1)}%`} />
+                  <Stat label="Mean slope" value={`${detailTerrain.meanSlopePercent.toFixed(1)}%`} />
+                </DataCard>
               ) : null}
 
               {detailGfw ? (
-                <div className="rounded-md border border-border bg-card/50 p-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <Trees className="size-3.5" aria-hidden />
-                      <span>GFW/UMD loss input</span>
-                      <SourceBadge inherited={false} label="ADM2" />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      pressure {detailGfw.degradationPressureScore}/100
-                    </span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    <Stat label="Total loss" value={`${detailGfw.totalLossHa.toLocaleString()} ha`} />
-                    <Stat label="Loss dens." value={`${detailGfw.lossDensityHaPerKm2.toFixed(2)} ha/km2`} />
-                    <Stat label="Recent loss" value={`${detailGfw.recentLossHa.toLocaleString()} ha`} />
-                    <Stat label="Recent share" value={`${Math.round(detailGfw.recentLossShare * 100)}%`} />
-                    <Stat label="Canopy" value={`${detailGfw.canopyCoverThreshold}%`} />
-                    <Stat label="Driver" value={detailGfw.dominantDriver} />
-                  </div>
-                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real Global Forest Watch / UMD tree-cover loss by driver.
-                    Used in ADM2 ERP as degradation pressure: higher historical
-                    loss density means higher restoration priority.
-                  </p>
-                </div>
+                <DataCard
+                  icon={Trees}
+                  title="GFW loss"
+                  badge={<SourceBadge inherited={false} label="ADM2" />}
+                  score={detailGfw.degradationPressureScore}
+                  scoreLabel="pressure"
+                >
+                  <Stat label="Total loss" value={`${detailGfw.totalLossHa.toLocaleString()} ha`} />
+                  <Stat label="Loss dens." value={`${detailGfw.lossDensityHaPerKm2.toFixed(2)} ha/km2`} />
+                  <Stat label="Recent loss" value={`${detailGfw.recentLossHa.toLocaleString()} ha`} />
+                  <Stat label="Recent share" value={`${Math.round(detailGfw.recentLossShare * 100)}%`} />
+                  <Stat label="Canopy" value={`${detailGfw.canopyCoverThreshold}%`} />
+                  <Stat label="Driver" value={detailGfw.dominantDriver} />
+                </DataCard>
               ) : detail?.level === "adm2" ? (
                 <MissingData label="GFW/UMD loss input" />
               ) : null}
 
               {detailLivelihood ? (
-                <div className="rounded-md border border-border bg-card/50 p-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <UsersRound className="size-3.5" aria-hidden />
-                      <span>HDX/OCHA LI input</span>
-                      <SourceBadge inherited={false} label={detail.level.toUpperCase()} />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      evidence {detailLivelihood.livelihoodEvidenceScore}/100
-                    </span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    <Stat label="ADM3 units" value={detailLivelihood.admin3Count.toLocaleString()} />
-                    <Stat label="Population" value={detailLivelihood.populationTotal.toLocaleString()} />
-                    <Stat label="Density" value={`${detailLivelihood.densityPerKm2.toFixed(1)} /km2`} />
-                    <Stat label="Children <15" value={`${Math.round(detailLivelihood.childShare * 100)}%`} />
-                    <Stat label="Women" value={`${Math.round(detailLivelihood.femaleShare * 100)}%`} />
-                    <Stat label="Dependency" value={detailLivelihood.dependencyRatio.toFixed(2)} />
-                  </div>
-                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real HDX/OCHA ADM3 2022 projected population statistics,
-                    aggregated to {detail.level === "adm2" ? "this ADM2 zone" : "the app's focus regions"}. The LI score uses only this fetched population aggregation.
-                  </p>
-                </div>
+                <DataCard
+                  icon={UsersRound}
+                  title="HDX/OCHA population"
+                  badge={<SourceBadge inherited={false} label={detail.level.toUpperCase()} />}
+                  score={detailLivelihood.livelihoodEvidenceScore}
+                  scoreLabel="LI evidence"
+                >
+                  <Stat label="ADM3 units" value={detailLivelihood.admin3Count.toLocaleString()} />
+                  <Stat label="Population" value={detailLivelihood.populationTotal.toLocaleString()} />
+                  <Stat label="Density" value={`${detailLivelihood.densityPerKm2.toFixed(1)} /km2`} />
+                  <Stat label="Children <15" value={`${Math.round(detailLivelihood.childShare * 100)}%`} />
+                  <Stat label="Women" value={`${Math.round(detailLivelihood.femaleShare * 100)}%`} />
+                  <Stat label="Dependency" value={detailLivelihood.dependencyRatio.toFixed(2)} />
+                </DataCard>
               ) : (
                 <MissingData label="HDX/OCHA LI input" />
               )}
 
-              <div className="rounded-md border border-border bg-card/50 p-3 text-xs text-muted-foreground">
-                Priority = weighted mean of the available real-source proxy
-                scores above. Missing datasets contribute 0 until fetched and
-                wired in, so no placeholder values are silently used.
-                {detail.level === "adm2"
-                  ? " ADM2 proxy scores are scaled across the currently mapped ADM2 zones, so the ranking shows relative priority instead of compressed raw suitability values."
-                  : ""}
+              <div className="rounded-md border border-border/70 bg-card/35 px-3 py-2 text-[10px] text-muted-foreground">
+                Real-source scores only · ADM2 scores are relative within the mapped project zones.
               </div>
             </div>
           ) : (
@@ -626,11 +575,65 @@ function Index() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-secondary/60 p-3">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+    <div className="min-w-0 rounded-md border border-border/60 bg-secondary/35 p-2">
+      <div className="truncate text-[9px] uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
+      <div className="mt-1 truncate text-sm font-semibold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function ScoreBar({ value, color }: { value: number; color?: string }) {
+  const clamped = Math.max(0, Math.min(100, value));
+  return (
+    <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+      <div
+        className="h-full rounded-full"
+        style={{ width: `${clamped}%`, backgroundColor: color ?? colorForScore(clamped) }}
+      />
+    </div>
+  );
+}
+
+function DataCard({
+  icon: Icon,
+  title,
+  badge,
+  score,
+  scoreLabel,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  badge?: ReactNode;
+  score?: number | null;
+  scoreLabel?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card/45 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-secondary/70 text-foreground">
+            <Icon className="size-4" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <div className="truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {title}
+            </div>
+            {badge ? <div className="mt-1">{badge}</div> : null}
+          </div>
+        </div>
+        {typeof score === "number" ? (
+          <div className="text-right">
+            <div className="text-lg font-semibold tabular-nums">{score}</div>
+            <div className="text-[9px] uppercase tracking-wider text-muted-foreground">{scoreLabel ?? "score"}</div>
+          </div>
+        ) : null}
+      </div>
+      {typeof score === "number" ? <div className="mt-2"><ScoreBar value={score} /></div> : null}
+      <div className="mt-3 grid grid-cols-3 gap-2">{children}</div>
     </div>
   );
 }
@@ -1060,7 +1063,7 @@ function buildAdm2Summary({
 function AiSummaryCard({ summary }: { summary: Adm2Summary }) {
   return (
     <div className="rounded-md border border-primary/25 bg-primary/5 p-3">
-      <div className="mb-2 flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-primary">
           <Sparkles className="size-3.5" aria-hidden />
           <span>AI Summary</span>
@@ -1073,11 +1076,16 @@ function AiSummaryCard({ summary }: { summary: Adm2Summary }) {
           ))}
         </div>
       </div>
-      <p className="text-sm font-medium leading-snug">{summary.headline}</p>
-      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{summary.body}</p>
-      <div className="mt-3 grid gap-2 text-[11px] leading-relaxed">
-        <div className="rounded-sm bg-secondary/50 px-2 py-1.5 text-foreground/85">{summary.focus}</div>
-        <div className="rounded-sm bg-amber-500/10 px-2 py-1.5 text-amber-200">{summary.caution}</div>
+      <p className="mt-2 text-sm font-medium leading-snug">{summary.headline}</p>
+      <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] leading-snug">
+        <div className="rounded-md bg-secondary/50 px-2 py-2 text-foreground/85">
+          <div className="mb-1 text-[9px] uppercase tracking-wider text-muted-foreground">Next action</div>
+          {summary.focus}
+        </div>
+        <div className="rounded-md bg-amber-500/10 px-2 py-2 text-amber-200">
+          <div className="mb-1 text-[9px] uppercase tracking-wider text-amber-300/80">Watch</div>
+          {summary.caution}
+        </div>
       </div>
     </div>
   );
@@ -1220,17 +1228,24 @@ function ProxyPanel({
 }) {
   const sumW = PROXIES.reduce((sum, proxy) => sum + weights[proxy.key], 0);
   return (
-    <div>
-      <div className="flex items-baseline justify-between">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Priority breakdown
-        </h3>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold tabular-nums">{total}</span>
-          <span className="text-[10px] text-muted-foreground">/ 100</span>
+    <div className="rounded-md border border-border bg-card/45 p-3">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Priority score
+          </h3>
+          <div className="mt-1 flex items-baseline gap-1">
+            <span className="text-3xl font-semibold tabular-nums">{total}</span>
+            <span className="text-xs text-muted-foreground">/100</span>
+          </div>
+        </div>
+        <div className="mt-1 size-14 rounded-full p-1" style={{ backgroundColor: `${colorForScore(total)}33` }}>
+          <div className="flex size-full items-center justify-center rounded-full text-sm font-semibold tabular-nums" style={{ backgroundColor: colorForScore(total), color: "#0b0f0c" }}>
+            {total}
+          </div>
         </div>
       </div>
-      <div className="mt-2 space-y-1.5">
+      <div className="mt-3 space-y-2">
         {PROXIES.map((p) => {
           const v = proxies[p.key as ProxyKey];
           const share = sumW > 0 ? Math.round((weights[p.key] / sumW) * 100) : 0;
@@ -1238,36 +1253,25 @@ function ProxyPanel({
           const sourceLevel = proxySourceLevelForUnit(unit, p.key);
           const inherited = sourceIsInherited(sourceLevel, unit.level);
           return (
-            <div key={p.key} className="grid grid-cols-[112px_1fr_36px] items-center gap-2">
-              <span className="flex items-center gap-1.5 text-[11px]">
-                <span
-                  className="flex size-5 shrink-0 items-center justify-center rounded-sm"
-                  style={{ backgroundColor: `${p.color}26`, color: p.color }}
-                  title={p.label}
-                >
-                  <Icon className="size-3.5" aria-hidden />
+            <div key={p.key} className="rounded-md bg-secondary/25 p-2">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5 text-[11px]">
+                  <span
+                    className="flex size-5 shrink-0 items-center justify-center rounded-sm"
+                    style={{ backgroundColor: `${p.color}26`, color: p.color }}
+                    title={p.label}
+                  >
+                    <Icon className="size-3.5" aria-hidden />
+                  </span>
+                  <span className="font-semibold">{p.short}</span>
+                  <span className="text-[9px] text-muted-foreground">{share}% weight</span>
                 </span>
-                <span>
-                  <span className="font-medium">{p.short}</span>{" "}
-                  <span className="text-[9px] text-muted-foreground/70">({share}%)</span>
+                <span className="flex items-center gap-2">
+                  <SourceBadge inherited={inherited} label={sourceLevelLabel(sourceLevel)} />
+                  <span className="w-6 text-right text-xs font-semibold tabular-nums">{v}</span>
                 </span>
-              </span>
-              <div className="h-1.5 overflow-hidden rounded-sm bg-secondary">
-                <div
-                  className="h-full"
-                  style={{ width: `${v}%`, backgroundColor: p.color }}
-                />
               </div>
-              <span className="text-right text-[10px] tabular-nums text-muted-foreground">
-                {v}
-              </span>
-              <span className="col-span-3 -mt-0.5 pl-[120px] text-[10px] text-muted-foreground/80">
-                  <SourceBadge
-                  inherited={inherited}
-                  label={sourceLevelLabel(sourceLevel)}
-                />{" "}
-                {p.description}
-              </span>
+              <ScoreBar value={v} color={p.color} />
             </div>
           );
         })}
