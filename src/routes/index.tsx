@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bird, CloudSun, Layers, Mountain, Sprout, Trees, UsersRound, type LucideIcon } from "lucide-react";
+import { Bird, CloudSun, Layers, Mountain, Sparkles, Sprout, Trees, UsersRound, type LucideIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
   DEFAULT_WEIGHTS,
@@ -132,6 +132,21 @@ function Index() {
   const detailGbifDensity =
     detail?.level === "adm2" && detailGbif && detailLandCover?.areaKm2
       ? detailGbif.allOccurrences / detailLandCover.areaKm2
+      : null;
+  const detailSummary =
+    detail?.level === "adm2" && detailProxies
+      ? buildAdm2Summary({
+          unit: detail,
+          score: detailScore,
+          proxies: detailProxies,
+          gfw: detailGfw,
+          landCover: detailLandCover,
+          livelihood: detailLivelihood,
+          climate: detailClimate,
+          terrain: detailTerrain,
+          gbifDensityScore: detailGbifDensityScore,
+          habitatScore: detailHabitatScore,
+        })
       : null;
   const handleAdminLevelChange = (level: AdminLevel) => {
     const current = analysisUnitById(selected ?? undefined);
@@ -287,6 +302,8 @@ function Index() {
                   </span>
                 </div>
               </div>
+
+              {detailSummary ? <AiSummaryCard summary={detailSummary} /> : null}
 
               <ProxyPanel
                 proxies={detailProxies}
@@ -540,6 +557,116 @@ function Stat({ label, value }: { label: string; value: string }) {
         {label}
       </div>
       <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+interface Adm2Summary {
+  headline: string;
+  body: string;
+  focus: string;
+  caution: string;
+  badges: string[];
+}
+
+function strongestProxy(proxies: ProxyScores) {
+  return PROXIES.map((proxy) => ({
+    label: proxy.short,
+    value: proxies[proxy.key],
+  })).sort((a, b) => b.value - a.value)[0];
+}
+
+function buildAdm2Summary({
+  unit,
+  score,
+  proxies,
+  gfw,
+  landCover,
+  livelihood,
+  climate,
+  terrain,
+  gbifDensityScore,
+  habitatScore,
+}: {
+  unit: AnalysisUnit;
+  score: number;
+  proxies: ProxyScores;
+  gfw?: ReturnType<typeof gfwTreeCoverLossForAdm2>;
+  landCover?: ReturnType<typeof landCoverForAdm2>;
+  livelihood?: ReturnType<typeof livelihoodPopulationForAdm2>;
+  climate?: ReturnType<typeof climateSampleForAdm2>;
+  terrain?: ReturnType<typeof terrainSampleForAdm2>;
+  gbifDensityScore: number | null;
+  habitatScore: number | null;
+}): Adm2Summary {
+  const strongest = strongestProxy(proxies);
+  const priority =
+    score >= 70 ? "very high" : score >= 55 ? "high" : score >= 40 ? "medium" : "lower";
+  const gfwPart = gfw
+    ? `GFW reports ${Math.round(gfw.totalLossHa).toLocaleString()} ha tree-cover loss, mostly ${gfw.dominantDriver.toLowerCase()}, with ${Math.round(gfw.recentLossHa).toLocaleString()} ha since 2015.`
+    : "GFW tree-cover-loss evidence is not available for this zone yet.";
+  const ecologySignal = [
+    climate ? `climate suitability ${climate.climateSuitabilityScore}/100` : null,
+    terrain ? `terrain relief ${terrain.terrainReliefScore}/100` : null,
+    habitatScore !== null ? `ESA habitat context ${habitatScore}/100` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const safeguardFlags = [
+    landCover && landCover.croplandShare >= 0.35 ? `${Math.round(landCover.croplandShare * 100)}% cropland` : null,
+    landCover && landCover.builtUpShare >= 0.03 ? `${Math.round(landCover.builtUpShare * 100)}% built-up` : null,
+    livelihood && livelihood.densityPerKm2 >= 120 ? `${livelihood.densityPerKm2.toFixed(0)} people/km2` : null,
+  ].filter(Boolean);
+  const caution =
+    safeguardFlags.length > 0
+      ? `Treat as targeted restoration, not broad planting: ${safeguardFlags.join(", ")} require local exclusion checks.`
+      : "No major land-use safeguard warning stands out from the current sampled inputs, but field validation is still needed.";
+  const biodiversity =
+    gbifDensityScore !== null
+      ? `Biodiversity evidence is ${gbifDensityScore}/100 from GBIF density${habitatScore !== null ? ` and ${habitatScore}/100 from ESA habitat context` : ""}.`
+      : "Biodiversity evidence is inherited or missing at this level.";
+
+  return {
+    headline: `${unit.name} has ${priority} restoration priority, driven most by ${strongest.label} (${strongest.value}/100).`,
+    body: `${gfwPart} ${ecologySignal ? `The biophysical context adds ${ecologySignal}.` : ""} ${biodiversity}`,
+    focus:
+      strongest.label === "LI"
+        ? "Best next use: screen community and livelihood constraints first, then pick smaller restoration sites."
+        : strongest.label === "BRV"
+          ? "Best next use: prioritize corridor or habitat-recovery opportunities, then verify land-use conflicts."
+          : "Best next use: shortlist degraded and erosion-sensitive sites, then remove cropland, settlement and wetland conflicts.",
+    caution,
+    badges: [
+      `RPS ${score}/100`,
+      `ERP ${proxies.ecologicalRestorationPotential}`,
+      `BRV ${proxies.biodiversityRecoveryValue}`,
+      `LI ${proxies.livelihoodImpact}`,
+    ],
+  };
+}
+
+function AiSummaryCard({ summary }: { summary: Adm2Summary }) {
+  return (
+    <div className="rounded-md border border-primary/25 bg-primary/5 p-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-primary">
+          <Sparkles className="size-3.5" aria-hidden />
+          <span>AI Summary</span>
+        </div>
+        <div className="flex flex-wrap justify-end gap-1">
+          {summary.badges.map((badge) => (
+            <span key={badge} className="rounded-sm bg-background/80 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
+              {badge}
+            </span>
+          ))}
+        </div>
+      </div>
+      <p className="text-sm font-medium leading-snug">{summary.headline}</p>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{summary.body}</p>
+      <div className="mt-3 grid gap-2 text-[11px] leading-relaxed">
+        <div className="rounded-sm bg-secondary/50 px-2 py-1.5 text-foreground/85">{summary.focus}</div>
+        <div className="rounded-sm bg-amber-500/10 px-2 py-1.5 text-amber-200">{summary.caution}</div>
+      </div>
     </div>
   );
 }
