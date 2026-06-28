@@ -12,4 +12,20 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          // Isolate leaflet / react-leaflet into their own chunk so their
+          // window-touching IIFE never gets pulled into a shared SSR chunk
+          // (otherwise routes import it just to grab React and SSR 500s).
+          manualChunks(id: string) {
+            if (id.includes("node_modules/leaflet/") || id.includes("node_modules/react-leaflet/") || id.includes("node_modules/@react-leaflet/")) {
+              return "leaflet";
+            }
+          },
+        },
+      },
+    },
+  },
 });
