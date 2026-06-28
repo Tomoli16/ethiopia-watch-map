@@ -17,7 +17,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import {
   DEFAULT_WEIGHTS,
   PROXIES,
@@ -49,7 +49,16 @@ import {
   type ProxyScores,
   type Weights,
 } from "@/lib/deforestation-data";
-import type { AdminLevel } from "@/components/DeforestationMap";
+type AdminLevel = "adm1" | "adm2" | "adm3";
+
+interface DeforestationMapProps {
+  selected: string | null;
+  onSelect: (id: string | null) => void;
+  adminLevel: AdminLevel;
+  onAdminLevelChange: (level: AdminLevel) => void;
+  weights: Weights;
+  layoutKey?: string;
+}
 
 const PROXY_ICONS: Record<ProxyKey, LucideIcon> = {
   ecologicalRestorationPotential: Sprout,
@@ -66,9 +75,26 @@ function sourceIsInherited(level: ReturnType<typeof proxySourceLevelForUnit>, un
   return level !== unitLevel && level !== "adm2-aggregate";
 }
 
-const DeforestationMap = lazy(() =>
-  import("@/components/DeforestationMap").then((m) => ({ default: m.DeforestationMap })),
-);
+function ClientOnlyDeforestationMap(props: DeforestationMapProps) {
+  const [Comp, setComp] = useState<ComponentType<DeforestationMapProps> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    import("@/components/DeforestationMap").then((m) => {
+      if (!cancelled) setComp(() => m.DeforestationMap as ComponentType<DeforestationMapProps>);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  if (!Comp) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        Loading map...
+      </div>
+    );
+  }
+  return <Comp {...props} />;
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
