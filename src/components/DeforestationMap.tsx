@@ -51,6 +51,74 @@ const ADMIN_LEVELS: { value: AdminLevel; label: string; description: string }[] 
   { value: "adm3", label: "ADM3", description: "Woredas" },
 ];
 
+const OVERLAY_OPTIONS: { value: OverlayMode; label: string; description: string; color: string }[] = [
+  {
+    value: "priority",
+    label: "Priority map",
+    description: "Weighted restoration priority score for the selected admin level.",
+    color: "#f97316",
+  },
+  {
+    value: "soil",
+    label: "SoilGrids",
+    description: "Soil suitability input for ecological restoration potential.",
+    color: "#f59e0b",
+  },
+  {
+    value: "gbif",
+    label: "GBIF",
+    description: "Biodiversity evidence from area-normalized occurrence records.",
+    color: "#7c3aed",
+  },
+  {
+    value: "livelihood",
+    label: "Livelihood",
+    description: "Population pressure and livelihood evidence from HDX/OCHA inputs.",
+    color: "#f97316",
+  },
+  {
+    value: "climate",
+    label: "Climate",
+    description: "NASA POWER climate suitability at ADM2 centroid level.",
+    color: "#38bdf8",
+  },
+  {
+    value: "terrain",
+    label: "Terrain",
+    description: "Open-Meteo elevation relief proxy for erosion-sensitive terrain.",
+    color: "#84cc16",
+  },
+  {
+    value: "gfw",
+    label: "GFW loss",
+    description: "GFW/UMD tree-cover-loss pressure used inside ERP.",
+    color: "#fb7185",
+  },
+  {
+    value: "landcover",
+    label: "Landcover",
+    description: "ESA WorldCover land-use safeguard context and sample points.",
+    color: "#10b981",
+  },
+];
+
+const SCORE_LEGEND = [
+  { label: "Very low", color: "#2dd4bf" },
+  { label: "Moderate", color: "#84cc16" },
+  { label: "Elevated", color: "#facc15" },
+  { label: "High", color: "#f97316" },
+  { label: "Very high", color: "#dc2626" },
+];
+
+const LANDCOVER_SAMPLE_LEGEND = [
+  { label: "Water / wetland", color: "#0ea5e9" },
+  { label: "Cropland", color: "#facc15" },
+  { label: "Built-up", color: "#dc2626" },
+  { label: "Tree cover", color: "#16a34a" },
+  { label: "Open vegetation", color: "#84cc16" },
+  { label: "Other / sparse", color: "#94a3b8" },
+];
+
 const SOILGRIDS_SAMPLES = Object.values(SOILGRIDS_REGION_SAMPLES);
 const ETHIOPIA_VIEW_BOUNDS: [[number, number], [number, number]] = [
   [2.7, 32.2],
@@ -676,6 +744,7 @@ export function DeforestationMap({
 
   // Re-key GeoJSON layer when weights change so colors refresh
   const weightKey = Object.values(weights).join("-");
+  const activeOverlay = OVERLAY_OPTIONS.find((option) => option.value === overlayMode) ?? OVERLAY_OPTIONS[0];
 
   return (
     <MapContainer
@@ -918,6 +987,192 @@ export function DeforestationMap({
       <ZoomToSelection data={boundaryData} selected={selected} adminLevel={adminLevel} />
       <MapSizeInvalidator layoutKey={layoutKey} />
       <div className="leaflet-top leaflet-right" style={{ pointerEvents: "none" }}>
+        <div
+          className="leaflet-control"
+          style={{
+            pointerEvents: "auto",
+            margin: 10,
+            width: 245,
+            borderRadius: 8,
+            border: "1px solid rgba(12,20,16,0.2)",
+            background: "rgba(255,255,255,0.96)",
+            boxShadow: "0 12px 32px rgba(0,0,0,0.22)",
+            color: "#0c1410",
+            overflow: "hidden",
+            fontFamily: "system-ui, sans-serif",
+          }}
+        >
+          <div style={{ display: "grid", gap: 10, padding: 12 }}>
+            <label style={{ display: "grid", gap: 5, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
+              Admin boundary
+              <select
+                value={adminLevel}
+                onChange={(event) => onAdminLevelChange(event.target.value as AdminLevel)}
+                style={{
+                  width: "100%",
+                  border: "1px solid #cbd5d1",
+                  borderRadius: 6,
+                  background: "#fff",
+                  color: "#0c1410",
+                  padding: "7px 8px",
+                  font: "600 12px/1.2 system-ui, sans-serif",
+                }}
+              >
+                {ADMIN_LEVELS.map((level) => (
+                  <option key={level.value} value={level.value}>
+                    {level.label} · {level.description}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label style={{ display: "grid", gap: 5, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
+              Data layer
+              <select
+                value={overlayMode}
+                onChange={(event) => setOverlayMode(event.target.value as OverlayMode)}
+                style={{
+                  width: "100%",
+                  border: "1px solid #cbd5d1",
+                  borderRadius: 6,
+                  background: "#fff",
+                  color: "#0c1410",
+                  padding: "7px 8px",
+                  font: "600 12px/1.2 system-ui, sans-serif",
+                }}
+              >
+                {OVERLAY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div>
+              <div style={{ marginBottom: 5, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
+                Basemap
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", overflow: "hidden", border: "1px solid #cbd5d1", borderRadius: 6 }}>
+                {[
+                  { label: "Map", value: false },
+                  { label: "Satellite", value: true },
+                ].map((item) => {
+                  const active = satellite === item.value;
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => setSatellite(item.value)}
+                      aria-pressed={active}
+                      style={{
+                        border: "none",
+                        borderRight: item.value ? "none" : "1px solid #cbd5d1",
+                        background: active ? "#0c1410" : "#fff",
+                        color: active ? "#fafafa" : "#0c1410",
+                        padding: "7px 8px",
+                        font: "700 11px/1 system-ui, sans-serif",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ borderTop: "1px solid #e2e8e4", paddingTop: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <span
+                  aria-hidden
+                  style={{
+                    display: "inline-block",
+                    width: 9,
+                    height: 9,
+                    borderRadius: 999,
+                    background: activeOverlay.color,
+                    boxShadow: "0 0 0 2px #0c1410",
+                    flex: "0 0 auto",
+                  }}
+                />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ font: "700 12px/1.2 system-ui, sans-serif" }}>{activeOverlay.label}</div>
+                  <div style={{ marginTop: 2, color: "#475569", font: "500 10px/1.35 system-ui, sans-serif" }}>
+                    {activeOverlay.description}
+                  </div>
+                </div>
+              </div>
+
+              {overlayMode !== "priority" ? (
+                <button
+                  type="button"
+                  onClick={() => setOverlayMode("priority")}
+                  style={{
+                    width: "100%",
+                    marginTop: 9,
+                    border: "1px solid #0c1410",
+                    borderRadius: 6,
+                    background: "#0c1410",
+                    color: "#fafafa",
+                    padding: "7px 8px",
+                    font: "700 11px/1 system-ui, sans-serif",
+                    cursor: "pointer",
+                  }}
+                >
+                  Back to priority map
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div style={{ borderTop: "1px solid #e2e8e4", padding: "9px 12px 11px" }}>
+            <div style={{ marginBottom: 6, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
+              Score scale
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", overflow: "hidden", borderRadius: 4 }}>
+              {SCORE_LEGEND.map((item) => (
+                <span key={item.label} title={item.label} style={{ height: 8, background: item.color }} />
+              ))}
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, color: "#475569", font: "600 9px/1 system-ui, sans-serif" }}>
+              <span>Low</span>
+              <span>High</span>
+            </div>
+
+            {overlayMode === "landcover" ? (
+              <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px solid #e2e8e4" }}>
+                <div style={{ marginBottom: 6, font: "700 10px/1.2 system-ui, sans-serif", letterSpacing: 0.4, textTransform: "uppercase" }}>
+                  Sample points
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 8px" }}>
+                  {LANDCOVER_SAMPLE_LEGEND.map((item) => (
+                    <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                      <span
+                        aria-hidden
+                        style={{
+                          display: "inline-block",
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          background: item.color,
+                          boxShadow: "0 0 0 1px #0c1410",
+                          flex: "0 0 auto",
+                        }}
+                      />
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", font: "600 9px/1.1 system-ui, sans-serif" }}>
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="leaflet-top leaflet-right" aria-hidden style={{ display: "none" }}>
         <div
           className="leaflet-control leaflet-bar"
           style={{ pointerEvents: "auto", margin: "10px", overflow: "hidden" }}

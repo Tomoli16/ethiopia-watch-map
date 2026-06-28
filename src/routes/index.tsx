@@ -91,9 +91,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [selected, setSelected] = useState<string | null>("Oromia");
+  const [selected, setSelected] = useState<string | null>(analysisUnitsForLevel("adm2")[0]?.id ?? "Oromia");
   const [mounted, setMounted] = useState(false);
-  const [adminLevel, setAdminLevel] = useState<AdminLevel>("adm1");
+  const [adminLevel, setAdminLevel] = useState<AdminLevel>("adm2");
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   const [rankingOpen, setRankingOpen] = useState(true);
   const [detailOpen, setDetailOpen] = useState(true);
