@@ -9,7 +9,6 @@ import { fileURLToPath } from "node:url";
 
 const ssrStub = fileURLToPath(new URL("./src/lib/leaflet-ssr-stub.ts", import.meta.url));
 
-export default defineConfig({
 const SSR_STUB_TARGETS = new Set([
   "leaflet",
   "react-leaflet",
@@ -18,6 +17,7 @@ const SSR_STUB_TARGETS = new Set([
 
 export default defineConfig({
   tanstackStart: {
+    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     server: { entry: "server" },
   },
   vite: {
@@ -26,9 +26,9 @@ export default defineConfig({
         name: "ssr-stub-leaflet",
         enforce: "pre",
         // During the SSR build, redirect leaflet / react-leaflet imports to a
-        // tiny no-op stub so their browser-only IIFE never runs in the
-        // worker. The map component is loaded via a client-only dynamic
-        // import, so SSR never actually renders it.
+        // no-op stub so their browser-only IIFE never runs in the worker.
+        // The map component is loaded via a client-only dynamic import, so
+        // SSR never actually renders it.
         async resolveId(source, importer, options) {
           if (!options?.ssr) return null;
           if (!SSR_STUB_TARGETS.has(source) && !source.startsWith("leaflet/")) return null;
