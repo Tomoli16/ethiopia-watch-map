@@ -320,11 +320,20 @@ export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
   const gbifAdm2 = unit.level === "adm2" ? gbifBiodiversityForAdm2(unit.id) : undefined;
   const livelihoodAdm1 = livelihoodPopulationForRegion(region);
   const livelihoodAdm2 = unit.level === "adm2" ? livelihoodPopulationForAdm2(unit.id) : undefined;
-  const soilScore = soilAdm2 ?? soilSuitabilityScoreForRegion(region) ?? 0;
-  const ecologicalInputs = [gfwAdm2, soilScore, climateAdm2, terrainAdm2].filter(
-    (value): value is number => value !== null && value !== undefined,
-  );
-  const rawEcologicalRestorationPotential = average(ecologicalInputs);
+  const soilScore = soilAdm2 ?? soilSuitabilityScoreForRegion(region) ?? null;
+  // GFW tree-cover-loss is a sparse signal across Ethiopia: many ADM2 units have
+  // genuinely 0 ha of recent loss, which does NOT mean "no restoration potential".
+  // Treat GFW=0 as "no degradation pressure signal" so it doesn't drag ERP to 0,
+  // and weight it lightly even when present (soil/climate/terrain are the primary
+  // ecological-restoration drivers).
+  const gfwSignal = typeof gfwAdm2 === "number" && gfwAdm2 > 0 ? gfwAdm2 : null;
+  const ecologicalWeighted: { value: number; weight: number }[] = [
+    { value: soilScore ?? 0, weight: soilScore !== null ? 1 : 0 },
+    { value: climateAdm2 ?? 0, weight: climateAdm2 !== null && climateAdm2 !== undefined ? 1 : 0 },
+    { value: terrainAdm2 ?? 0, weight: terrainAdm2 !== null && terrainAdm2 !== undefined ? 1 : 0 },
+    { value: gfwSignal ?? 0, weight: gfwSignal !== null ? 0.4 : 0 },
+  ];
+  const rawEcologicalRestorationPotential = weightedAverage(ecologicalWeighted);
   const rawBiodiversityRecoveryValue =
     biodiversityRecoveryEvidenceScoreForAdm2(unit.id) ??
     gbifAdm2?.occurrenceEvidenceScore ??
