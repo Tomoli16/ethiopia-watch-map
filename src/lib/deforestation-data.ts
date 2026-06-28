@@ -1,3 +1,4 @@
+import { climateSampleForAdm2 } from "./climate-adm2-data";
 import { gbifBiodiversityForRegion } from "./gbif-data";
 import { gbifBiodiversityForAdm2 } from "./gbif-adm2-data";
 import {
@@ -130,7 +131,7 @@ export const PROXIES: ProxyMeta[] = [
     label: "Ecological Restoration Potential",
     short: "ERP",
     description:
-      "Real ISRIC SoilGrids v2.0 centroid sample: soil organic carbon, pH and texture.",
+      "Real SoilGrids soil suitability plus NASA POWER climate suitability where ADM2 climate is available.",
     color: "#22c55e",
   },
   {
@@ -219,12 +220,16 @@ export function proxyScores(r: RegionRisk): ProxyScores {
 export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
   const region = unit.region;
   const soilAdm2 = unit.level === "adm2" ? soilSuitabilityScoreForAdm2(unit.id) : null;
+  const climateAdm2 = unit.level === "adm2" ? climateSampleForAdm2(unit.id)?.climateSuitabilityScore : null;
   const gbifAdm2 = unit.level === "adm2" ? gbifBiodiversityForAdm2(unit.id) : undefined;
   const livelihoodAdm1 = livelihoodPopulationForRegion(region);
   const livelihoodAdm2 = unit.level === "adm2" ? livelihoodPopulationForAdm2(unit.id) : undefined;
+  const soilScore = soilAdm2 ?? soilSuitabilityScoreForRegion(region) ?? 0;
+  const ecologicalRestorationPotential =
+    climateAdm2 === null || climateAdm2 === undefined ? soilScore : Math.round((soilScore + climateAdm2) / 2);
 
   return {
-    ecologicalRestorationPotential: soilAdm2 ?? soilSuitabilityScoreForRegion(region) ?? 0,
+    ecologicalRestorationPotential,
     biodiversityRecoveryValue:
       gbifAdm2?.occurrenceEvidenceScore ??
       gbifBiodiversityForRegion(region)?.occurrenceEvidenceScore ??
@@ -236,7 +241,11 @@ export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
 export function proxySourceLevelForUnit(unit: AnalysisUnit, key: ProxyKey): AnalysisLevel | "none" {
   if (unit.level === "adm1") return "adm1";
   if (key === "ecologicalRestorationPotential") {
-    return soilGridsSampleForAdm2(unit.id) ? "adm2" : soilGridsSampleForRegion(unit.region) ? "adm1" : "none";
+    return soilGridsSampleForAdm2(unit.id) || climateSampleForAdm2(unit.id)
+      ? "adm2"
+      : soilGridsSampleForRegion(unit.region)
+        ? "adm1"
+        : "none";
   }
   if (key === "biodiversityRecoveryValue") {
     return gbifBiodiversityForAdm2(unit.id) ? "adm2" : gbifBiodiversityForRegion(unit.region) ? "adm1" : "none";
@@ -317,6 +326,8 @@ export function colorForScore(score: number, stops: ColorStop[] = PRIORITY_COLOR
     lowerRgb[2] + (upperRgb[2] - lowerRgb[2]) * t,
   ]);
 }
+
+export { climateSampleForAdm2 };
 
 export const RISK_COLORS: Record<RiskLevel, string> = {
   severe: colorForScore(85),

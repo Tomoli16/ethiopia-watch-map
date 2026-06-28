@@ -7,6 +7,7 @@ import {
   FOCUS_REGIONS,
   adm2UnitId,
   analysisUnitById,
+  climateSampleForAdm2,
   colorForScore,
   gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
@@ -29,7 +30,7 @@ interface Props {
 }
 
 export type AdminLevel = "adm1" | "adm2" | "adm3";
-type OverlayMode = "priority" | "soil" | "gbif" | "livelihood";
+type OverlayMode = "priority" | "soil" | "gbif" | "livelihood" | "climate";
 
 interface ZoneProps {
   shapeName?: string;
@@ -66,6 +67,10 @@ function gbifColor(score: number) {
 }
 
 function livelihoodColor(score: number) {
+  return colorForScore(score);
+}
+
+function climateColor(score: number) {
   return colorForScore(score);
 }
 
@@ -246,6 +251,7 @@ export function DeforestationMap({
   const soilOverlayData = adminLevel === "adm1" ? soilRegionData : focusBoundaryData;
   const gbifOverlayData = adminLevel === "adm1" ? gbifRegionData : focusBoundaryData;
   const livelihoodOverlayData = adminLevel === "adm1" ? livelihoodRegionData : focusBoundaryData;
+  const climateOverlayData = adminLevel === "adm1" ? null : focusBoundaryData;
 
   const zoneStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
@@ -423,6 +429,47 @@ export function DeforestationMap({
     });
   };
 
+  const climateStyle = (feature?: Feature): PathOptions => {
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const climate = climateSampleForAdm2(unitId);
+    const active = unitId === selected || regionName === selectedRegion;
+    return {
+      fillColor: climate ? climateColor(climate.climateSuitabilityScore) : "#737373",
+      fillOpacity: active ? 0.62 : 0.46,
+      color: active ? "#fafafa" : "#bae6fd",
+      weight: active ? 3 : 1.4,
+    };
+  };
+
+  const onEachClimateRegion = (feature: Feature, layer: Layer) => {
+    const props = feature.properties as ZoneProps | undefined;
+    const name = props?.shapeName ?? "";
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const climate = climateSampleForAdm2(unitId);
+    if (!climate) return;
+
+    layer.bindTooltip(
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>NASA POWER climate: ${climate.climateSuitabilityScore}/100<br/>Rainfall: ${climate.annualRainfallMm.toLocaleString()} mm/yr<br/>Temp: ${climate.annualTemperatureC.toFixed(1)} °C</div>`,
+      { sticky: true, className: "deforest-tooltip" },
+    );
+    layer.bindPopup(
+      `<div style="min-width:220px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">Real NASA POWER MERRA2 20-year climatology at the ADM2 centroid.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Suitability</dt><dd style="margin:0;font-weight:700">${climate.climateSuitabilityScore}/100</dd><dt>Rainfall</dt><dd style="margin:0;font-weight:700">${climate.annualRainfallMm.toLocaleString()} mm/yr</dd><dt>Temperature</dt><dd style="margin:0;font-weight:700">${climate.annualTemperatureC.toFixed(1)} °C</dd><dt>Elevation</dt><dd style="margin:0;font-weight:700">${climate.elevationM.toFixed(0)} m</dd></dl></div>`,
+    );
+    layer.on({
+      click: () => onSelect(unitId ?? regionName),
+      mouseover: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle({ fillOpacity: 0.72, weight: 3 });
+      },
+      mouseout: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle(climateStyle(feature));
+      },
+    });
+  };
+
   // Re-key GeoJSON layer when weights change so colors refresh
   const weightKey = Object.values(weights).join("-");
 
@@ -510,6 +557,14 @@ export function DeforestationMap({
           data={livelihoodOverlayData}
           style={livelihoodStyle}
           onEachFeature={onEachLivelihoodRegion}
+        />
+      )}
+      {overlayMode === "climate" && climateOverlayData && (
+        <GeoJSON
+          key={`climate-regions-${selected ?? "none"}`}
+          data={climateOverlayData}
+          style={climateStyle}
+          onEachFeature={onEachClimateRegion}
         />
       )}
       {overlayMode === "soil" &&
@@ -718,6 +773,38 @@ export function DeforestationMap({
               }}
             />
             Livelihood
+          </button>
+          <button
+            type="button"
+            onClick={() => setOverlayMode((mode) => (mode === "climate" ? "priority" : "climate"))}
+            aria-pressed={overlayMode === "climate"}
+            title={overlayMode === "climate" ? "Show priority map" : "Show NASA POWER climate suitability layer"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              width: "100%",
+              padding: "6px 10px",
+              background: overlayMode === "climate" ? "#0c1410" : "#fff",
+              color: overlayMode === "climate" ? "#fafafa" : "#0c1410",
+              border: "none",
+              borderTop: "1px solid #d6d6d6",
+              font: "600 12px/1 system-ui, sans-serif",
+              cursor: "pointer",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 9,
+                height: 9,
+                borderRadius: 999,
+                background: "#38bdf8",
+                boxShadow: "0 0 0 2px currentColor",
+              }}
+            />
+            Climate
           </button>
           {overlayMode === "soil" ? (
             <div

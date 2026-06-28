@@ -7,6 +7,7 @@
     "gbif-ethiopia-summary.json",
     "gbif-biodiversity-regions.json",
     "gbif-biodiversity-adm2.json",
+    "nasa-power-climate-adm2.json",
     "livelihood-population-regions.json",
     "livelihood-population-adm2.json",
     "worldpop-ethiopia.metadata.json"
@@ -21,6 +22,11 @@
       "dataset": "GBIF Occurrence API",
       "level": "ADM1 and ADM2 bounding-box occurrence counts",
       "proxy": "BRV"
+    },
+    {
+      "dataset": "NASA POWER MERRA2 climatology",
+      "level": "ADM2 centroid climate samples, 2001-2020 climatology",
+      "proxy": "ERP"
     },
     {
       "dataset": "HDX/OCHA ADM3 projected population 2022",

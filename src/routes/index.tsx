@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bird, Sprout, UsersRound, type LucideIcon } from "lucide-react";
+import { Bird, CloudSun, Sprout, UsersRound, type LucideIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
   DEFAULT_WEIGHTS,
@@ -8,6 +8,7 @@ import {
   PROXIES,
   analysisUnitById,
   analysisUnitsForLevel,
+  climateSampleForAdm2,
   colorForScore,
   gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
@@ -103,6 +104,7 @@ function Index() {
     detail?.level === "adm2"
       ? livelihoodPopulationForAdm2(detail.id)
       : livelihoodPopulationForRegion(detail?.region);
+  const detailClimate = detail?.level === "adm2" ? climateSampleForAdm2(detail.id) : undefined;
   const handleAdminLevelChange = (level: AdminLevel) => {
     const current = analysisUnitById(selected ?? undefined);
     setAdminLevel(level);
@@ -326,6 +328,30 @@ function Index() {
               ) : (
                 <MissingData label="GBIF BRV input" />
               )}
+
+              {detailClimate ? (
+                <div className="rounded-md border border-border bg-card/50 p-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <CloudSun className="size-3.5" aria-hidden />
+                      <span>NASA POWER climate input</span>
+                      <SourceBadge inherited={false} label="ADM2" />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      suitability {detailClimate.climateSuitabilityScore}/100
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <Stat label="Rainfall" value={`${detailClimate.annualRainfallMm.toLocaleString()} mm/yr`} />
+                    <Stat label="Temp." value={`${detailClimate.annualTemperatureC.toFixed(1)} C`} />
+                    <Stat label="Elevation" value={`${detailClimate.elevationM.toFixed(0)} m`} />
+                  </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                    Real NASA POWER MERRA2 20-year climatology at the ADM2 centroid.
+                    Used with SoilGrids in ADM2 ERP.
+                  </p>
+                </div>
+              ) : null}
 
               {detailLivelihood ? (
                 <div className="rounded-md border border-border bg-card/50 p-3">
