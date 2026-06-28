@@ -142,3 +142,11 @@
     color: var(--color-foreground);
   }
 }
+
+.leaflet-popup-pane {
+  z-index: 10000 !important;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 10001 !important;
+}

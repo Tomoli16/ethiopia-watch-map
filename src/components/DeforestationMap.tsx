@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { CircleMarker, GeoJSON, MapContainer, Pane, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
 import L, { type Layer, type PathOptions } from "leaflet";
 import type { Feature } from "geojson";
 import "leaflet/dist/leaflet.css";
@@ -708,69 +708,72 @@ export function DeforestationMap({
           key={`landcover-regions-${selected ?? "none"}`}
           data={landCoverOverlayData}
           style={landCoverStyle}
-          onEachFeature={onEachLandCoverRegion}
+          interactive={false}
         />
       )}
       {overlayMode === "landcover" &&
-        landCoverSamples.map((sample) => {
-          const active = sample.id === selected;
-          const isWater = sample.classValue === 80 || sample.classValue === 90 || sample.classValue === 95;
-          const isConflict = isWater || sample.classValue === 40 || sample.classValue === 50;
-          return (
-            <CircleMarker
-              key={`${sample.id}-${sample.key}`}
-              center={[sample.lat, sample.lon]}
-              radius={landCoverClassRadius(sample.classValue, active)}
-              pathOptions={{
-                color: active ? "#fafafa" : isWater ? "#e0f2fe" : "#0c1410",
-                fillColor: landCoverClassColor(sample.classValue),
-                fillOpacity: isWater ? 0.96 : 0.84,
-                opacity: 1,
-                weight: active || isWater ? 2.5 : 1.5,
-              }}
-              eventHandlers={{
-                click: () => onSelect(sample.id),
-              }}
-            >
-              <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
-                <div style={{ fontFamily: "inherit" }}>
-                  <strong>{sample.zone}</strong>
-                  <br />
-                  {sample.region}
-                  <br />
-                  {sample.classLabel} · class {sample.classValue}
-                  <br />
-                  {isConflict ? "Safeguard warning" : "Safeguard context"}
-                  <br />
-                  Safeguard {sample.safeguard}/100
-                </div>
-              </Tooltip>
-              <Popup>
-                <div style={{ minWidth: 210, fontFamily: "system-ui, sans-serif" }}>
-                  <strong>{sample.zone}</strong>
-                  <div style={{ marginTop: 4, color: "#4b5563" }}>
-                    ESA WorldCover 2021 sample point.
+        <Pane name="landcover-samples-v2" style={{ zIndex: 450 }}>
+          {landCoverSamples.map((sample) => {
+            const active = sample.id === selected;
+            const isWater = sample.classValue === 80 || sample.classValue === 90 || sample.classValue === 95;
+            const isConflict = isWater || sample.classValue === 40 || sample.classValue === 50;
+            return (
+              <CircleMarker
+                key={`${sample.id}-${sample.key}`}
+                center={[sample.lat, sample.lon]}
+                radius={landCoverClassRadius(sample.classValue, active)}
+                bubblingMouseEvents={false}
+                pathOptions={{
+                  color: active ? "#fafafa" : isWater ? "#e0f2fe" : "#0c1410",
+                  fillColor: landCoverClassColor(sample.classValue),
+                  fillOpacity: isWater ? 0.96 : 0.84,
+                  opacity: 1,
+                  weight: active || isWater ? 2.5 : 1.5,
+                }}
+                eventHandlers={{
+                  click: () => onSelect(sample.id),
+                }}
+              >
+                <Tooltip pane="tooltipPane" direction="top" offset={[0, -8]} opacity={0.95}>
+                  <div style={{ fontFamily: "inherit" }}>
+                    <strong>{sample.zone}</strong>
+                    <br />
+                    {sample.region}
+                    <br />
+                    {sample.classLabel} · class {sample.classValue}
+                    <br />
+                    {isConflict ? "Safeguard warning" : "Safeguard context"}
+                    <br />
+                    Safeguard {sample.safeguard}/100
                   </div>
-                  <dl style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "3px 12px", margin: "8px 0 0" }}>
-                    <dt>Class</dt>
-                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.classLabel}</dd>
-                    <dt>Code</dt>
-                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.classValue}</dd>
-                    <dt>Sample</dt>
-                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.key}</dd>
-                    <dt>Safeguard</dt>
-                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.safeguard}/100</dd>
-                  </dl>
-                  <div style={{ marginTop: 8, color: "#6b7280", fontSize: 10 }}>
-                    {isConflict
-                      ? "This point flags a land-use caution for restoration planning."
-                      : "This point provides land-cover context for the ADM2 safeguard."}
+                </Tooltip>
+                <Popup pane="popupPane">
+                  <div style={{ minWidth: 210, fontFamily: "system-ui, sans-serif" }}>
+                    <strong>{sample.zone}</strong>
+                    <div style={{ marginTop: 4, color: "#4b5563" }}>
+                      ESA WorldCover 2021 sample point.
+                    </div>
+                    <dl style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "3px 12px", margin: "8px 0 0" }}>
+                      <dt>Class</dt>
+                      <dd style={{ margin: 0, fontWeight: 700 }}>{sample.classLabel}</dd>
+                      <dt>Code</dt>
+                      <dd style={{ margin: 0, fontWeight: 700 }}>{sample.classValue}</dd>
+                      <dt>Sample</dt>
+                      <dd style={{ margin: 0, fontWeight: 700 }}>{sample.key}</dd>
+                      <dt>Safeguard</dt>
+                      <dd style={{ margin: 0, fontWeight: 700 }}>{sample.safeguard}/100</dd>
+                    </dl>
+                    <div style={{ marginTop: 8, color: "#6b7280", fontSize: 10 }}>
+                      {isConflict
+                        ? "This point flags a land-use caution for restoration planning."
+                        : "This point provides land-cover context for the ADM2 safeguard."}
+                    </div>
                   </div>
-                </div>
-              </Popup>
-            </CircleMarker>
-          );
-        })}
+                </Popup>
+              </CircleMarker>
+            );
+          })}
+        </Pane>}
       {overlayMode === "soil" &&
         SOILGRIDS_SAMPLES.map((sample) => {
           const active = sample.region === selectedRegion;
@@ -1271,6 +1274,40 @@ export function DeforestationMap({
                     <span>{item.label}</span>
                   </div>
                 ))}
+              </div>
+              <div
+                style={{
+                  marginTop: 9,
+                  paddingTop: 7,
+                  borderTop: "1px solid #d6d6d6",
+                }}
+              >
+                <div style={{ marginBottom: 5 }}>Sample point class</div>
+                <div style={{ display: "grid", gap: 4 }}>
+                  {[
+                    { label: "Water / wetland", color: "#0ea5e9" },
+                    { label: "Cropland", color: "#facc15" },
+                    { label: "Built-up", color: "#dc2626" },
+                    { label: "Tree cover", color: "#16a34a" },
+                    { label: "Open vegetation", color: "#84cc16" },
+                    { label: "Other / sparse", color: "#94a3b8" },
+                  ].map((item) => (
+                    <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span
+                        aria-hidden
+                        style={{
+                          display: "inline-block",
+                          width: 9,
+                          height: 9,
+                          borderRadius: 999,
+                          background: item.color,
+                          boxShadow: "0 0 0 1px #0c1410",
+                        }}
+                      />
+                      <span>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ) : null}
