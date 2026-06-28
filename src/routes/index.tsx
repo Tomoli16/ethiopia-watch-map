@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   Bird,
   CloudSun,
+  Download,
+  FileText,
   Layers,
   Mountain,
   PanelLeftClose,
@@ -12,6 +14,7 @@ import {
   Sprout,
   Trees,
   UsersRound,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
@@ -94,6 +97,7 @@ function Index() {
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   const [rankingOpen, setRankingOpen] = useState(true);
   const [detailOpen, setDetailOpen] = useState(true);
+  const [briefingOpen, setBriefingOpen] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const analysisLevel: AnalysisLevel = adminLevel === "adm1" ? "adm1" : "adm2";
@@ -175,6 +179,7 @@ function Index() {
       if (firstAdm2) setSelected(firstAdm2.id);
     }
   };
+  const briefing = buildProjectBriefing(weights);
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -216,6 +221,15 @@ function Index() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setBriefingOpen(true)}
+              className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
+              title="Generate project briefing"
+            >
+              <FileText className="size-4" aria-hidden />
+              Briefing
+            </button>
             <div className="flex overflow-hidden rounded-md border border-border bg-card">
               <button
                 type="button"
@@ -624,6 +638,13 @@ function Index() {
           )}
         </aside>
       </div>
+      {briefingOpen ? (
+        <BriefingModal
+          briefing={briefing}
+          onClose={() => setBriefingOpen(false)}
+          onDownload={() => downloadBriefingPdf(briefing)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -637,6 +658,344 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
     </div>
   );
+}
+
+interface BriefingZone {
+  rank: number;
+  id: string;
+  name: string;
+  region: string;
+  score: number;
+  proxies: ProxyScores;
+  gfwLossHa: number | null;
+  croplandShare: number | null;
+  populationDensity: number | null;
+}
+
+interface ProjectBriefing {
+  title: string;
+  subtitle: string;
+  generatedAt: string;
+  weights: Weights;
+  keyFindings: string[];
+  callsToAction: { title: string; detail: string }[];
+  topZones: BriefingZone[];
+  caveats: string[];
+}
+
+function buildProjectBriefing(weights: Weights): ProjectBriefing {
+  const zones = analysisUnitsForLevel("adm2")
+    .map((unit) => {
+      const proxies = proxyScoresForUnit(unit);
+      const gfw = gfwTreeCoverLossForAdm2(unit.id);
+      const landCover = landCoverForAdm2(unit.id);
+      const livelihood = livelihoodPopulationForAdm2(unit.id);
+      return {
+        id: unit.id,
+        name: unit.name,
+        region: unit.region,
+        score: priorityScoreForUnit(unit, weights),
+        proxies,
+        gfwLossHa: gfw?.totalLossHa ?? null,
+        croplandShare: landCover?.croplandShare ?? null,
+        populationDensity: livelihood?.densityPerKm2 ?? null,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+  const topZones = zones.slice(0, 8).map((zone, index) => ({ ...zone, rank: index + 1 }));
+  const topFive = topZones.slice(0, 5);
+  const gfwLeader = [...zones]
+    .filter((zone) => zone.gfwLossHa !== null)
+    .sort((a, b) => (b.gfwLossHa ?? 0) - (a.gfwLossHa ?? 0))[0];
+  const safeguardHits = topFive.filter(
+    (zone) => (zone.croplandShare ?? 0) >= 0.35 || (zone.populationDensity ?? 0) >= 120,
+  );
+
+  return {
+    title: "Southwest Ethiopia Restoration Priority Briefing",
+    subtitle: "Generated from current ADM2 scores, weights and fetched evidence layers.",
+    generatedAt: new Date().toLocaleString(),
+    weights,
+    keyFindings: [
+      `The current top ADM2 priorities are ${topFive.map((zone) => `${zone.name} (${zone.score})`).join(", ")}.`,
+      gfwLeader
+        ? `The strongest GFW/UMD historical tree-cover-loss signal is ${gfwLeader.name}, ${gfwLeader.region}, with ${Math.round(gfwLeader.gfwLossHa ?? 0).toLocaleString()} ha total loss.`
+        : "GFW/UMD tree-cover-loss evidence is not available in the current briefing input.",
+      safeguardHits.length > 0
+        ? `${safeguardHits.length} of the top 5 zones need early safeguard screening for cropland or population pressure.`
+        : "The top 5 zones do not show a major sampled cropland or population-density warning, but field validation is still required.",
+      `Current score weights are ERP ${weights.ecologicalRestorationPotential}, BRV ${weights.biodiversityRecoveryValue}, LI ${weights.livelihoodImpact}.`,
+    ],
+    callsToAction: [
+      {
+        title: "1. Validate the top-ranked ADM2 zones in the field",
+        detail:
+          "Start with the top 5 zones and verify degradation, land tenure, access, and local restoration demand before selecting exact planting or assisted-regeneration sites.",
+      },
+      {
+        title: "2. Run safeguard exclusions before any site commitment",
+        detail:
+          "Use ESA WorldCover, local land-use knowledge, and community checks to exclude cropland, settlements, wetlands, and livelihood-critical areas from intervention polygons.",
+      },
+      {
+        title: "3. Prioritize watershed and erosion-sensitive opportunity areas",
+        detail:
+          "Within high-priority zones, focus the technical design on degraded slopes, riparian buffers, and areas where restoration can reduce erosion and downstream risk.",
+      },
+      {
+        title: "4. Turn the ranking into an implementation shortlist",
+        detail:
+          "For each shortlisted zone, prepare a one-page field package: score rationale, key evidence layers, likely safeguards, target kebeles/woredas, and data gaps.",
+      },
+      {
+        title: "5. Close evidence gaps before final budgeting",
+        detail:
+          "Replace sampled proxies with zonal raster summaries where possible, especially full DEM slope, WorldPop raster density, and protected-area or corridor adjacency.",
+      },
+    ],
+    topZones,
+    caveats: [
+      "Scores are relative to the currently mapped focus ADM2 zones and current slider weights.",
+      "ESA WorldCover and terrain are sampled proxies, not final hectare-level exclusion maps.",
+      "GBIF observations are not corrected for observer or road-access sampling bias.",
+      "The briefing supports planning and prioritization; it is not a final restoration prescription.",
+    ],
+  };
+}
+
+function BriefingModal({
+  briefing,
+  onClose,
+  onDownload,
+}: {
+  briefing: ProjectBriefing;
+  onClose: () => void;
+  onDownload: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/70 p-6">
+      <div className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg border border-border bg-card shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-primary">
+              <FileText className="size-4" aria-hidden />
+              Project Briefing
+            </div>
+            <h2 className="mt-1 text-xl font-semibold">{briefing.title}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {briefing.subtitle} Generated {briefing.generatedAt}.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onDownload}
+              className="inline-flex h-8 items-center gap-2 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              <Download className="size-4" aria-hidden />
+              Download PDF
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex size-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              aria-label="Close briefing"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          </div>
+        </div>
+        <div className="overflow-y-auto px-5 py-4">
+          <section>
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Key findings</h3>
+            <ul className="mt-2 space-y-2 text-sm">
+              {briefing.keyFindings.map((finding) => (
+                <li key={finding} className="rounded-md bg-secondary/50 px-3 py-2">
+                  {finding}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="mt-5">
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Calls to action</h3>
+            <div className="mt-2 grid gap-2">
+              {briefing.callsToAction.map((cta) => (
+                <div key={cta.title} className="rounded-md border border-border bg-background/50 p-3">
+                  <div className="text-sm font-semibold">{cta.title}</div>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{cta.detail}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-5">
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Top ADM2 shortlist</h3>
+            <div className="mt-2 overflow-hidden rounded-md border border-border">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-secondary/70 text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Rank</th>
+                    <th className="px-3 py-2 font-medium">Zone</th>
+                    <th className="px-3 py-2 font-medium">RPS</th>
+                    <th className="px-3 py-2 font-medium">ERP/BRV/LI</th>
+                    <th className="px-3 py-2 font-medium">GFW loss</th>
+                    <th className="px-3 py-2 font-medium">Safeguard</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {briefing.topZones.map((zone) => (
+                    <tr key={zone.id} className="border-t border-border">
+                      <td className="px-3 py-2 tabular-nums">{zone.rank}</td>
+                      <td className="px-3 py-2">
+                        <div className="font-medium">{zone.name}</div>
+                        <div className="text-[10px] text-muted-foreground">{zone.region}</div>
+                      </td>
+                      <td className="px-3 py-2 font-semibold tabular-nums">{zone.score}</td>
+                      <td className="px-3 py-2 tabular-nums">
+                        {zone.proxies.ecologicalRestorationPotential}/{zone.proxies.biodiversityRecoveryValue}/
+                        {zone.proxies.livelihoodImpact}
+                      </td>
+                      <td className="px-3 py-2 tabular-nums">
+                        {zone.gfwLossHa === null ? "n/a" : `${Math.round(zone.gfwLossHa).toLocaleString()} ha`}
+                      </td>
+                      <td className="px-3 py-2">
+                        {zone.croplandShare === null && zone.populationDensity === null
+                          ? "n/a"
+                          : `${zone.croplandShare === null ? "?" : `${Math.round(zone.croplandShare * 100)}% crop`} · ${
+                              zone.populationDensity === null ? "?" : `${zone.populationDensity.toFixed(0)}/km2`
+                            }`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="mt-5">
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Caveats</h3>
+            <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-relaxed text-muted-foreground">
+              {briefing.caveats.map((caveat) => (
+                <li key={caveat}>{caveat}</li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function briefingPdfLines(briefing: ProjectBriefing): string[] {
+  return [
+    briefing.title,
+    briefing.subtitle,
+    `Generated: ${briefing.generatedAt}`,
+    "",
+    "Key findings",
+    ...briefing.keyFindings.map((finding) => `- ${finding}`),
+    "",
+    "Calls to action",
+    ...briefing.callsToAction.flatMap((cta) => [cta.title, cta.detail]),
+    "",
+    "Top ADM2 shortlist",
+    ...briefing.topZones.map(
+      (zone) =>
+        `${zone.rank}. ${zone.name}, ${zone.region} | RPS ${zone.score} | ERP/BRV/LI ${zone.proxies.ecologicalRestorationPotential}/${zone.proxies.biodiversityRecoveryValue}/${zone.proxies.livelihoodImpact} | GFW ${zone.gfwLossHa === null ? "n/a" : `${Math.round(zone.gfwLossHa)} ha`}`,
+    ),
+    "",
+    "Caveats",
+    ...briefing.caveats.map((caveat) => `- ${caveat}`),
+  ];
+}
+
+function wrapPdfLine(line: string, width = 92): string[] {
+  const clean = line.replace(/[^\x20-\x7E]/g, " ");
+  if (clean.length <= width) return [clean];
+  const words = clean.split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    if (`${current} ${word}`.trim().length > width) {
+      if (current) lines.push(current);
+      current = word;
+    } else {
+      current = `${current} ${word}`.trim();
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function escapePdfText(text: string): string {
+  return text.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+}
+
+function createTextPdf(lines: string[]): Blob {
+  const pageTop = 760;
+  const lineHeight = 14;
+  const linesPerPage = 48;
+  const wrapped = lines.flatMap((line) => (line ? wrapPdfLine(line) : [""]));
+  const pages: string[][] = [];
+  for (let i = 0; i < wrapped.length; i += linesPerPage) pages.push(wrapped.slice(i, i + linesPerPage));
+
+  const objects: string[] = [];
+  const addObject = (body: string) => {
+    objects.push(body);
+    return objects.length;
+  };
+
+  const catalogId = addObject("<< /Type /Catalog /Pages 2 0 R >>");
+  const pagesId = addObject("");
+  const fontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  const pageIds: number[] = [];
+
+  pages.forEach((pageLines) => {
+    const text = [
+      "BT",
+      "/F1 11 Tf",
+      `50 ${pageTop} Td`,
+      `${lineHeight} TL`,
+      ...pageLines.map((line) => `(${escapePdfText(line)}) Tj T*`),
+      "ET",
+    ].join("\n");
+    const contentId = addObject(`<< /Length ${text.length} >>\nstream\n${text}\nendstream`);
+    const pageId = addObject(
+      `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${contentId} 0 R >>`,
+    );
+    pageIds.push(pageId);
+  });
+
+  objects[pagesId - 1] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${
+    pageIds.length
+  } >>`;
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((body, index) => {
+    offsets.push(pdf.length);
+    pdf += `${index + 1} 0 obj\n${body}\nendobj\n`;
+  });
+  const xrefOffset = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach((offset) => {
+    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return new Blob([pdf], { type: "application/pdf" });
+}
+
+function downloadBriefingPdf(briefing: ProjectBriefing) {
+  const blob = createTextPdf(briefingPdfLines(briefing));
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ethiopia-restoration-priority-briefing.pdf";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 interface Adm2Summary {
