@@ -21,6 +21,17 @@
     ],
     "reason": "Population-density rasters help prevent restoration planning on livelihood-critical smallholder farmland."
   },
+  "landUseSafeguardFoundation": {
+    "dataset": "ESA WorldCover",
+    "proxy": "Separate safeguard context",
+    "role": "Cross-pillar land-use safeguard layer",
+    "status": "sample-fetched-used-as-safeguard",
+    "localFiles": [
+      "public/data/real/esa-worldcover-adm2-samples.json",
+      "src/lib/landcover-adm2-data.ts"
+    ],
+    "reason": "Land-cover classes help flag cropland, built-up areas, water/wetlands and already tree-covered areas before interpreting restoration priority."
+  },
   "proxies": [
     {
       "key": "ecologicalRestorationPotential",
@@ -39,6 +50,17 @@
           "status": "deferred",
           "nextStep": "Select DEM tiles, derive slope, then aggregate steep-slope share by ADM3.",
           "reason": "Provides wall-to-wall elevation data for slope and erosion exposure, helping prioritize steep, landslide-prone watershed areas."
+        },
+        {
+          "priority": 2,
+          "dataset": "Open-Meteo Elevation API",
+          "status": "sample-fetched-used-in-score",
+          "localFiles": [
+            "public/data/real/open-meteo-terrain-adm2.json",
+            "src/lib/terrain-adm2-data.ts"
+          ],
+          "nextStep": "Replace this lightweight five-point ADM2 relief proxy with full SRTM/DEM zonal slope statistics.",
+          "reason": "Provides real elevation samples immediately, allowing terrain relief and erosion sensitivity to influence ERP before full DEM processing exists."
         },
         {
           "priority": 3,

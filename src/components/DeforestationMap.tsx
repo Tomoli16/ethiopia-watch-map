@@ -5,18 +5,21 @@ import type { Feature } from "geojson";
 import "leaflet/dist/leaflet.css";
 import {
   FOCUS_REGIONS,
+  LANDCOVER_ADM2,
   adm2UnitId,
   analysisUnitById,
   climateSampleForAdm2,
   colorForScore,
   gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
+  landCoverForAdm2,
   livelihoodPopulationForAdm2,
   livelihoodPopulationForRegion,
   priorityScoreForUnit,
   soilGridsSampleForAdm2,
   soilSuitabilityScoreForAdm2,
   soilSuitabilityScoreForRegion,
+  terrainSampleForAdm2,
   type Weights,
 } from "@/lib/deforestation-data";
 import { SOILGRIDS_REGION_SAMPLES } from "@/lib/soilgrids-data";
@@ -30,7 +33,7 @@ interface Props {
 }
 
 export type AdminLevel = "adm1" | "adm2" | "adm3";
-type OverlayMode = "priority" | "soil" | "gbif" | "livelihood" | "climate";
+type OverlayMode = "priority" | "soil" | "gbif" | "livelihood" | "climate" | "terrain" | "landcover";
 
 interface ZoneProps {
   shapeName?: string;
@@ -72,6 +75,29 @@ function livelihoodColor(score: number) {
 
 function climateColor(score: number) {
   return colorForScore(score);
+}
+
+function terrainColor(score: number) {
+  return colorForScore(score);
+}
+
+function landCoverColor(score: number) {
+  return colorForScore(score);
+}
+
+function landCoverClassColor(classValue: number) {
+  if (classValue === 80 || classValue === 90 || classValue === 95) return "#0ea5e9";
+  if (classValue === 50) return "#dc2626";
+  if (classValue === 40) return "#facc15";
+  if (classValue === 10) return "#16a34a";
+  if (classValue === 20 || classValue === 30 || classValue === 60) return "#84cc16";
+  return "#94a3b8";
+}
+
+function landCoverClassRadius(classValue: number, active: boolean) {
+  if (classValue === 80 || classValue === 90 || classValue === 95) return active ? 9 : 7;
+  if (classValue === 50 || classValue === 40) return active ? 8 : 6;
+  return active ? 6 : 4.5;
 }
 
 function ZoomToSelection({
@@ -171,7 +197,7 @@ export function DeforestationMap({
     const inFocus = FOCUS_REGIONS.includes(regionName);
     const score = unit ? priorityScoreForUnit(unit, weights) : 0;
     layer.bindTooltip(
-      `<div style="font-family:inherit"><strong>${name}</strong>${adminLevel !== "adm1" && regionName ? `<br/><em>${parentLabel}</em>` : ""}${inFocus ? `<br/>Priority: ${score}${adminLevel !== "adm1" ? "<br/><span>ADM2 LI + parent ERP/BRV</span>" : ""}` : "<br/><em>out of scope</em>"}</div>`,
+      `<div style="font-family:inherit"><strong>${name}</strong>${adminLevel !== "adm1" && regionName ? `<br/><em>${parentLabel}</em>` : ""}${inFocus ? `<br/>Priority: ${score}${adminLevel !== "adm1" ? `<br/><span>${adminLevel === "adm3" ? "ADM2 zone score" : "ADM2 score"}</span>` : ""}` : "<br/><em>out of scope</em>"}</div>`,
       { sticky: true, className: "deforest-tooltip" },
     );
     if (!inFocus) return;
@@ -252,6 +278,21 @@ export function DeforestationMap({
   const gbifOverlayData = adminLevel === "adm1" ? gbifRegionData : focusBoundaryData;
   const livelihoodOverlayData = adminLevel === "adm1" ? livelihoodRegionData : focusBoundaryData;
   const climateOverlayData = adminLevel === "adm1" ? null : focusBoundaryData;
+  const terrainOverlayData = adminLevel === "adm1" ? null : focusBoundaryData;
+  const landCoverOverlayData = adminLevel === "adm1" ? null : focusBoundaryData;
+  const landCoverSamples = useMemo(
+    () =>
+      Object.values(LANDCOVER_ADM2).flatMap((zone) =>
+        zone.samples.map((sample) => ({
+          ...sample,
+          id: zone.id,
+          region: zone.region,
+          zone: zone.zone,
+          safeguard: zone.landUseSafeguardScore,
+        })),
+      ),
+    [],
+  );
 
   const zoneStyle = (feature?: Feature): PathOptions => {
     const name = (feature?.properties as ZoneProps | undefined)?.shapeName ?? "";
@@ -470,6 +511,93 @@ export function DeforestationMap({
     });
   };
 
+  const terrainStyle = (feature?: Feature): PathOptions => {
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const terrain = terrainSampleForAdm2(unitId);
+    const active = unitId === selected || regionName === selectedRegion;
+    return {
+      fillColor: terrain ? terrainColor(terrain.terrainReliefScore) : "#737373",
+      fillOpacity: active ? 0.62 : 0.46,
+      color: active ? "#fafafa" : "#d9f99d",
+      weight: active ? 3 : 1.4,
+    };
+  };
+
+  const onEachTerrainRegion = (feature: Feature, layer: Layer) => {
+    const props = feature.properties as ZoneProps | undefined;
+    const name = props?.shapeName ?? "";
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const terrain = terrainSampleForAdm2(unitId);
+    if (!terrain) return;
+
+    layer.bindTooltip(
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>Open-Meteo terrain relief: ${terrain.terrainReliefScore}/100<br/>Elevation range: ${terrain.elevationRangeM.toLocaleString()} m<br/>Max sampled slope: ${terrain.maxSlopePercent.toFixed(1)}%</div>`,
+      { sticky: true, className: "deforest-tooltip" },
+    );
+    layer.bindPopup(
+      `<div style="min-width:230px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">Real Open-Meteo elevation samples at ADM2 centroid plus north/south/east/west points.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Relief score</dt><dd style="margin:0;font-weight:700">${terrain.terrainReliefScore}/100</dd><dt>Elevation range</dt><dd style="margin:0;font-weight:700">${terrain.elevationRangeM.toLocaleString()} m</dd><dt>Max sampled slope</dt><dd style="margin:0;font-weight:700">${terrain.maxSlopePercent.toFixed(1)}%</dd><dt>Mean sampled slope</dt><dd style="margin:0;font-weight:700">${terrain.meanSlopePercent.toFixed(1)}%</dd></dl><div style="margin-top:8px;color:#6b7280;font-size:10px">Proxy for erosion-sensitive terrain; not full DEM zonal statistics.</div></div>`,
+    );
+    layer.on({
+      click: () => onSelect(unitId ?? regionName),
+      mouseover: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle({ fillOpacity: 0.72, weight: 3 });
+      },
+      mouseout: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle(terrainStyle(feature));
+      },
+    });
+  };
+
+  const landCoverStyle = (feature?: Feature): PathOptions => {
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const landCover = landCoverForAdm2(unitId);
+    const active = unitId === selected || regionName === selectedRegion;
+    return {
+      fillColor: landCover ? landCoverColor(landCover.landUseSafeguardScore) : "#737373",
+      fillOpacity: active ? 0.64 : 0.48,
+      color: active ? "#fafafa" : "#a7f3d0",
+      weight: active ? 3 : 1.4,
+    };
+  };
+
+  const onEachLandCoverRegion = (feature: Feature, layer: Layer) => {
+    const props = feature.properties as ZoneProps | undefined;
+    const name = props?.shapeName ?? "";
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const landCover = landCoverForAdm2(unitId);
+    if (!landCover) return;
+    const topClasses = Object.values(landCover.classShares)
+      .sort((a, b) => b.share - a.share)
+      .slice(0, 3)
+      .map((item) => `${item.label}: ${Math.round(item.share * 100)}%`)
+      .join("<br/>");
+
+    layer.bindTooltip(
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>ESA WorldCover safeguard: ${landCover.landUseSafeguardScore}/100<br/>Cropland: ${Math.round(landCover.croplandShare * 100)}% · Built-up: ${Math.round(landCover.builtUpShare * 100)}%</div>`,
+      { sticky: true, className: "deforest-tooltip" },
+    );
+    layer.bindPopup(
+      `<div style="min-width:240px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">Real ESA WorldCover 2021 area-scaled ADM2 land-cover sample (${landCover.sampleGridSize}x${landCover.sampleGridSize}). Used as safeguard context, not as a weighted priority pillar.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Safeguard</dt><dd style="margin:0;font-weight:700">${landCover.landUseSafeguardScore}/100</dd><dt>Samples</dt><dd style="margin:0;font-weight:700">${landCover.samples.length}</dd><dt>Cropland</dt><dd style="margin:0;font-weight:700">${Math.round(landCover.croplandShare * 100)}%</dd><dt>Built-up</dt><dd style="margin:0;font-weight:700">${Math.round(landCover.builtUpShare * 100)}%</dd><dt>Tree cover</dt><dd style="margin:0;font-weight:700">${Math.round(landCover.treeCoverShare * 100)}%</dd><dt>Open vegetation</dt><dd style="margin:0;font-weight:700">${Math.round(landCover.openVegetationShare * 100)}%</dd></dl><div style="margin-top:8px;font-size:11px">${topClasses}</div><div style="margin-top:8px;color:#6b7280;font-size:10px">Sample proxy only; not hectare-level exclusion mapping.</div></div>`,
+    );
+    layer.on({
+      click: () => onSelect(unitId ?? regionName),
+      mouseover: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle({ fillOpacity: 0.74, weight: 3 });
+      },
+      mouseout: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle(landCoverStyle(feature));
+      },
+    });
+  };
+
   // Re-key GeoJSON layer when weights change so colors refresh
   const weightKey = Object.values(weights).join("-");
 
@@ -567,6 +695,82 @@ export function DeforestationMap({
           onEachFeature={onEachClimateRegion}
         />
       )}
+      {overlayMode === "terrain" && terrainOverlayData && (
+        <GeoJSON
+          key={`terrain-regions-${selected ?? "none"}`}
+          data={terrainOverlayData}
+          style={terrainStyle}
+          onEachFeature={onEachTerrainRegion}
+        />
+      )}
+      {overlayMode === "landcover" && landCoverOverlayData && (
+        <GeoJSON
+          key={`landcover-regions-${selected ?? "none"}`}
+          data={landCoverOverlayData}
+          style={landCoverStyle}
+          onEachFeature={onEachLandCoverRegion}
+        />
+      )}
+      {overlayMode === "landcover" &&
+        landCoverSamples.map((sample) => {
+          const active = sample.id === selected;
+          const isWater = sample.classValue === 80 || sample.classValue === 90 || sample.classValue === 95;
+          const isConflict = isWater || sample.classValue === 40 || sample.classValue === 50;
+          return (
+            <CircleMarker
+              key={`${sample.id}-${sample.key}`}
+              center={[sample.lat, sample.lon]}
+              radius={landCoverClassRadius(sample.classValue, active)}
+              pathOptions={{
+                color: active ? "#fafafa" : isWater ? "#e0f2fe" : "#0c1410",
+                fillColor: landCoverClassColor(sample.classValue),
+                fillOpacity: isWater ? 0.96 : 0.84,
+                opacity: 1,
+                weight: active || isWater ? 2.5 : 1.5,
+              }}
+              eventHandlers={{
+                click: () => onSelect(sample.id),
+              }}
+            >
+              <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+                <div style={{ fontFamily: "inherit" }}>
+                  <strong>{sample.zone}</strong>
+                  <br />
+                  {sample.region}
+                  <br />
+                  {sample.classLabel} · class {sample.classValue}
+                  <br />
+                  {isConflict ? "Safeguard warning" : "Safeguard context"}
+                  <br />
+                  Safeguard {sample.safeguard}/100
+                </div>
+              </Tooltip>
+              <Popup>
+                <div style={{ minWidth: 210, fontFamily: "system-ui, sans-serif" }}>
+                  <strong>{sample.zone}</strong>
+                  <div style={{ marginTop: 4, color: "#4b5563" }}>
+                    ESA WorldCover 2021 sample point.
+                  </div>
+                  <dl style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "3px 12px", margin: "8px 0 0" }}>
+                    <dt>Class</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.classLabel}</dd>
+                    <dt>Code</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.classValue}</dd>
+                    <dt>Sample</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.key}</dd>
+                    <dt>Safeguard</dt>
+                    <dd style={{ margin: 0, fontWeight: 700 }}>{sample.safeguard}/100</dd>
+                  </dl>
+                  <div style={{ marginTop: 8, color: "#6b7280", fontSize: 10 }}>
+                    {isConflict
+                      ? "This point flags a land-use caution for restoration planning."
+                      : "This point provides land-cover context for the ADM2 safeguard."}
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
       {overlayMode === "soil" &&
         SOILGRIDS_SAMPLES.map((sample) => {
           const active = sample.region === selectedRegion;
@@ -806,6 +1010,70 @@ export function DeforestationMap({
             />
             Climate
           </button>
+          <button
+            type="button"
+            onClick={() => setOverlayMode((mode) => (mode === "terrain" ? "priority" : "terrain"))}
+            aria-pressed={overlayMode === "terrain"}
+            title={overlayMode === "terrain" ? "Show priority map" : "Show Open-Meteo terrain relief layer"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              width: "100%",
+              padding: "6px 10px",
+              background: overlayMode === "terrain" ? "#0c1410" : "#fff",
+              color: overlayMode === "terrain" ? "#fafafa" : "#0c1410",
+              border: "none",
+              borderTop: "1px solid #d6d6d6",
+              font: "600 12px/1 system-ui, sans-serif",
+              cursor: "pointer",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 9,
+                height: 9,
+                borderRadius: 999,
+                background: "#84cc16",
+                boxShadow: "0 0 0 2px currentColor",
+              }}
+            />
+            Terrain
+          </button>
+          <button
+            type="button"
+            onClick={() => setOverlayMode((mode) => (mode === "landcover" ? "priority" : "landcover"))}
+            aria-pressed={overlayMode === "landcover"}
+            title={overlayMode === "landcover" ? "Show priority map" : "Show ESA WorldCover land-use safeguard layer"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              width: "100%",
+              padding: "6px 10px",
+              background: overlayMode === "landcover" ? "#0c1410" : "#fff",
+              color: overlayMode === "landcover" ? "#fafafa" : "#0c1410",
+              border: "none",
+              borderTop: "1px solid #d6d6d6",
+              font: "600 12px/1 system-ui, sans-serif",
+              cursor: "pointer",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 9,
+                height: 9,
+                borderRadius: 999,
+                background: "#10b981",
+                boxShadow: "0 0 0 2px currentColor",
+              }}
+            />
+            Landcover
+          </button>
           {overlayMode === "soil" ? (
             <div
               style={{
@@ -833,6 +1101,31 @@ export function DeforestationMap({
                         height: 8,
                         borderRadius: 2,
                         background: item.color,
+                      }}
+                    />
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 8, marginBottom: 5 }}>Sample classes</div>
+              <div style={{ display: "grid", gap: 4 }}>
+                {[
+                  { label: "Water / wetland", color: "#0ea5e9" },
+                  { label: "Cropland", color: "#facc15" },
+                  { label: "Built-up", color: "#dc2626" },
+                  { label: "Tree cover", color: "#16a34a" },
+                  { label: "Open vegetation", color: "#84cc16" },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        display: "inline-block",
+                        width: 9,
+                        height: 9,
+                        borderRadius: 999,
+                        background: item.color,
+                        boxShadow: "0 0 0 1px #0c1410",
                       }}
                     />
                     <span>{item.label}</span>
@@ -893,6 +1186,76 @@ export function DeforestationMap({
                   { label: "75-89", color: "#f97316" },
                   { label: "60-74", color: "#facc15" },
                   { label: "< 60", color: "#65a30d" },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        display: "inline-block",
+                        width: 18,
+                        height: 8,
+                        borderRadius: 2,
+                        background: item.color,
+                      }}
+                    />
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {overlayMode === "terrain" ? (
+            <div
+              style={{
+                padding: "7px 10px 8px",
+                background: "#fff",
+                borderTop: "1px solid #d6d6d6",
+                color: "#0c1410",
+                font: "600 10px/1.2 system-ui, sans-serif",
+              }}
+            >
+              <div style={{ marginBottom: 5 }}>Terrain relief</div>
+              <div style={{ display: "grid", gap: 4 }}>
+                {[
+                  { label: "70-100", color: "#dc2626" },
+                  { label: "50-69", color: "#f97316" },
+                  { label: "30-49", color: "#facc15" },
+                  { label: "< 30", color: "#84cc16" },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        display: "inline-block",
+                        width: 18,
+                        height: 8,
+                        borderRadius: 2,
+                        background: item.color,
+                      }}
+                    />
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {overlayMode === "landcover" ? (
+            <div
+              style={{
+                padding: "7px 10px 8px",
+                background: "#fff",
+                borderTop: "1px solid #d6d6d6",
+                color: "#0c1410",
+                font: "600 10px/1.2 system-ui, sans-serif",
+              }}
+            >
+              <div style={{ marginBottom: 5 }}>Land-use safeguard</div>
+              <div style={{ display: "grid", gap: 4 }}>
+                {[
+                  { label: "80-100", color: "#16a34a" },
+                  { label: "60-79", color: "#84cc16" },
+                  { label: "40-59", color: "#facc15" },
+                  { label: "< 40", color: "#f97316" },
                 ].map((item) => (
                   <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span

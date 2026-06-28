@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-27T20:57:00.000Z",
+  "fetchedAt": "2026-06-28T08:40:00.000Z",
   "generatedFiles": [
     "hdx-cod-ab-eth.metadata.json",
     "soilgrids-region-samples.json",
@@ -8,6 +8,8 @@
     "gbif-biodiversity-regions.json",
     "gbif-biodiversity-adm2.json",
     "nasa-power-climate-adm2.json",
+    "open-meteo-terrain-adm2.json",
+    "esa-worldcover-adm2-samples.json",
     "livelihood-population-regions.json",
     "livelihood-population-adm2.json",
     "worldpop-ethiopia.metadata.json"
@@ -29,9 +31,21 @@
       "proxy": "ERP"
     },
     {
+      "dataset": "Open-Meteo Elevation API",
+      "level": "ADM2 centroid plus north/south/east/west elevation samples",
+      "proxy": "ERP"
+    },
+    {
       "dataset": "HDX/OCHA ADM3 projected population 2022",
       "level": "Aggregated to ADM1 and ADM2",
       "proxy": "LI"
+    }
+  ],
+  "safeguards": [
+    {
+      "dataset": "ESA WorldCover 2021 v200",
+      "level": "ADM2 area-scaled land-cover samples: 5x5, 7x7 or 9x9 by polygon area",
+      "role": "Land-use safeguard for cropland, built-up, water/wetland and existing tree-cover context"
     }
   ],
   "deferred": [

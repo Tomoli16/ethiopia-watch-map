@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bird, CloudSun, Sprout, UsersRound, type LucideIcon } from "lucide-react";
+import { Bird, CloudSun, Layers, Mountain, Sprout, UsersRound, type LucideIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
   DEFAULT_WEIGHTS,
@@ -12,6 +12,7 @@ import {
   colorForScore,
   gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
+  landCoverForAdm2,
   livelihoodPopulationForAdm2,
   livelihoodPopulationForRegion,
   priorityLevel,
@@ -20,6 +21,7 @@ import {
   proxyScoresForUnit,
   soilGridsSampleForAdm2,
   soilGridsSampleForRegion,
+  terrainSampleForAdm2,
   type AnalysisLevel,
   type AnalysisUnit,
   type ProxyKey,
@@ -54,13 +56,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Interactive Ethiopia restoration priority map using fetched SoilGrids, GBIF and HDX/OCHA ADM3 population data.",
+          "Interactive Ethiopia restoration priority map using fetched SoilGrids, GBIF, ESA WorldCover and HDX/OCHA ADM3 population data.",
       },
       { property: "og:title", content: "Southwest Ethiopia · Real Data Priority Map" },
       {
         property: "og:description",
         content:
-          "Prioritize focus regions with real SoilGrids, GBIF occurrence and HDX/OCHA ADM3 population inputs.",
+          "Prioritize focus regions with real SoilGrids, GBIF occurrence, ESA WorldCover safeguards and HDX/OCHA ADM3 population inputs.",
       },
     ],
   }),
@@ -114,6 +116,8 @@ function Index() {
       ? livelihoodPopulationForAdm2(detail.id)
       : livelihoodPopulationForRegion(detail?.region);
   const detailClimate = detail?.level === "adm2" ? climateSampleForAdm2(detail.id) : undefined;
+  const detailTerrain = detail?.level === "adm2" ? terrainSampleForAdm2(detail.id) : undefined;
+  const detailLandCover = detail?.level === "adm2" ? landCoverForAdm2(detail.id) : undefined;
   const handleAdminLevelChange = (level: AdminLevel) => {
     const current = analysisUnitById(selected ?? undefined);
     setAdminLevel(level);
@@ -153,7 +157,7 @@ function Index() {
               >
                 GBIF
               </a>
-              {" "}and HDX/OCHA ADM3 population data. Boundaries from HDX{" "}
+              , NASA POWER climate, Open-Meteo terrain and HDX/OCHA ADM3 population data. Boundaries from HDX{" "}
               <a
                 className="underline decoration-dotted hover:text-foreground"
                 href="https://data.humdata.org/dataset/cod-ab-eth"
@@ -213,7 +217,7 @@ function Index() {
               Map boundaries use HDX COD-AB-ETH{" "}
               <span className="font-medium text-foreground/80">{adminLevel.toUpperCase()}</span>{" "}
               {adminLevel === "adm1" ? "regions" : adminLevel === "adm2" ? "zones" : "woredas"}.
-              {" "}ADM2/ADM3 colors inherit their parent region priority.
+              {" "}{adminLevel === "adm1" ? "ADM1 scores aggregate the mapped ADM2 zones." : adminLevel === "adm2" ? "ADM2 colors use ADM2-native real inputs where available." : "ADM3 colors display the matched ADM2 zone score."}
             </div>
             <div className="px-4 pb-4 text-[11px] leading-relaxed text-muted-foreground">
               Current focus regions: Oromia, SNNPR, Gambela and Benishangul-Gumuz.
@@ -276,6 +280,40 @@ function Index() {
                 unit={detail}
               />
 
+              {detailLandCover ? (
+                <div className="rounded-md border border-border bg-card/50 p-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <Layers className="size-3.5" aria-hidden />
+                      <span>ESA WorldCover safeguard</span>
+                      <SourceBadge inherited={false} label="ADM2" />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      safeguard {detailLandCover.landUseSafeguardScore}/100
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <Stat label="Cropland" value={`${Math.round(detailLandCover.croplandShare * 100)}%`} />
+                    <Stat label="Built-up" value={`${Math.round(detailLandCover.builtUpShare * 100)}%`} />
+                    <Stat label="Tree cover" value={`${Math.round(detailLandCover.treeCoverShare * 100)}%`} />
+                    <Stat label="Open veg." value={`${Math.round(detailLandCover.openVegetationShare * 100)}%`} />
+                    <Stat label="Water/wet." value={`${Math.round(detailLandCover.waterWetlandShare * 100)}%`} />
+                    <Stat
+                      label="Samples"
+                      value={`${detailLandCover.samples.length} (${detailLandCover.sampleGridSize}x${detailLandCover.sampleGridSize})`}
+                    />
+                  </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                    Real ESA WorldCover 2021 land-cover classes sampled with an
+                    area-scaled ADM2 grid. This is a separate land-use safeguard, not a
+                    fourth weighted priority pillar. Low values warn about
+                    cropland, built-up or water/wetland conflicts.
+                  </p>
+                </div>
+              ) : detail?.level === "adm2" ? (
+                <MissingData label="ESA WorldCover safeguard" />
+              ) : null}
+
               {detailSoilGrids ? (
                 <div className="rounded-md border border-border bg-card/50 p-3">
                   <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -299,7 +337,7 @@ function Index() {
                   </div>
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real ISRIC SoilGrids v2.0 centroid sample, depth-weighted
-                    across 0-30 cm. {proxySourceLevelForUnit(detail, "ecologicalRestorationPotential") === "adm2" ? "This ERP input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this ERP input from its parent ADM1 region." : "The ERP score is calculated only from this fetched soil sample."}
+                    across 0-30 cm. {proxySourceLevelForUnit(detail, "ecologicalRestorationPotential") === "adm2" ? "This ERP input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this ERP input from its parent ADM1 region." : "ADM1 ERP is aggregated from the mapped ADM2 zone scores."}
                   </p>
                 </div>
               ) : (
@@ -336,8 +374,7 @@ function Index() {
                     </div>
                   ) : null}
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real GBIF coordinated occurrences, queried by ADM1 bounding
-                    box. {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "This BRV input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "The BRV score uses only this occurrence evidence and is"} not yet corrected for observer or road-access bias.
+                    Real GBIF coordinated occurrences, queried by {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "ADM2 bounding box." : "ADM1 bounding box."} {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "This BRV input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "ADM1 BRV is aggregated from the mapped ADM2 zone scores and is"} not yet corrected for observer or road-access bias.
                   </p>
                 </div>
               ) : (
@@ -363,7 +400,32 @@ function Index() {
                   </div>
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                     Real NASA POWER MERRA2 20-year climatology at the ADM2 centroid.
-                    Used with SoilGrids in ADM2 ERP.
+                    Used with SoilGrids and terrain relief in ADM2 ERP.
+                  </p>
+                </div>
+              ) : null}
+
+              {detailTerrain ? (
+                <div className="rounded-md border border-border bg-card/50 p-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <Mountain className="size-3.5" aria-hidden />
+                      <span>Open-Meteo terrain input</span>
+                      <SourceBadge inherited={false} label="ADM2" />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      relief {detailTerrain.terrainReliefScore}/100
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <Stat label="Range" value={`${detailTerrain.elevationRangeM.toLocaleString()} m`} />
+                    <Stat label="Max slope" value={`${detailTerrain.maxSlopePercent.toFixed(1)}%`} />
+                    <Stat label="Mean slope" value={`${detailTerrain.meanSlopePercent.toFixed(1)}%`} />
+                  </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                    Real Open-Meteo elevation samples at the ADM2 centroid plus
+                    north/south/east/west points. Used in ADM2 ERP as a
+                    lightweight terrain relief proxy, not full DEM zonal statistics.
                   </p>
                 </div>
               ) : null}
