@@ -350,22 +350,14 @@ function Index() {
             ) : null}
           </div>
           {mounted ? (
-            <Suspense
-              fallback={
-                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                  Loading map...
-                </div>
-              }
-            >
-              <DeforestationMap
-                selected={selected}
-                onSelect={setSelected}
-                adminLevel={adminLevel}
-                onAdminLevelChange={handleAdminLevelChange}
-                weights={weights}
-                layoutKey={`${rankingOpen}-${detailOpen}`}
-              />
-            </Suspense>
+            <ClientOnlyDeforestationMap
+              selected={selected}
+              onSelect={setSelected}
+              adminLevel={adminLevel}
+              onAdminLevelChange={handleAdminLevelChange}
+              weights={weights}
+              layoutKey={`${rankingOpen}-${detailOpen}`}
+            />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               Loading map...
