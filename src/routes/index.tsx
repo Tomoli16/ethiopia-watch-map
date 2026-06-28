@@ -165,7 +165,7 @@ function Index() {
           proxies: detailProxies,
           gfw: detailGfw,
           landCover: detailLandCover,
-          livelihood: detailLivelihood,
+          livelihood: detail.level === "adm2" ? livelihoodPopulationForAdm2(detail.id) : undefined,
           climate: detailClimate,
           terrain: detailTerrain,
           gbifDensityScore: detailGbifDensityScore,

@@ -932,7 +932,7 @@ export function DeforestationMap({
             features: regions.features.filter(
               (f) => (f.properties as ZoneProps | undefined)?.shapeName === selectedRegion,
             ),
-          }}
+          } as GeoJSON.FeatureCollection}
           style={() => ({
             fillOpacity: 0,
             color: "#fafafa",
