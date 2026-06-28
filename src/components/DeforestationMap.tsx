@@ -8,11 +8,13 @@ import {
   LANDCOVER_ADM2,
   adm2UnitId,
   analysisUnitById,
+  biodiversityRecoveryEvidenceScoreForAdm2,
   climateSampleForAdm2,
   colorForScore,
   gbifAreaNormalizedEvidenceScoreForAdm2,
   gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
+  gfwTreeCoverLossForAdm2,
   landCoverForAdm2,
   livelihoodPopulationForAdm2,
   livelihoodPopulationForRegion,
@@ -34,7 +36,7 @@ interface Props {
 }
 
 export type AdminLevel = "adm1" | "adm2" | "adm3";
-type OverlayMode = "priority" | "soil" | "gbif" | "livelihood" | "climate" | "terrain" | "landcover";
+type OverlayMode = "priority" | "soil" | "gbif" | "livelihood" | "climate" | "terrain" | "landcover" | "gfw";
 
 interface ZoneProps {
   shapeName?: string;
@@ -79,6 +81,10 @@ function climateColor(score: number) {
 }
 
 function terrainColor(score: number) {
+  return colorForScore(score);
+}
+
+function gfwColor(score: number) {
   return colorForScore(score);
 }
 
@@ -280,6 +286,7 @@ export function DeforestationMap({
   const livelihoodOverlayData = adminLevel === "adm1" ? livelihoodRegionData : focusBoundaryData;
   const climateOverlayData = adminLevel === "adm1" ? null : focusBoundaryData;
   const terrainOverlayData = adminLevel === "adm1" ? null : focusBoundaryData;
+  const gfwOverlayData = adminLevel === "adm1" ? null : focusBoundaryData;
   const landCoverOverlayData = adminLevel === "adm1" ? null : focusBoundaryData;
   const landCoverSamples = useMemo(
     () =>
@@ -375,7 +382,7 @@ export function DeforestationMap({
     const regionName = regionNameForFeature(feature);
     const gbif = adminLevel === "adm1" ? gbifBiodiversityForRegion(regionName) : gbifBiodiversityForAdm2(unitId) ?? gbifBiodiversityForRegion(regionName);
     const evidenceScore =
-      adminLevel === "adm1" ? gbif?.occurrenceEvidenceScore : gbifAreaNormalizedEvidenceScoreForAdm2(unitId) ?? gbif?.occurrenceEvidenceScore;
+      adminLevel === "adm1" ? gbif?.occurrenceEvidenceScore : biodiversityRecoveryEvidenceScoreForAdm2(unitId) ?? gbif?.occurrenceEvidenceScore;
     const active = unitId === selected || regionName === selectedRegion;
     return {
       fillColor: evidenceScore !== undefined ? gbifColor(evidenceScore) : "#737373",
@@ -394,8 +401,9 @@ export function DeforestationMap({
     const gbif = adm2Gbif ?? gbifBiodiversityForRegion(regionName);
     if (!gbif) return;
     const evidenceScore = adm2Gbif
-      ? gbifAreaNormalizedEvidenceScoreForAdm2(unitId) ?? gbif.occurrenceEvidenceScore
+      ? biodiversityRecoveryEvidenceScoreForAdm2(unitId) ?? gbif.occurrenceEvidenceScore
       : gbif.occurrenceEvidenceScore;
+    const gbifDensityScore = adm2Gbif ? gbifAreaNormalizedEvidenceScoreForAdm2(unitId) : null;
     const areaKm2 = unitId ? landCoverForAdm2(unitId)?.areaKm2 : undefined;
     const occurrenceDensity = areaKm2 && "allOccurrences" in gbif ? gbif.allOccurrences / areaKm2 : null;
 
@@ -420,7 +428,7 @@ export function DeforestationMap({
       { sticky: true, className: "deforest-tooltip" },
     );
     layer.bindPopup(
-      `<div style="min-width:230px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">${sourceLabel}. Counts are real GBIF records${adm2Gbif ? " normalized by ADM2 area" : ""}.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>Evidence</dt><dd style="margin:0;font-weight:700">${evidenceScore}/100</dd>${occurrenceDensity === null ? "" : `<dt>Records/km²</dt><dd style="margin:0;font-weight:700">${occurrenceDensity.toFixed(2)}</dd>`}<dt>All records</dt><dd style="margin:0;font-weight:700">${gbif.allOccurrences.toLocaleString()}</dd><dt>Plants</dt><dd style="margin:0;font-weight:700">${gbif.plantOccurrences.toLocaleString()}</dd><dt>Birds</dt><dd style="margin:0;font-weight:700">${gbif.birdOccurrences.toLocaleString()}</dd></dl>${topPlants || topBirds ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;font-size:11px"><div><strong>Top plants</strong><br/>${topPlants}</div><div><strong>Top birds</strong><br/>${topBirds}</div></div>` : ""}<div style="margin-top:8px;color:#6b7280;font-size:10px">Normalized for area, but not yet corrected for observer/sampling bias.</div></div>`,
+      `<div style="min-width:230px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">${sourceLabel}. Counts are real GBIF records${adm2Gbif ? " normalized by ADM2 area and blended with ESA habitat context" : ""}.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>BRV evidence</dt><dd style="margin:0;font-weight:700">${evidenceScore}/100</dd>${gbifDensityScore === null ? "" : `<dt>GBIF density score</dt><dd style="margin:0;font-weight:700">${gbifDensityScore}/100</dd>`}${occurrenceDensity === null ? "" : `<dt>Records/km²</dt><dd style="margin:0;font-weight:700">${occurrenceDensity.toFixed(2)}</dd>`}<dt>All records</dt><dd style="margin:0;font-weight:700">${gbif.allOccurrences.toLocaleString()}</dd><dt>Plants</dt><dd style="margin:0;font-weight:700">${gbif.plantOccurrences.toLocaleString()}</dd><dt>Birds</dt><dd style="margin:0;font-weight:700">${gbif.birdOccurrences.toLocaleString()}</dd></dl>${topPlants || topBirds ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;font-size:11px"><div><strong>Top plants</strong><br/>${topPlants}</div><div><strong>Top birds</strong><br/>${topBirds}</div></div>` : ""}<div style="margin-top:8px;color:#6b7280;font-size:10px">Normalized for area, but not yet corrected for observer/sampling bias.</div></div>`,
     );
     layer.on({
       click: () => onSelect(unitId ?? regionName),
@@ -556,6 +564,52 @@ export function DeforestationMap({
       mouseout: (e) => {
         const l = e.target as { setStyle: (s: PathOptions) => void };
         l.setStyle(terrainStyle(feature));
+      },
+    });
+  };
+
+  const gfwStyle = (feature?: Feature): PathOptions => {
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const gfw = gfwTreeCoverLossForAdm2(unitId);
+    const active = unitId === selected || regionName === selectedRegion;
+    return {
+      fillColor: gfw ? gfwColor(gfw.degradationPressureScore) : "#737373",
+      fillOpacity: active ? 0.62 : 0.46,
+      color: active ? "#fafafa" : "#fb7185",
+      weight: active ? 3 : 1.4,
+    };
+  };
+
+  const onEachGfwRegion = (feature: Feature, layer: Layer) => {
+    const props = feature.properties as ZoneProps | undefined;
+    const name = props?.shapeName ?? "";
+    const unitId = adm2IdForFeature(feature, adminLevel);
+    const regionName = regionNameForFeature(feature);
+    const gfw = gfwTreeCoverLossForAdm2(unitId);
+    if (!gfw) return;
+    const topDrivers = Object.entries(gfw.lossByDriverHa)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([driver, ha]) => `${driver}: ${ha.toLocaleString()} ha`)
+      .join("<br/>");
+
+    layer.bindTooltip(
+      `<div style="font-family:inherit"><strong>${name}</strong><br/>GFW/UMD loss pressure: ${gfw.degradationPressureScore}/100<br/>Loss density: ${gfw.lossDensityHaPerKm2.toFixed(2)} ha/km²<br/>Recent loss: ${gfw.recentLossHa.toLocaleString()} ha</div>`,
+      { sticky: true, className: "deforest-tooltip" },
+    );
+    layer.bindPopup(
+      `<div style="min-width:240px;font-family:system-ui,sans-serif"><strong>${name}</strong><div style="margin-top:4px;color:#4b5563">Real Global Forest Watch / UMD tree-cover loss by driver for this ADM2 boundary.</div><dl style="display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:8px 0 0"><dt>ERP loss pressure</dt><dd style="margin:0;font-weight:700">${gfw.degradationPressureScore}/100</dd><dt>Total loss</dt><dd style="margin:0;font-weight:700">${gfw.totalLossHa.toLocaleString()} ha</dd><dt>Loss density</dt><dd style="margin:0;font-weight:700">${gfw.lossDensityHaPerKm2.toFixed(2)} ha/km²</dd><dt>Recent loss</dt><dd style="margin:0;font-weight:700">${gfw.recentLossHa.toLocaleString()} ha</dd><dt>Dominant driver</dt><dd style="margin:0;font-weight:700">${gfw.dominantDriver}</dd></dl>${topDrivers ? `<div style="margin-top:8px;font-size:11px">${topDrivers}</div>` : ""}<div style="margin-top:8px;color:#6b7280;font-size:10px">Higher values mean stronger historical tree-cover-loss pressure and therefore higher restoration opportunity inside ERP.</div></div>`,
+    );
+    layer.on({
+      click: () => onSelect(unitId ?? regionName),
+      mouseover: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle({ fillOpacity: 0.72, weight: 3 });
+      },
+      mouseout: (e) => {
+        const l = e.target as { setStyle: (s: PathOptions) => void };
+        l.setStyle(gfwStyle(feature));
       },
     });
   };
@@ -709,6 +763,14 @@ export function DeforestationMap({
           data={terrainOverlayData}
           style={terrainStyle}
           onEachFeature={onEachTerrainRegion}
+        />
+      )}
+      {overlayMode === "gfw" && gfwOverlayData && (
+        <GeoJSON
+          key={`gfw-regions-${selected ?? "none"}`}
+          data={gfwOverlayData}
+          style={gfwStyle}
+          onEachFeature={onEachGfwRegion}
         />
       )}
       {overlayMode === "landcover" && landCoverOverlayData && (
@@ -1055,6 +1117,38 @@ export function DeforestationMap({
           </button>
           <button
             type="button"
+            onClick={() => setOverlayMode((mode) => (mode === "gfw" ? "priority" : "gfw"))}
+            aria-pressed={overlayMode === "gfw"}
+            title={overlayMode === "gfw" ? "Show priority map" : "Show GFW/UMD tree-cover-loss layer"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              width: "100%",
+              padding: "6px 10px",
+              background: overlayMode === "gfw" ? "#0c1410" : "#fff",
+              color: overlayMode === "gfw" ? "#fafafa" : "#0c1410",
+              border: "none",
+              borderTop: "1px solid #d6d6d6",
+              font: "600 12px/1 system-ui, sans-serif",
+              cursor: "pointer",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 9,
+                height: 9,
+                borderRadius: 999,
+                background: "#fb7185",
+                boxShadow: "0 0 0 2px currentColor",
+              }}
+            />
+            GFW loss
+          </button>
+          <button
+            type="button"
             onClick={() => setOverlayMode((mode) => (mode === "landcover" ? "priority" : "landcover"))}
             aria-pressed={overlayMode === "landcover"}
             title={overlayMode === "landcover" ? "Show priority map" : "Show ESA WorldCover land-use safeguard layer"}
@@ -1226,6 +1320,41 @@ export function DeforestationMap({
               }}
             >
               <div style={{ marginBottom: 5 }}>Terrain relief</div>
+              <div style={{ display: "grid", gap: 4 }}>
+                {[
+                  { label: "70-100", color: "#dc2626" },
+                  { label: "50-69", color: "#f97316" },
+                  { label: "30-49", color: "#facc15" },
+                  { label: "< 30", color: "#84cc16" },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        display: "inline-block",
+                        width: 18,
+                        height: 8,
+                        borderRadius: 2,
+                        background: item.color,
+                      }}
+                    />
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {overlayMode === "gfw" ? (
+            <div
+              style={{
+                padding: "7px 10px 8px",
+                background: "#fff",
+                borderTop: "1px solid #d6d6d6",
+                color: "#0c1410",
+                font: "600 10px/1.2 system-ui, sans-serif",
+              }}
+            >
+              <div style={{ marginBottom: 5 }}>GFW loss pressure</div>
               <div style={{ display: "grid", gap: 4 }}>
                 {[
                   { label: "70-100", color: "#dc2626" },

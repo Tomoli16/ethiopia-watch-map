@@ -9,6 +9,7 @@
     "gbif-biodiversity-adm2.json",
     "nasa-power-climate-adm2.json",
     "open-meteo-terrain-adm2.json",
+    "gfw-tree-cover-loss-adm2.json",
     "esa-worldcover-adm2-samples.json",
     "livelihood-population-regions.json",
     "livelihood-population-adm2.json",
@@ -36,6 +37,12 @@
       "proxy": "ERP"
     },
     {
+      "dataset": "Global Forest Watch / UMD Tree Cover Loss",
+      "level": "ADM2 geostore analysis by HDX/OCHA zone boundary",
+      "proxy": "ERP",
+      "status": "script-integrated-pending-fetch"
+    },
+    {
       "dataset": "HDX/OCHA ADM3 projected population 2022",
       "level": "Aggregated to ADM1 and ADM2",
       "proxy": "LI"
@@ -49,10 +56,6 @@
     }
   ],
   "deferred": [
-    {
-      "dataset": "Global Forest Watch / UMD",
-      "reason": "Needs geostore/vector workflow or bulk tile processing before useful ADM3 aggregation."
-    },
     {
       "dataset": "SRTM DEM",
       "reason": "Needs DEM tile selection and slope derivation; raw DEM should stay in data/raw."

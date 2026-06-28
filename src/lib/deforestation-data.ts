@@ -1,6 +1,7 @@
 import { climateSampleForAdm2 } from "./climate-adm2-data";
 import { gbifBiodiversityForRegion } from "./gbif-data";
 import { gbifBiodiversityForAdm2 } from "./gbif-adm2-data";
+import { gfwTreeCoverLossForAdm2 } from "./gfw-adm2-data";
 import { LANDCOVER_ADM2, landCoverForAdm2 } from "./landcover-adm2-data";
 import {
   LIVELIHOOD_POPULATION_ADM2,
@@ -133,7 +134,7 @@ export const PROXIES: ProxyMeta[] = [
     label: "Ecological Restoration Potential",
     short: "ERP",
     description:
-      "Real SoilGrids soil suitability, NASA POWER climate suitability and Open-Meteo terrain relief where ADM2 inputs are available.",
+      "Real GFW/UMD tree-cover loss, SoilGrids soil suitability, NASA POWER climate suitability and Open-Meteo terrain relief where ADM2 inputs are available.",
     color: "#22c55e",
   },
   {
@@ -141,7 +142,7 @@ export const PROXIES: ProxyMeta[] = [
     label: "Biodiversity Recovery Value",
     short: "BRV",
     description:
-      "Real GBIF coordinated occurrence evidence by regional bounding box.",
+      "Real GBIF occurrence density plus ESA WorldCover habitat context where ADM2 inputs are available.",
     color: "#a855f7",
   },
   {
@@ -210,6 +211,7 @@ export function soilSuitabilityScoreForAdm2(id?: string): number | null {
 
 export { gbifBiodiversityForAdm2 };
 export { gbifBiodiversityForRegion };
+export { gfwTreeCoverLossForAdm2 };
 export { LANDCOVER_ADM2 };
 export { landCoverForAdm2 };
 export { livelihoodPopulationForAdm2 };
@@ -259,6 +261,25 @@ export function gbifAreaNormalizedEvidenceScoreForAdm2(id?: string): number | nu
   );
 }
 
+export function landCoverHabitatContextScoreForAdm2(id?: string): number | null {
+  const landCover = landCoverForAdm2(id);
+  if (!landCover) return null;
+  const rawHabitat =
+    landCover.treeCoverShare * 0.35 +
+    landCover.openVegetationShare * 0.45 +
+    landCover.waterWetlandShare * 0.2;
+  return scaleRange(Math.round(rawHabitat * 100), 6, 41);
+}
+
+export function biodiversityRecoveryEvidenceScoreForAdm2(id?: string): number | null {
+  const gbifScore = gbifAreaNormalizedEvidenceScoreForAdm2(id);
+  const habitatScore = landCoverHabitatContextScoreForAdm2(id);
+  if (gbifScore === null && habitatScore === null) return null;
+  if (gbifScore === null) return habitatScore;
+  if (habitatScore === null) return gbifScore;
+  return Math.round(gbifScore * 0.75 + habitatScore * 0.25);
+}
+
 export function proxyScores(r: RegionRisk): ProxyScores {
   return proxyScoresForUnit({ id: r.name, name: r.name, level: "adm1", region: r.name });
 }
@@ -293,18 +314,19 @@ export function proxyScoresForUnit(unit: AnalysisUnit): ProxyScores {
 
   const region = unit.region;
   const soilAdm2 = unit.level === "adm2" ? soilSuitabilityScoreForAdm2(unit.id) : null;
+  const gfwAdm2 = unit.level === "adm2" ? gfwTreeCoverLossForAdm2(unit.id)?.degradationPressureScore : null;
   const climateAdm2 = unit.level === "adm2" ? climateSampleForAdm2(unit.id)?.climateSuitabilityScore : null;
   const terrainAdm2 = unit.level === "adm2" ? terrainSampleForAdm2(unit.id)?.terrainReliefScore : null;
   const gbifAdm2 = unit.level === "adm2" ? gbifBiodiversityForAdm2(unit.id) : undefined;
   const livelihoodAdm1 = livelihoodPopulationForRegion(region);
   const livelihoodAdm2 = unit.level === "adm2" ? livelihoodPopulationForAdm2(unit.id) : undefined;
   const soilScore = soilAdm2 ?? soilSuitabilityScoreForRegion(region) ?? 0;
-  const ecologicalInputs = [soilScore, climateAdm2, terrainAdm2].filter(
+  const ecologicalInputs = [gfwAdm2, soilScore, climateAdm2, terrainAdm2].filter(
     (value): value is number => value !== null && value !== undefined,
   );
   const rawEcologicalRestorationPotential = average(ecologicalInputs);
   const rawBiodiversityRecoveryValue =
-    gbifAreaNormalizedEvidenceScoreForAdm2(unit.id) ??
+    biodiversityRecoveryEvidenceScoreForAdm2(unit.id) ??
     gbifAdm2?.occurrenceEvidenceScore ??
     gbifBiodiversityForRegion(region)?.occurrenceEvidenceScore ??
     0;
@@ -324,7 +346,10 @@ export function proxySourceLevelForUnit(unit: AnalysisUnit, key: ProxyKey): Anal
     return ADM2_ANALYSIS_UNITS.some((child) => child.region === unit.region) ? "adm2-aggregate" : "adm1";
   }
   if (key === "ecologicalRestorationPotential") {
-    return soilGridsSampleForAdm2(unit.id) || climateSampleForAdm2(unit.id) || terrainSampleForAdm2(unit.id)
+    return gfwTreeCoverLossForAdm2(unit.id) ||
+      soilGridsSampleForAdm2(unit.id) ||
+      climateSampleForAdm2(unit.id) ||
+      terrainSampleForAdm2(unit.id)
       ? "adm2"
       : soilGridsSampleForRegion(unit.region)
         ? "adm1"

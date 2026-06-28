@@ -11,6 +11,7 @@
     "data:fetch:gbif": "node scripts/fetch-gbif-biodiversity.mjs",
     "data:fetch:gbif:adm2": "node scripts/fetch-gbif-adm2-biodiversity.mjs",
     "data:fetch:climate:adm2": "node scripts/fetch-nasa-power-climate-adm2.mjs",
+    "data:fetch:gfw:adm2": "node scripts/fetch-gfw-tree-cover-loss-adm2.mjs",
     "data:fetch:landcover:adm2": "node scripts/fetch-esa-worldcover-adm2-samples.mjs",
     "data:fetch:terrain:adm2": "node scripts/fetch-open-meteo-terrain-adm2.mjs",
     "data:fetch:soilgrids:adm2": "node scripts/fetch-soilgrids-adm2-samples.mjs",

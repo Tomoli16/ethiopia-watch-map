@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bird, CloudSun, Layers, Mountain, Sprout, UsersRound, type LucideIcon } from "lucide-react";
+import { Bird, CloudSun, Layers, Mountain, Sprout, Trees, UsersRound, type LucideIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
   DEFAULT_WEIGHTS,
@@ -8,11 +8,14 @@ import {
   PROXIES,
   analysisUnitById,
   analysisUnitsForLevel,
+  biodiversityRecoveryEvidenceScoreForAdm2,
   climateSampleForAdm2,
   colorForScore,
   gbifAreaNormalizedEvidenceScoreForAdm2,
   gbifBiodiversityForAdm2,
   gbifBiodiversityForRegion,
+  gfwTreeCoverLossForAdm2,
+  landCoverHabitatContextScoreForAdm2,
   landCoverForAdm2,
   livelihoodPopulationForAdm2,
   livelihoodPopulationForRegion,
@@ -57,13 +60,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Interactive Ethiopia restoration priority map using fetched SoilGrids, GBIF, ESA WorldCover and HDX/OCHA ADM3 population data.",
+          "Interactive Ethiopia restoration priority map using fetched GFW/UMD, SoilGrids, GBIF, ESA WorldCover and HDX/OCHA ADM3 population data.",
       },
       { property: "og:title", content: "Southwest Ethiopia · Real Data Priority Map" },
       {
         property: "og:description",
         content:
-          "Prioritize focus regions with real SoilGrids, GBIF occurrence, ESA WorldCover safeguards and HDX/OCHA ADM3 population inputs.",
+          "Prioritize focus regions with real GFW/UMD loss, SoilGrids, GBIF occurrence, ESA WorldCover safeguards and HDX/OCHA ADM3 population inputs.",
       },
     ],
   }),
@@ -118,11 +121,14 @@ function Index() {
       : livelihoodPopulationForRegion(detail?.region);
   const detailClimate = detail?.level === "adm2" ? climateSampleForAdm2(detail.id) : undefined;
   const detailTerrain = detail?.level === "adm2" ? terrainSampleForAdm2(detail.id) : undefined;
+  const detailGfw = detail?.level === "adm2" ? gfwTreeCoverLossForAdm2(detail.id) : undefined;
   const detailLandCover = detail?.level === "adm2" ? landCoverForAdm2(detail.id) : undefined;
   const detailGbifEvidenceScore =
     detail?.level === "adm2"
-      ? gbifAreaNormalizedEvidenceScoreForAdm2(detail.id) ?? detailGbif?.occurrenceEvidenceScore
+      ? biodiversityRecoveryEvidenceScoreForAdm2(detail.id) ?? detailGbif?.occurrenceEvidenceScore
       : detailGbif?.occurrenceEvidenceScore;
+  const detailGbifDensityScore = detail?.level === "adm2" ? gbifAreaNormalizedEvidenceScoreForAdm2(detail.id) : null;
+  const detailHabitatScore = detail?.level === "adm2" ? landCoverHabitatContextScoreForAdm2(detail.id) : null;
   const detailGbifDensity =
     detail?.level === "adm2" && detailGbif && detailLandCover?.areaKm2
       ? detailGbif.allOccurrences / detailLandCover.areaKm2
@@ -166,7 +172,7 @@ function Index() {
               >
                 GBIF
               </a>
-              , NASA POWER climate, Open-Meteo terrain and HDX/OCHA ADM3 population data. Boundaries from HDX{" "}
+              , GFW/UMD tree-cover loss, NASA POWER climate, Open-Meteo terrain and HDX/OCHA ADM3 population data. Boundaries from HDX{" "}
               <a
                 className="underline decoration-dotted hover:text-foreground"
                 href="https://data.humdata.org/dataset/cod-ab-eth"
@@ -375,6 +381,12 @@ function Index() {
                     {detailGbifDensity === null ? null : (
                       <Stat label="Records/km2" value={detailGbifDensity.toFixed(2)} />
                     )}
+                    {detailGbifDensityScore === null ? null : (
+                      <Stat label="GBIF dens." value={`${detailGbifDensityScore}/100`} />
+                    )}
+                    {detailHabitatScore === null ? null : (
+                      <Stat label="ESA habitat" value={`${detailHabitatScore}/100`} />
+                    )}
                     <Stat label="All records" value={detailGbif.allOccurrences.toLocaleString()} />
                     <Stat label="Plants" value={detailGbif.plantOccurrences.toLocaleString()} />
                     <Stat label="Birds" value={detailGbif.birdOccurrences.toLocaleString()} />
@@ -386,7 +398,7 @@ function Index() {
                     </div>
                   ) : null}
                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                    Real GBIF coordinated occurrences, queried by {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "ADM2 bounding box and normalized by ADM2 area." : "ADM1 bounding box."} {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "This BRV input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "ADM1 BRV is area-weighted from the mapped ADM2 zone scores and is"} not yet corrected for observer or road-access bias.
+                    Real GBIF coordinated occurrences, queried by {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "ADM2 bounding box and normalized by ADM2 area. ADM2 BRV blends this GBIF density evidence with ESA WorldCover habitat context." : "ADM1 bounding box."} {proxySourceLevelForUnit(detail, "biodiversityRecoveryValue") === "adm2" ? "This BRV input is ADM2-specific." : detail.level === "adm2" ? "ADM2 currently inherits this BRV input from its parent ADM1 region." : "ADM1 BRV is area-weighted from the mapped ADM2 zone scores and is"} not yet corrected for observer or road-access bias.
                   </p>
                 </div>
               ) : (
@@ -440,6 +452,36 @@ function Index() {
                     lightweight terrain relief proxy, not full DEM zonal statistics.
                   </p>
                 </div>
+              ) : null}
+
+              {detailGfw ? (
+                <div className="rounded-md border border-border bg-card/50 p-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <Trees className="size-3.5" aria-hidden />
+                      <span>GFW/UMD loss input</span>
+                      <SourceBadge inherited={false} label="ADM2" />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      pressure {detailGfw.degradationPressureScore}/100
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <Stat label="Total loss" value={`${detailGfw.totalLossHa.toLocaleString()} ha`} />
+                    <Stat label="Loss dens." value={`${detailGfw.lossDensityHaPerKm2.toFixed(2)} ha/km2`} />
+                    <Stat label="Recent loss" value={`${detailGfw.recentLossHa.toLocaleString()} ha`} />
+                    <Stat label="Recent share" value={`${Math.round(detailGfw.recentLossShare * 100)}%`} />
+                    <Stat label="Canopy" value={`${detailGfw.canopyCoverThreshold}%`} />
+                    <Stat label="Driver" value={detailGfw.dominantDriver} />
+                  </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                    Real Global Forest Watch / UMD tree-cover loss by driver.
+                    Used in ADM2 ERP as degradation pressure: higher historical
+                    loss density means higher restoration priority.
+                  </p>
+                </div>
+              ) : detail?.level === "adm2" ? (
+                <MissingData label="GFW/UMD loss input" />
               ) : null}
 
               {detailLivelihood ? (

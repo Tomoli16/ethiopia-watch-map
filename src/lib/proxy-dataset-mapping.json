@@ -40,8 +40,13 @@
         {
           "priority": 1,
           "dataset": "Global Forest Watch / UMD",
-          "status": "deferred",
-          "nextStep": "Add GFW geostore or bulk raster workflow for ADM3 aggregation.",
+          "status": "script-integrated-pending-fetch",
+          "localFiles": [
+            "scripts/fetch-gfw-tree-cover-loss-adm2.mjs",
+            "public/data/real/gfw-tree-cover-loss-adm2.json",
+            "src/lib/gfw-adm2-data.ts"
+          ],
+          "nextStep": "Run data:fetch:gfw:adm2 with GFW_API_KEY in the environment, then replace ADM2 API results with ADM3 or raster zonal statistics when needed.",
           "reason": "Provides ready-to-use metrics for historical tree loss and canopy condition, allowing degradation extent to be shown without custom image processing."
         },
         {
