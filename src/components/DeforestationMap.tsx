@@ -33,6 +33,7 @@ interface Props {
   adminLevel: AdminLevel;
   onAdminLevelChange: (level: AdminLevel) => void;
   weights: Weights;
+  layoutKey?: string;
 }
 
 export type AdminLevel = "adm1" | "adm2" | "adm3";
@@ -51,6 +52,10 @@ const ADMIN_LEVELS: { value: AdminLevel; label: string; description: string }[] 
 ];
 
 const SOILGRIDS_SAMPLES = Object.values(SOILGRIDS_REGION_SAMPLES);
+const ETHIOPIA_VIEW_BOUNDS: [[number, number], [number, number]] = [
+  [2.7, 32.2],
+  [15.2, 48.4],
+];
 
 function regionNameForFeature(feature?: Feature) {
   const props = feature?.properties as ZoneProps | undefined;
@@ -135,12 +140,21 @@ function ZoomToSelection({
   return null;
 }
 
+function MapSizeInvalidator({ layoutKey }: { layoutKey?: string }) {
+  const map = useMap();
+  useEffect(() => {
+    window.setTimeout(() => map.invalidateSize({ animate: false }), 180);
+  }, [layoutKey, map]);
+  return null;
+}
+
 export function DeforestationMap({
   selected,
   onSelect,
   adminLevel,
   onAdminLevelChange,
   weights,
+  layoutKey,
 }: Props) {
   const [regions, setRegions] = useState<GeoJSON.FeatureCollection | null>(null);
   const [zones, setZones] = useState<GeoJSON.FeatureCollection | null>(null);
@@ -665,9 +679,11 @@ export function DeforestationMap({
 
   return (
     <MapContainer
-      center={[7.5, 36.5]}
+      center={[8.1, 38.2]}
       zoom={6}
-      minZoom={5}
+      minZoom={6}
+      maxBounds={ETHIOPIA_VIEW_BOUNDS}
+      maxBoundsViscosity={1}
       style={{ height: "100%", width: "100%", background: "oklch(0.16 0.02 150)" }}
       scrollWheelZoom
     >
@@ -900,6 +916,7 @@ export function DeforestationMap({
           );
         })}
       <ZoomToSelection data={boundaryData} selected={selected} adminLevel={adminLevel} />
+      <MapSizeInvalidator layoutKey={layoutKey} />
       <div className="leaflet-top leaflet-right" style={{ pointerEvents: "none" }}>
         <div
           className="leaflet-control leaflet-bar"

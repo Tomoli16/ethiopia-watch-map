@@ -1,5 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bird, CloudSun, Layers, Mountain, Sparkles, Sprout, Trees, UsersRound, type LucideIcon } from "lucide-react";
+import {
+  Bird,
+  CloudSun,
+  Layers,
+  Mountain,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  Sparkles,
+  Sprout,
+  Trees,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
   DEFAULT_WEIGHTS,
@@ -78,6 +92,8 @@ function Index() {
   const [mounted, setMounted] = useState(false);
   const [adminLevel, setAdminLevel] = useState<AdminLevel>("adm1");
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
+  const [rankingOpen, setRankingOpen] = useState(true);
+  const [detailOpen, setDetailOpen] = useState(true);
   useEffect(() => setMounted(true), []);
 
   const analysisLevel: AnalysisLevel = adminLevel === "adm1" ? "adm1" : "adm2";
@@ -199,12 +215,44 @@ function Index() {
               .
             </p>
           </div>
-          <Legend />
+          <div className="flex items-center gap-3">
+            <div className="flex overflow-hidden rounded-md border border-border bg-card">
+              <button
+                type="button"
+                onClick={() => setRankingOpen((open) => !open)}
+                className="inline-flex size-8 items-center justify-center border-r border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                aria-pressed={rankingOpen}
+                title={rankingOpen ? "Hide ranking sidebar" : "Show ranking sidebar"}
+              >
+                {rankingOpen ? <PanelLeftClose className="size-4" /> : <PanelLeftOpen className="size-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDetailOpen((open) => !open)}
+                className="inline-flex size-8 items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                aria-pressed={detailOpen}
+                title={detailOpen ? "Hide detail sidebar" : "Show detail sidebar"}
+              >
+                {detailOpen ? <PanelRightClose className="size-4" /> : <PanelRightOpen className="size-4" />}
+              </button>
+            </div>
+            <Legend />
+          </div>
         </div>
       </header>
 
-      <div className="grid flex-1 min-h-0 grid-cols-[320px_1fr_360px]">
-        <aside className="flex flex-col overflow-hidden border-r border-border">
+      <div
+        className="grid flex-1 min-h-0"
+        style={{
+          gridTemplateColumns: `${rankingOpen ? "320px" : "0px"} minmax(0, 1fr) ${detailOpen ? "360px" : "0px"}`,
+        }}
+      >
+        <aside
+          className={`flex flex-col overflow-hidden border-r border-border transition-[opacity] duration-150 ${
+            rankingOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
+          aria-hidden={!rankingOpen}
+        >
           <div className="overflow-y-auto">
             <div className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {analysisLevel === "adm2" ? "ADM2 zones" : "Focus regions"} · ranked by priority
@@ -256,6 +304,30 @@ function Index() {
         </aside>
 
         <main className="relative min-h-0">
+          <div className="pointer-events-none absolute left-3 top-3 z-[500] flex gap-2">
+            {!rankingOpen ? (
+              <button
+                type="button"
+                onClick={() => setRankingOpen(true)}
+                className="pointer-events-auto inline-flex h-9 items-center gap-2 rounded-md border border-border bg-card/95 px-3 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-secondary"
+                title="Show ranking sidebar"
+              >
+                <PanelLeftOpen className="size-4" />
+                Ranking
+              </button>
+            ) : null}
+            {!detailOpen ? (
+              <button
+                type="button"
+                onClick={() => setDetailOpen(true)}
+                className="pointer-events-auto inline-flex h-9 items-center gap-2 rounded-md border border-border bg-card/95 px-3 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-secondary"
+                title="Show detail sidebar"
+              >
+                <PanelRightOpen className="size-4" />
+                Details
+              </button>
+            ) : null}
+          </div>
           {mounted ? (
             <Suspense
               fallback={
@@ -270,6 +342,7 @@ function Index() {
                 adminLevel={adminLevel}
                 onAdminLevelChange={handleAdminLevelChange}
                 weights={weights}
+                layoutKey={`${rankingOpen}-${detailOpen}`}
               />
             </Suspense>
           ) : (
@@ -279,7 +352,12 @@ function Index() {
           )}
         </main>
 
-        <aside className="overflow-y-auto border-l border-border p-5">
+        <aside
+          className={`overflow-y-auto border-l border-border p-5 transition-[opacity] duration-150 ${
+            detailOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
+          aria-hidden={!detailOpen}
+        >
           {detail && selected && detailLevel && detailProxies ? (
             <div className="space-y-5">
               <div>
